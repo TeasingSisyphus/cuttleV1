@@ -4,7 +4,7 @@
         {{homepage.formTitle}}
         <form ng-submit='homepage.makeGame()'>
             <input type='text' ng-model='homepage.gameName'></input>
-            <input type='submit'></input>
+            <input type='submit' class='btn btn-lg'></input>
         </form>
 
         <ul ng-repeat='game in homepage.gameList' id='{{game.id}}'>Game Name: {{game.name}}</ul>
