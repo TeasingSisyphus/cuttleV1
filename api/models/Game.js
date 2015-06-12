@@ -8,10 +8,21 @@
 module.exports = {
 
   attributes: {
-  	// name: {
-  	// 	type: 'string',
-  	// 	required: true,
-  	// },
+  	name: {
+  		type: 'string',
+  		required: true,
+  	},
+
+    p0Ready: {
+      type: 'boolean',
+      defaultsTo: false,
+    },
+
+    p1Ready: {
+      type: 'boolean',
+      defaultsTo: false,
+    },
+    
   	players: {
   		collection: 'player',
   		via: 'currentGame',

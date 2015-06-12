@@ -6,6 +6,7 @@
 		this.formTitle = 'Type a name and submit to create a new game!';
 		this.gameName = '';
 		this.gameList = [];
+		this.readyView = false;
 		this.gameView = false;
 
 		////////////////////////
@@ -28,11 +29,9 @@
 				console.log("Recieved response to game: ");
 				console.log(res);
 
-				console.log(res.hasOwnProperty('game'));
-
 				if( res.hasOwnProperty('game') ) {
-					$scope.homepage.gameView = true;
-					$rootScope.$emit('gameView', res.game);
+					$scope.homepage.readyView = true;
+					$rootScope.$emit('readyView', res.game);
 
 					$scope.$apply();
 				}
@@ -80,14 +79,30 @@
 		this.turn = null;
 		this.pNum = null;
 		this.glasses = false;
+		this.p0Ready = false;
+		this.p1Ready = false;
+		this.gameView = false;
 
-		this.buns = function(){console.log('buns')};
 
-		$rootScope.$on('gameView', function(event, game) {
-			console.log('\nChanging to gameView');
+		this.ready = function() {
+			console.log("Player " + $scope.game.pNum + " is ready to play");
+			if ($scope.game.pNum === 0) {
+				$scope.game.p0Ready = true;
+			}
+			if ($scope.game.pNum === 1) {
+				$scope.game.p1Ready = true;
+			}
+
+			io.socket.get('/game/ready', {id: $scope.game.gameId, pNum: $scope.game.pNum}, function(res) {
+				console.log(res);
+			});
+		};
+
+		$rootScope.$on('readyView', function(event, game) {
+			console.log('\nChanging to readyView');
 			$scope.game.gameId = game.id;
 			$scope.game.gameName = game.name;
-			$scope.game.pNum = game.players.length;
+			$scope.game.pNum = game.players.length - 1;
 			$scope.game.deck = game.deck;
 
 
@@ -101,6 +116,8 @@
 				case 'updated':
 					console.log("\nGame was updated.");
 					if ( obj.data.hasOwnProperty('game') ) {
+						$scope.game.p0Ready = obj.data.game.p0Ready;
+						$scope.game.p1Ready = obj.data.game.p1Ready;
 						$scope.game.players = obj.data.game.players;
 						$scope.game.deck = obj.data.game.deck;
 						$scope.game.scrap = obj.data.game.scrap;
@@ -108,10 +125,24 @@
 						$scope.game.secondCard = obj.data.game.secondCard;
 						$scope.game.turn = obj.data.game.turn;
 
-						$scope.$apply();
+					}
+					break;	
+				//Using this case to trigger gameView	
+				case 'messaged':
+					console.log("\nGame was updated.");
+					if ( obj.data.hasOwnProperty('game') ) {
+						$scope.game.gameView = true;
+						$scope.game.players = obj.data.game.players;
+						$scope.game.deck = obj.data.game.deck;
+						$scope.game.scrap = obj.data.game.scrap;
+						$scope.game.topCard = obj.data.game.topCard;
+						$scope.game.secondCard = obj.data.game.secondCard;
+						$scope.game.turn = obj.data.game.turn;
+
 					}
 					break;						
 			}
+			$scope.$apply();
 		});
 	});	
 })();
