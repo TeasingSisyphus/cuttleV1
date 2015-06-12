@@ -206,89 +206,101 @@ module.exports = {
 					console.log("P0 is ready: " + game.p0Ready);
 					console.log("P1 is ready: " + game.p1Ready);
 
-					Player.find([game.players[0].id, game.players[1].id]).populateAll().exec(function(errr, playerList) {
-						playerList[0].save(function(erios, savedP0) {
-							console.log(savedP0);
-						});
+					Player.find([game.players[0].id, game.players[1].id]).populate('hand').exec(function(errr, playerList) {
+
 						var playerSort = sortPlayers(playerList);
-						console.log("\nLogging playerSort: ");
-						console.log(playerSort);
 
-					switch (req.body.pNum) {
-						case 0:
-							game.p0Ready = true;
-							if (game.p1Ready) {
-								consoele.log("Both players ready. Firing gameView");
-								deal = true;
-							}
-							break;
-						case 1:
-							game.p1Ready = true;
-							if (game.p0Ready) {
-								console.log("Both players ready. Firing gameView");
-								deal = true;
-							}
-							break;
-					}
-
-						if (deal) {
-							var dealt = [];
-							var min = 0;
-							var max = 51;
-
-							var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-
-							console.log("\nRandom is " + random);
-
-
-							// playerList[0].hand.add(game.deck[random].id);
-							// game.deck.remove(game.deck[random].id);
-							// dealt.push("1st random: " + random);	
-
-
-							// for(var i=0; i<5; i++) {
-							// 	while (dealt.indexOf(random) >=0) {
-							// 		var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-							// 	}
-							// 	console.log("Random: " + random);
-
-							// 	playerList[0].hand.add(game.deck[random].id);
-							// 	game.deck.remove(game.deck[random].id);
-							// 	dealt.push(random);
-
-							// 	while (dealt.indexOf(random) >=0) {
-							// 		var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-							// 	}
-							// 	console.log("Random: " + random);
-
-							// 	playerList[1].hand.add(game.deck[random].id);
-							// 	game.deck.remove(game.deck[random].id);
-							// 	dealt.push(random);								
-
-							// }	
-
-
+						switch (req.body.pNum) {
+							case 0:
+								game.p0Ready = true;
+								if (game.p1Ready) {
+									console.log("Both players ready. Firing gameView");
+									deal = true;
+								}
+								break;
+							case 1:
+								game.p1Ready = true;
+								if (game.p0Ready) {
+									console.log("Both players ready. Firing gameView");
+									deal = true;
+								}
+								break;
 						}
 
-						game.save(function(er, savedGame) {
-							console.log("Saving the game");
-							if (dealt) {
-								// var p0 = playerList[0];
-								// console.log(p0);
-								// playerList[0].save(function(error, savedP0) {
+							if (deal) {
+								var dealt = [];
+								var min = 0;
+								var max = 51;
 
-								// 		Game.message(savedGame.id, {game: savedGame});
-								// });
-								// playerSort[0].save(function(e, savedP0) {
-									// playerSort[1].save(function(errrrrr, savedP1) {
+								var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
 
-									// });
-								// });
-							}else{
 
-								Game.publishUpdate(game.id, {game: savedGame});
+
+								playerSort[0].hand.add(game.deck[random].id);
+								game.deck.remove(game.deck[random].id);
+								dealt.push(random);	
+								console.log("1st random: " + random);
+								console.log(game.deck[random]);
+
+
+								for(var i=0; i<5; i++) {
+									while (dealt.indexOf(random) >= 0) {
+										random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+									}
+									console.log("\n\nRandom: " + random);
+									console.log(game.deck[random]);
+									playerSort[0].hand.add(game.deck[random].id);
+									game.deck.remove(game.deck[random].id);
+									dealt.push(random);
+
+									while (dealt.indexOf(random) >= 0) {
+										random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+									}
+									console.log("\n\nRandom: " + random);
+									console.log(game.deck[random]);
+
+									playerSort[1].hand.add(game.deck[random].id);
+									game.deck.remove(game.deck[random].id);
+									dealt.push(random);								
+
+								}
+
+								//Assign topCard
+								while (dealt.indexOf(random) >= 0)	{
+									random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+								}
+								game.topCard = game.deck[random];
+								game.deck.remove(game.deck[random].id);
+
+
+								//Assign secondCard
+								while (dealt.indexOf(random) >= 0)	{
+									random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+								}
+								game.secondCard = game.deck[random];
+								game.deck.remove(game.deck[random].id);
+
+
+
 							}
-						});
+
+							game.save(function(er, savedGame) {
+								console.log("\nSaving the game");
+								console.log(savedGame);
+								if (dealt) {
+									playerList[0].save(function(error, savedP0) {
+
+										playerSort[1].save(function(errrrrr, savedP1) {
+											var players = [savedP0, savedP1];
+											Game.message(savedGame.id, {game: savedGame, players: players});
+										});
+									});
+
+								}else{
+
+									Game.publishUpdate(game.id, {game: savedGame});
+								}
+							});
 					});
 
 				}
@@ -300,12 +312,16 @@ module.exports = {
 		console.log("\n\nplayerTest");
 		console.log(req.body);
 		Game.findOne(req.body.id).populateAll().exec(function(err, game){
-			Player.findOne(game.players[0].id).populateAll().exec(function(error, foundPlayer) {
+			Player.findOne(game.players[0].id).populate('hand').populate('points').populate('runes').exec(function(error, foundPlayer) {
 				console.log("\n\nLogging foundPlayer");
 				console.log(foundPlayer);
-				foundPlayer.save(function(error, savedPlayer) {
-					console.log("\n\nLogging savedPlayer:");
-					console.log(savedPlayer);
+				Card.find({}).populateAll().exec(function(e, cards) {
+					foundPlayer.hand.add(cards[0].id);
+
+					foundPlayer.save(function(error, savedPlayer) {
+						console.log("\n\nLogging savedPlayer:");
+						console.log(savedPlayer);
+					});
 				});
 			});
 		});

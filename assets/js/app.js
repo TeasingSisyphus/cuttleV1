@@ -136,10 +136,11 @@
 					break;	
 				//Using this case to trigger gameView	
 				case 'messaged':
-					console.log("\nGame was updated.");
+					console.log("\nGame messaged.");
+					console.log(obj.data);
 					if ( obj.data.hasOwnProperty('game') ) {
 						$scope.game.gameView = true;
-						$scope.game.players = obj.data.game.players;
+						$scope.game.players = obj.data.players;
 						$scope.game.deck = obj.data.game.deck;
 						$scope.game.scrap = obj.data.game.scrap;
 						$scope.game.topCard = obj.data.game.topCard;

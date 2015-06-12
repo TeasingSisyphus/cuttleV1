@@ -29,6 +29,7 @@ module.exports = {
   	runes: {
   		model: 'player',
    	},
+
   }
 };
 
