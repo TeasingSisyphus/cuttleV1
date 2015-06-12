@@ -98,6 +98,13 @@
 			});
 		};
 
+		this.playerTest = function() {
+			console.log('clicked playerTest');
+			io.socket.get('/game/playerTest', {id: $scope.game.gameId}, function(res){
+				console.log(res);
+			});
+		};
+
 		$rootScope.$on('readyView', function(event, game) {
 			console.log('\nChanging to readyView');
 			$scope.game.gameId = game.id;

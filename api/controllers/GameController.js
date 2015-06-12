@@ -124,8 +124,7 @@ module.exports = {
 													if (cardError || !card) {
 														console.log("Card not created for game " + game.id);
 													} else {
-														console.log("\nLogging card as it is creatd");
-														console.log(card);
+
 														game.deck.add(card.id);
 													}
 												});
@@ -208,6 +207,9 @@ module.exports = {
 					console.log("P1 is ready: " + game.p1Ready);
 
 					Player.find([game.players[0].id, game.players[1].id]).populateAll().exec(function(errr, playerList) {
+						playerList[0].save(function(erios, savedP0) {
+							console.log(savedP0);
+						});
 						var playerSort = sortPlayers(playerList);
 						console.log("\nLogging playerSort: ");
 						console.log(playerSort);
@@ -239,31 +241,31 @@ module.exports = {
 							console.log("\nRandom is " + random);
 
 
-							playerSort[0].hand.add(game.deck[random].id);
-							game.deck.remove(game.deck[random].id);
-							dealt.push("1st random: " + random);	
+							// playerList[0].hand.add(game.deck[random].id);
+							// game.deck.remove(game.deck[random].id);
+							// dealt.push("1st random: " + random);	
 
 
-							for(var i=0; i<5; i++) {
-								while (dealt.indexOf(random) >=0) {
-									var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-								}
-								console.log("Random: " + random);
+							// for(var i=0; i<5; i++) {
+							// 	while (dealt.indexOf(random) >=0) {
+							// 		var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+							// 	}
+							// 	console.log("Random: " + random);
 
-								playerSort[0].hand.add(game.deck[random].id);
-								game.deck.remove(game.deck[random].id);
-								dealt.push(random);
+							// 	playerList[0].hand.add(game.deck[random].id);
+							// 	game.deck.remove(game.deck[random].id);
+							// 	dealt.push(random);
 
-								while (dealt.indexOf(random) >=0) {
-									var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-								}
-								console.log("Random: " + random);
+							// 	while (dealt.indexOf(random) >=0) {
+							// 		var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+							// 	}
+							// 	console.log("Random: " + random);
 
-								playerSort[1].hand.add(game.deck[random].id);
-								game.deck.remove(game.deck[random].id);
-								dealt.push(random);								
+							// 	playerList[1].hand.add(game.deck[random].id);
+							// 	game.deck.remove(game.deck[random].id);
+							// 	dealt.push(random);								
 
-							}	
+							// }	
 
 
 						}
@@ -271,12 +273,17 @@ module.exports = {
 						game.save(function(er, savedGame) {
 							console.log("Saving the game");
 							if (dealt) {
-								playerSort[0].save(function(e, savedP0) {
+								// var p0 = playerList[0];
+								// console.log(p0);
+								// playerList[0].save(function(error, savedP0) {
+
+								// 		Game.message(savedGame.id, {game: savedGame});
+								// });
+								// playerSort[0].save(function(e, savedP0) {
 									// playerSort[1].save(function(errrrrr, savedP1) {
 
-										Game.message(savedGame.id, {game: savedGame});
 									// });
-								});
+								// });
 							}else{
 
 								Game.publishUpdate(game.id, {game: savedGame});
@@ -287,6 +294,21 @@ module.exports = {
 				}
 			});
 		}
+	},
+
+	playerTest: function(req, res) {
+		console.log("\n\nplayerTest");
+		console.log(req.body);
+		Game.findOne(req.body.id).populateAll().exec(function(err, game){
+			Player.findOne(game.players[0].id).populateAll().exec(function(error, foundPlayer) {
+				console.log("\n\nLogging foundPlayer");
+				console.log(foundPlayer);
+				foundPlayer.save(function(error, savedPlayer) {
+					console.log("\n\nLogging savedPlayer:");
+					console.log(savedPlayer);
+				});
+			});
+		});
 	}
 };
 
