@@ -14,6 +14,9 @@ module.exports = {
   	currentGame: {
   		model: 'game',
   	},
+    pNum: {
+      type: 'integer'
+    },
   	hand: {
   		collection: 'card',
   		via: 'hand',

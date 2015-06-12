@@ -30,6 +30,10 @@ module.exports = {
   	secondCard: {
   		model: 'card',
   	},
+    turn: {
+      type: 'integer',
+      defaultsTo: 0
+    },
   	log: {
   		type: 'array',
   	},

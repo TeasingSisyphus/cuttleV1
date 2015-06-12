@@ -1,12 +1,55 @@
 <!-- Default home page -->
 <body ng-app='homepage'>
     <div ng-controller='homepageController as homepage'>
-        {{homepage.formTitle}}
-        <form ng-submit='homepage.makeGame()'>
-            <input type='text' ng-model='homepage.gameName'></input>
-            <input type='submit' class='btn btn-lg'></input>
-        </form>
+    	<div ng-hide='homepage.gameView'>
+	        {{homepage.formTitle}}
+	        <form ng-submit='homepage.makeGame()'>
+	            <input type='text' ng-model='homepage.gameName'></input>
+	            <input type='submit' class='btn btn-lg'></input>
+	        </form>
 
-        <ul ng-repeat='game in homepage.gameList' id='{{game.id}}'>Game Name: {{game.name}}</ul>
+	        <ul ng-repeat='game in homepage.gameList' id='{{game.id}}' ng-click='homepage.joinGame(game.id)'>Game Name: {{game.name}}</ul>
+        </div>
+
+        <div ng-show='homepage.gameView' ng-controller='gameController as game'>
+            <div> Game Name: {{game.name}}      Game Id: {{game.id}} Glasses: {{game.glasses}}
+
+
+            <div id="op_wrap">
+                <div class='hand_wrap'>
+                    <p>Opponent's Hand</p>
+                    <!-- Cardback when you have no glasses -->
+                    <img ng-hide="game.glasses" ng-repeat="card in game.players[(game.playerNum + 1) % 2].hand" class='card' id="{{card.img}}" src="images/word-ace-card-back.jpg" alt="{{card.alt}}"></img>
+                    <!-- Card front when you have glasses -->
+                     <img ng-show="game.glasses" ng-repeat="card in game.players[(game.playerNum + 1) % 2].hand" class='card' id="{{card.img}}" ng-src="{{card.img}}" alt="{{card.alt}}"></img>
+                </div>
+                <div class='field_wrap'>
+                    <p>Opponent's Field:</p>
+                    <img ng-repeat="card in game.players[(game.playerNum + 1) % 2].field" class='card' id="{{card.img}}" ng-click="game.scuttle(card.index)" ng-src="{{card.img}}" alt="{{card.alt}}"></img>
+                </div>
+            </div>
+            
+            <div id='midWrap'>
+                <button ng-click="game.deal()">Deal Hands</button>
+                <button ng-click="game.draw()">Draw</button>
+                <div>{{game.scrap.length}} Cards in Scrap</div>
+            </div>
+
+
+            <div id="you_wrap">
+                <div class='field_wrap' ng-click='game.toField()'>
+                    <p>Your Field</p>
+                    <img ng-repeat="card in game.players[game.playerNum].field" class='card' id="{{card.img}}" ng-src="{{card.img}}" alt="{{card.alt}}"></img>
+                </div>                
+                <div class='hand_wrap'>
+                    <p>Your Hand</p>
+                    <img ng-repeat="card in game.players[game.playerNum].hand" class='card' id="{{card.img}}" ng-src="{{card.img}}" alt="{{card.alt}}" ng-click="game.sel($index)"></img>
+                </div>
+            </div>      
+            <img ng-repeat='card in game.deck' class='card' id= '{{card.img}}' ng-src="{{card.img}}" alt='{{card.alt}}'></img>
+            <img ng-repeat='card in gameWrap.game.deck' class='card' id= '{{card.img}}' ng-src="{{card.img}}" alt='{{card.alt}}'></img>
+            
+            </div>
+    	</div>
     </div>
 </body>
