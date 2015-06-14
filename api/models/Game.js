@@ -43,7 +43,7 @@ module.exports = {
   	},
     turn: {
       type: 'integer',
-      defaultsTo: 0
+      defaultsTo: 1
     },
   	log: {
   		type: 'array',

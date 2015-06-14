@@ -132,42 +132,6 @@ module.exports = {
 									} //End of for loops	
 
 
-									// var dealt = [];
-
-
-									// var min = 0;
-									// var max = 51;
-
-									// var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-
-									// console.log("\nRandom is " + random);
-
-
-									// game.players[0].hand.add(tempDeck[random].id);
-									// game.deck.remove(tempDeck[random].id);
-									// dealt.push(random);
-
-									// for (var i=0; i<5; i++) {
-									// 	while (random in dealt) {
-									// 		random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-									// 		console.log("Random is " + random);
-									// 	}
-
-
-									// 	newPlayer.hand.add(tempDeck[random].id);
-									// 	game.deck.remove(tempDeck[random].id);
-									// 	dealt.push(random);
-
-									// 	while (random in dealt) {
-									// 		random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-									// 		console.log("Random is " + random);
-
-									// 	}
-
-									// 	game.players[0].hand.add(tempDeck[random].id);
-									// 	game.deck.remove(tempDeck[random].id);
-									// 	dealt.push(random);
-									// }
 									game.save(function(e, savedGame) {
 										res.send({game: savedGame});
 										Game.publishUpdate(game.id, {game: savedGame});

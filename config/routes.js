@@ -51,4 +51,8 @@ module.exports.routes = {
 '/game/joinGame'         :          'GameController.joinGame',
 '/game/ready'            :          'GameController.ready',
 '/game/playerTest'       :          'GameController.playerTest',
+
+
+
+'/player/subscribe'      :          'PlayerController.subscribe',
 };

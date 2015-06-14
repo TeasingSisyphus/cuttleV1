@@ -30,6 +30,11 @@ module.exports = {
   		model: 'player',
    	},
 
+    class: {
+      type: 'string',
+      defaultsTo: 'card',
+    },
+
   }
 };
 

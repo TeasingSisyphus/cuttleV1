@@ -82,6 +82,8 @@
 		this.p0Ready = false;
 		this.p1Ready = false;
 		this.gameView = false;
+		this.selId = null;
+		this.selIndex = null;
 
 
 		this.ready = function() {
@@ -103,6 +105,36 @@
 			io.socket.get('/game/playerTest', {id: $scope.game.gameId}, function(res){
 				console.log(res);
 			});
+		};
+
+		//Selects a card by changing its class to apply a green border and capturing its id and index in your hand
+		//If a card is already selected, use the previous index to find it and revert its class to normal
+		//If the requested card was already selected, deselect it
+		this.select = function(card, index) {
+			console.log(index)
+			console.log(card);
+			if (card.class === 'card') {
+				if ($scope.game.selId !== null) {
+					$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+				}
+				card.class = 'card selected';
+				$scope.game.selId = card.id;
+				$scope.game.selIndex = index;
+			} else {
+				card.class = 'card';
+				$scope.game.selId = null;
+				$scope.game.selIndex = null;
+			};
+		};
+
+		//If a card is selected, request to play that card for points
+		this.points = function() {
+			if ($scope.game.selId !== null) {
+				console.log("\nRequesting to play " + $scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].alt + ' for points');
+				io.socket.get('/player/points', {playerId: $scope.game.players[$scope.game.pNum].id, cardId: $scope.game.selId}, function(res) {
+					console.log(res);
+				});
+			}
 		};
 
 		$rootScope.$on('readyView', function(event, game) {
@@ -147,10 +179,30 @@
 						$scope.game.secondCard = obj.data.game.secondCard;
 						$scope.game.turn = obj.data.game.turn;
 
+						//Request to be subscribed to both player models now that the game is beginning
+						//Player model events will be used to handle changes that only involve hands, points and runes.
+						io.socket.get('/player/subscribe', {p0Id: $scope.game.players[0].id, p1Id: $scope.game.players[1].id}, function(res) {
+							console.log(res);
+						});
+
 					}
 					break;						
 			}
 			$scope.$apply();
 		});
+
+		//Player Events are used to make changes only involving players' hands, points and runes
+		io.socket.on('player', function(obj) {
+			console.log("\nPlayer event fired");
+			console.log(obj.data);
+			switch(obj.verb) {
+				case 'updated':
+					$scope.game.players[obj.data.player.pNum] = obj.data.player;
+					break;
+			}
+
+			$scope.$apply();
+		});
+	
 	});	
 })();
