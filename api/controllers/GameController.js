@@ -272,6 +272,18 @@ module.exports = {
 		}
 	},
 
+	draw: function(req, res) {
+		console.log('\n\nDraw test');
+		console.log(req.body);
+		Game.findOne(req.body.id).populateAll().exec(function(err, game){
+			Player.findOne([game.player[0].id, game.player[1].id).populate('hand').exec(function(er, playerList) {
+				console.log('\n\nLogging playerList');
+				console.log(foundPlayer);
+				
+			})
+		})
+	},
+
 	playerTest: function(req, res) {
 		console.log("\n\nplayerTest");
 		console.log(req.body);

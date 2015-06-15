@@ -137,6 +137,22 @@
 			}
 		};
 
+		//Draw a card from the deck to your hand
+		this.draw = function() {
+			// Need to start keeping track of hand size
+			if ($scope.game.topCard === false) {
+				console.log("The deck is empty");
+				// Add a pop-up telling the player the deck is empty
+				// var deckOut = confirm("The deck is empty, you may either pass or play a card.\n Good Luck");
+				// io.socket.get
+			} else {
+				io.socket.get('/game/draw', {playerId: $scope.game.players[$scope.game.pNum].id, topCard: $scope.game.topCard}), function(res) {
+					console.log(res);
+				}
+			}
+		}
+		
+
 		$rootScope.$on('readyView', function(event, game) {
 			console.log('\nChanging to readyView');
 			$scope.game.gameId = game.id;
