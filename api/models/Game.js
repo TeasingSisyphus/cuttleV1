@@ -35,6 +35,11 @@ module.exports = {
   		collection: 'card',
   		via: 'scrap',
   	},
+
+    scrapTop: {
+      model: 'card'
+    },
+    
   	topCard: {
   		model: 'card',
   	},

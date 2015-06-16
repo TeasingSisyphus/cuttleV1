@@ -76,6 +76,7 @@
 		this.topCard = null;
 		this.secondCard = null;
 		this.scrap = [];
+		this.scrapTop = '';
 		this.turn = null;
 		this.pNum = null;
 		this.glasses = false;
@@ -210,6 +211,7 @@
 							console.log('\nIn scuttle case');
 							$scope.game.players = obj.data.players;
 							$scope.game.scrap = obj.data.game.scrap;
+							$scope.game.scrapTop = obj.data.game.scrapTop;
 							break;
 					}
 					break;

@@ -346,8 +346,9 @@ module.exports = {
 								console.log(playerSort);
 								playerSort[req.body.pNum].hand.remove(req.body.scuttler.id);
 								playerSort[(req.body.pNum + 1) % 2].points.remove(req.body.target.id);
-								game.scrap.add(req.body.scuttler.id);
 								game.scrap.add(req.body.target.id);
+								game.scrap.add(req.body.scuttler.id);
+								game.scrapTop = req.body.scuttler;
 								game.turn++;
 
 								game.save(function (err, savedGame) {
