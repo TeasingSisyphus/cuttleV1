@@ -4,9 +4,7 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 
 TODO:
 -Enable drawing a card
-	-Make sure server checks that it is your turn before making allowing the move and that the turn is incrimented after
-	-Both the game and one player will need to be updated.
-	-Make sure your Game.publishUpdate() is formatted with the data required in our io.socket.on(game) event handler
+	-Add the errors after findOnes
 -Scuttling (FOR MONDAY)
 
 BUGS:

@@ -34,8 +34,8 @@
                     </div>
                     <div class='field_wrap'>
                         <p>Opponent's Field:</p>
-                        <img ng-repeat="card in game.players[(game.pNum + 1) % 2].runes" class='card' id="{{card.id}}" ng-click="game.scuttle(card.index)" ng-src="{{card.img}}" alt="{{card.alt}}"></img>
-                        <img ng-repeat="card in game.players[(game.pNum + 1) % 2].points" class='card' id="{{card.id}}" ng-click="game.scuttle(card.index)" ng-src="{{card.img}}" alt="{{card.alt}}"></img>
+                        <img ng-repeat="card in game.players[(game.pNum + 1) % 2].runes" class='card' id="{{card.id}}" ng-click="game.scuttle(card)" ng-src="{{card.img}}" alt="{{card.alt}}"></img>
+                        <img ng-repeat="card in game.players[(game.pNum + 1) % 2].points" class='card' id="{{card.id}}" ng-click="game.scuttle(card)" ng-src="{{card.img}}" alt="{{card.alt}}"></img>
                     </div>
                 </div>
                 

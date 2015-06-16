@@ -52,6 +52,7 @@ module.exports.routes = {
 '/game/ready'            :          'GameController.ready',
 '/game/playerTest'       :          'GameController.playerTest',
 '/game/draw'             :          'GameController.draw',
+'/game/scuttle'          :          'GameController.scuttle',
 
 
 

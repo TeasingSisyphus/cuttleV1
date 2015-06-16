@@ -82,6 +82,7 @@
 		this.p0Ready = false;
 		this.p1Ready = false;
 		this.gameView = false;
+		this.selCard = null;
 		this.selId = null;
 		this.selIndex = null;
 
@@ -120,10 +121,12 @@
 				card.class = 'card selected';
 				$scope.game.selId = card.id;
 				$scope.game.selIndex = index;
+				$scope.game.selCard = card;
 			} else {
 				card.class = 'card';
 				$scope.game.selId = null;
 				$scope.game.selIndex = null;
+				$scope.game.selCard = null;
 			};
 		};
 
@@ -146,9 +149,19 @@
 				// var deckOut = confirm("The deck is empty, you may either pass or play a card.\n Good Luck");
 				// io.socket.get
 			} else {
-				io.socket.get('/game/draw', {playerId: $scope.game.players[$scope.game.pNum].id, topCard: $scope.game.topCard}), function(res) {
+				io.socket.get('/game/draw', {id: $scope.game.gameId, playerId: $scope.game.players[$scope.game.pNum].id, topCard: $scope.game.topCard, secondCard: $scope.game.secondCard}), function(res) {
 					console.log(res);
 				}
+			}
+		};
+
+		//Scuttle from your hand to the opponents field
+		this.scuttle = function(target) {
+			if(this.selId !== null) {
+				console.log('\n\nRequesting to scuttle');
+				io.socket.get('/game/scuttle', {id: $scope.game.gameId, pNum: $scope.game.pNum, scuttler: $scope.game.selCard, target: target}, function(res) {
+					console.log(res);
+				});
 			}
 		}
 		
@@ -170,18 +183,37 @@
 			switch (obj.verb) {
 				case 'updated':
 					console.log("\nGame was updated.");
-					if ( obj.data.hasOwnProperty('game') ) {
-						$scope.game.p0Ready = obj.data.game.p0Ready;
-						$scope.game.p1Ready = obj.data.game.p1Ready;
-						$scope.game.players = obj.data.game.players;
-						$scope.game.deck = obj.data.game.deck;
-						$scope.game.scrap = obj.data.game.scrap;
-						$scope.game.topCard = obj.data.game.topCard;
-						$scope.game.secondCard = obj.data.game.secondCard;
-						$scope.game.turn = obj.data.game.turn;
+					console.log(obj.data);
+					switch (obj.data.change) {
+						case 'draw':
+							console.log('\nIn draw case');
+							$scope.game.deck = obj.data.game.deck;
+							$scope.game.topCard = obj.data.game.topCard;
+							$scope.game.secondCard = obj.data.game.secondCard;
+							$scope.game.players[obj.data.player.pNum].hand = obj.data.player.hand;
+							break;
 
+						case 'ready':
+							if ( obj.data.hasOwnProperty('game') ) {
+								$scope.game.p0Ready = obj.data.game.p0Ready;
+								$scope.game.p1Ready = obj.data.game.p1Ready;
+								$scope.game.players = obj.data.game.players;
+								$scope.game.deck = obj.data.game.deck;
+								$scope.game.scrap = obj.data.game.scrap;
+								$scope.game.topCard = obj.data.game.topCard;
+								$scope.game.secondCard = obj.data.game.secondCard;
+								$scope.game.turn = obj.data.game.turn;
+
+							}
+							break;
+						case 'scuttle':
+							console.log('\nIn scuttle case');
+							$scope.game.players = obj.data.players;
+							$scope.game.scrap = obj.data.game.scrap;
+							break;
 					}
-					break;	
+					break;
+
 				//Using this case to trigger gameView	
 				case 'messaged':
 					console.log("\nGame messaged.");
