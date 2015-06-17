@@ -41,16 +41,16 @@
                 <div id='midWrap'>
                     <div class='container-fluid'>
                         <div class='row'>
-                            <div class='col-xs-6'>{{game.deck.length + 2}} Cards in Deck</div>
+                            <div class='col-xs-6 col-md-6 col-lg-6 col-sm-6'>{{game.deck.length + 2}} Cards in Deck fackem</div>
                             <!-- <div class='span3'></div> -->
-                            <div class='col-xs-6'>{{game.scrap.length}} Cards in Scrap</div>
+                            <div class='col-xs-6 col-md-6 col-lg-6 col-sm-6'>{{game.scrap.length}} Cards in Scrap</div>
                             <!-- <div class='span3'></div> -->
                         </div>
                         <div class='row'>
-                            <img src='/images/word-ace-card-back.jpg' ng-click="game.draw()" class='col-xs-3'></img>
-                            <!-- <div class='col-xs-1'></div> -->
-                            <img ng-src="{{game.scrapTopImg}}"  class='midCard' class='col-xs-3'></img>
-                            <div class='col-xs-6'></div>
+                            <img src='/images/word-ace-card-back.jpg' ng-click="game.draw()" class='midCard col-xs-2 col-md-2 col-lg-2 col-sm-2 img-responsive'></img>
+                            <!-- <div class='col-xs-5 col-md-5 col-lg-5 col-sm-5'></div> -->
+                            <img ng-src="{{game.scrapTopImg}}"  class='midCard col-md-offset-4 col-xs-2 col-md-2 col-lg-2 col-sm-2 img-responsive'></img>
+                            <div class='col-xs-4 col-md-4 col-lg-4 col-sm-4'></div>
                         </div>
                     </div>
                 </div>

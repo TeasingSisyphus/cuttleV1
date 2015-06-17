@@ -1,8 +1,8 @@
-(function(){
+(function() {
 	var app = angular.module('homepage', []);
 	console.log('We made an app.js');
 
-	app.controller('homepageController', function($scope, $rootScope){
+	app.controller('homepageController', function($scope, $rootScope) {
 		this.formTitle = 'Type a name and submit to create a new game!';
 		this.gameName = '';
 		this.gameList = [];
@@ -15,7 +15,9 @@
 		this.makeGame = function() {
 			console.log("You remembered how to make a form!");
 			console.log($scope.homepage.gameName);
-			io.socket.get('/game/create',{name: $scope.homepage.gameName}, function(res) {
+			io.socket.get('/game/create', {
+				name: $scope.homepage.gameName
+			}, function(res) {
 				console.log("\nRecieved response from request to create game: ");
 				console.log(res);
 			});
@@ -25,11 +27,13 @@
 		this.joinGame = function(id) {
 			console.log("\nRequesting to join game: " + id);
 
-			io.socket.get('/game/joinGame', {id: id}, function(res) {
+			io.socket.get('/game/joinGame', {
+				id: id
+			}, function(res) {
 				console.log("Recieved response to game: ");
 				console.log(res);
 
-				if( res.hasOwnProperty('game') ) {
+				if (res.hasOwnProperty('game')) {
 					$scope.homepage.readyView = true;
 					$rootScope.$emit('readyView', res.game);
 
@@ -41,8 +45,8 @@
 		///////////////////////////
 		// Socket Event Handlers //
 		///////////////////////////
-		io.socket.on('connect', function(){
-			io.socket.get('/game/subscribe',  function(res) {
+		io.socket.on('connect', function() {
+			io.socket.get('/game/subscribe', function(res) {
 
 				res.forEach(function(game, index, list) {
 					$scope.homepage.gameList.push(game);
@@ -76,7 +80,7 @@
 		this.topCard = null;
 		this.secondCard = null;
 		this.scrap = [];
-		this.scrapTopImg = '/images/cards/emptyTopScrap.png';
+		this.scrapTopImg = '/images/emptyScrap.png';
 		this.turn = null;
 		this.pNum = null;
 		this.glasses = false;
@@ -97,7 +101,10 @@
 				$scope.game.p1Ready = true;
 			}
 
-			io.socket.get('/game/ready', {id: $scope.game.gameId, pNum: $scope.game.pNum}, function(res) {
+			io.socket.get('/game/ready', {
+				id: $scope.game.gameId,
+				pNum: $scope.game.pNum
+			}, function(res) {
 				console.log(res);
 			});
 		};
@@ -128,7 +135,10 @@
 		this.points = function() {
 			if ($scope.game.selId !== null) {
 				console.log("\nRequesting to play " + $scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].alt + ' for points');
-				io.socket.get('/player/points', {playerId: $scope.game.players[$scope.game.pNum].id, cardId: $scope.game.selId}, function(res) {
+				io.socket.get('/player/points', {
+					playerId: $scope.game.players[$scope.game.pNum].id,
+					cardId: $scope.game.selId
+				}, function(res) {
 					console.log(res);
 				});
 			}
@@ -143,7 +153,13 @@
 				// var deckOut = confirm("The deck is empty, you may either pass or play a card.\n Good Luck");
 				// io.socket.get
 			} else {
-				io.socket.get('/game/draw', {id: $scope.game.gameId, playerId: $scope.game.players[$scope.game.pNum].id, topCard: $scope.game.topCard, secondCard: $scope.game.secondCard}), function(res) {
+				io.socket.get('/game/draw', {
+					id: $scope.game.gameId,
+					playerId: $scope.game.players[$scope.game.pNum].id,
+					topCard: $scope.game.topCard,
+					secondCard: $scope.game.secondCard
+				}),
+				function(res) {
 					console.log(res);
 				}
 			}
@@ -151,14 +167,19 @@
 
 		//Scuttle from your hand to the opponents field
 		this.scuttle = function(target) {
-			if(this.selId !== null) {
+			if (this.selId !== null) {
 				console.log('\n\nRequesting to scuttle');
-				io.socket.get('/game/scuttle', {id: $scope.game.gameId, pNum: $scope.game.pNum, scuttler: $scope.game.selCard, target: target}, function(res) {
+				io.socket.get('/game/scuttle', {
+					id: $scope.game.gameId,
+					pNum: $scope.game.pNum,
+					scuttler: $scope.game.selCard,
+					target: target
+				}, function(res) {
 					console.log(res);
 				});
 			}
 		}
-		
+
 
 		$rootScope.$on('readyView', function(event, game) {
 			console.log('\nChanging to readyView');
@@ -188,7 +209,7 @@
 							break;
 
 						case 'ready':
-							if ( obj.data.hasOwnProperty('game') ) {
+							if (obj.data.hasOwnProperty('game')) {
 								$scope.game.p0Ready = obj.data.game.p0Ready;
 								$scope.game.p1Ready = obj.data.game.p1Ready;
 								$scope.game.players = obj.data.game.players;
@@ -209,11 +230,11 @@
 					}
 					break;
 
-				//Using this case to trigger gameView	
+					//Using this case to trigger gameView	
 				case 'messaged':
 					console.log("\nGame messaged.");
 					console.log(obj.data);
-					if ( obj.data.hasOwnProperty('game') ) {
+					if (obj.data.hasOwnProperty('game')) {
 						$scope.game.gameView = true;
 						$scope.game.players = obj.data.players;
 						$scope.game.deck = obj.data.game.deck;
@@ -224,12 +245,15 @@
 
 						//Request to be subscribed to both player models now that the game is beginning
 						//Player model events will be used to handle changes that only involve hands, points and runes.
-						io.socket.get('/player/subscribe', {p0Id: $scope.game.players[0].id, p1Id: $scope.game.players[1].id}, function(res) {
+						io.socket.get('/player/subscribe', {
+							p0Id: $scope.game.players[0].id,
+							p1Id: $scope.game.players[1].id
+						}, function(res) {
 							console.log(res);
 						});
 
 					}
-					break;						
+					break;
 			}
 			$scope.$apply();
 		});
@@ -238,7 +262,7 @@
 		io.socket.on('player', function(obj) {
 			console.log("\nPlayer event fired");
 			console.log(obj.data);
-			switch(obj.verb) {
+			switch (obj.verb) {
 				case 'updated':
 					$scope.game.players[obj.data.player.pNum] = obj.data.player;
 					break;
@@ -246,6 +270,6 @@
 
 			$scope.$apply();
 		});
-	
-	});	
+
+	});
 })();
