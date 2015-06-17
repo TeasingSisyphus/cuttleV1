@@ -20,6 +20,70 @@ var sortPlayers = function(players) {
 	return sorted;
 };
 
+//Checks if one player has won; returns true if so, false otherwise
+var winner = function(player) {
+	console.log("\nChecking player " + player.socketId + " for a win");
+	var kings = 0;
+	var points = 0;
+
+	//Check kings for p0
+	player.runes.forEach(function(rune, index, runes) {
+		if (rune.rank === 13) {
+			kings++;
+		}
+	});
+
+	//Check points for p0
+	player.points.forEach(function(point, index, ponits) {
+		points += point.rank;
+	});
+
+	console.log("Player " + player.id + " has " + kings + " kings and " + points + " points");
+
+	switch (kings) {
+		case 0:
+			if (points >= 21) {
+				console.log("Victory!");
+				return true;
+			} else {
+				return false;
+			}
+			break;
+		case 1:
+			if (points >= 14) {
+				console.log("Victory!");
+				return true;
+			} else {
+				return false;
+			}
+			break;
+		case 2:
+			if(points >= 10) {
+				console.log("Victory!");
+				return true;
+			} else {
+				return false;
+			}
+			break;
+		case 3:
+			if (points >= 7) {
+				console.log("Victory!");
+				return true;
+			} else {
+				return false;
+			}
+			break;
+		case 4:
+			if (points >= 5) {
+				console.log("Victory!");
+				return true;
+			} else {
+				return false;
+			}
+			break;
+	}
+};
+
 module.exports = {
 	subscribe: function(req, res) {
 		if (req.isSocket) {

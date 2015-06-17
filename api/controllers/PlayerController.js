@@ -5,6 +5,88 @@
  * @help        :: See http://links.sailsjs.org/docs/controllers
  */
 
+var sortPlayers = function(players) {
+	var sorted = [];
+
+	for (var i = 0; i < players.length; i++) {
+		sorted.push(players[i]);
+	}
+
+	sorted.sort(function(a, b) {
+		return a.pNum - b.pNum
+	});
+
+	return sorted;
+};
+
+//Checks if one player has won; returns true if so, false otherwise
+var winner = function(player) {
+	console.log("\nChecking player " + player.socketId + " for a win");
+	var kings = 0;
+	var points = 0;
+
+	//Check kings for p0
+	player.runes.forEach(function(rune, index, runes) {
+		if (rune.rank === 13) {
+			kings++;
+		}
+	});
+
+	//Check points for p0
+	player.points.forEach(function(point, index, ponits) {
+		points += point.rank;
+	});
+
+	console.log("Player " + player.id + " has " + kings + " kings and " + points + " points");
+
+	switch (kings) {
+		case 0:
+			if (points >= 21) {
+				console.log("Victory!");
+				return true;
+			} else {
+				return false;
+			}
+			break;
+		case 1:
+			if (points >= 14) {
+				console.log("Victory!");
+				return true;
+			} else {
+				return false;
+			}
+			break;
+		case 2:
+			if(points >= 10) {
+				console.log("Victory!");
+				return true;
+			} else {
+				return false;
+			}
+			break;
+		case 3:
+			if (points >= 7) {
+				console.log("Victory!");
+				return true;
+			} else {
+				return false;
+			}
+			break;
+		case 4:
+			if (points >= 5) {
+				console.log("Victory!");
+				return true;
+			} else {
+				return false;
+			}
+			break;
+	}
+};
+
+
+
+
+
 module.exports = {
 	//Subscribes the requesting socket to the two player models in their game
 	subscribe: function(req, res) {
@@ -45,12 +127,16 @@ module.exports = {
 											player.points.add(card.id);
 											game.turn++;
 
-											///////////////////
-											// Check for win //
-											///////////////////
 
 											player.save(function(e, savedPlayer) {
-												Player.publishUpdate(savedPlayer.id, {player: savedPlayer});
+												//Assign winner if player has won
+												var victor = winner(savedPlayer);
+												console.log("Victor: " + victor);
+												if (victor) {
+													game.winner = savedPlayer.pNum;
+												}
+
+												Player.publishUpdate(savedPlayer.id, {change: 'points', victor: victor, player: savedPlayer});
 												//The save was causing the server to crash when I populated the game in the find
 												game.save();
 											});

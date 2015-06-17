@@ -27,10 +27,12 @@ module.exports = {
   		collection: 'player',
   		via: 'currentGame',
   	},
+    
   	deck: {
   		collection: 'card',
   		via: 'deck',
   	},
+
   	scrap: {
   		collection: 'card',
   		via: 'scrap',
@@ -39,17 +41,25 @@ module.exports = {
     scrapTop: {
       model: 'card'
     },
-    
+
   	topCard: {
   		model: 'card',
   	},
+
   	secondCard: {
   		model: 'card',
   	},
+
     turn: {
       type: 'integer',
       defaultsTo: 1
     },
+
+    winner: {
+      type: 'integer',
+      defaultsTo: null
+    },
+
   	log: {
   		type: 'array',
   	},

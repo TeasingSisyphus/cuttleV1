@@ -264,7 +264,14 @@
 			console.log(obj.data);
 			switch (obj.verb) {
 				case 'updated':
-					$scope.game.players[obj.data.player.pNum] = obj.data.player;
+					switch (obj.data.change) {
+						case 'points':
+							if (obj.data.victor === true) {
+								alert("Player " + obj.data.player.pNum + " has won!");
+							}
+							$scope.game.players[obj.data.player.pNum] = obj.data.player;
+							break;
+					}
 					break;
 			}
 
