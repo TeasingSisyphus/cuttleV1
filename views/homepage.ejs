@@ -15,7 +15,6 @@
             <div ng-show='homepage.readyView && !game.gameView'>
                 <!-- Add view of who is ready -->
                 <button class='btn btn-success' ng-click='game.ready()'>Ready</button>
-                <button class='btn btn-default' ng-click='game.playerTest()'>Save Player</button>
 
              </div>
 
@@ -40,10 +39,20 @@
                 </div>
                 
                 <div id='midWrap'>
-                    <button ng-click="game.deal()">Deal Hands</button>
-                    <button ng-click="game.draw()">Draw</button>
-                    <div>{{game.scrap.length}} Cards in Scrap</div>
-                    <img ng-src="{{game.scrapTop.img}}" class='card'></img>
+                    <div class='container-fluid'>
+                        <div class='row'>
+                            <div class='col-xs-6'>{{game.deck.length + 2}} Cards in Deck</div>
+                            <!-- <div class='span3'></div> -->
+                            <div class='col-xs-6'>{{game.scrap.length}} Cards in Scrap</div>
+                            <!-- <div class='span3'></div> -->
+                        </div>
+                        <div class='row'>
+                            <img src='/images/word-ace-card-back.jpg' ng-click="game.draw()" class='col-xs-3'></img>
+                            <!-- <div class='col-xs-1'></div> -->
+                            <img ng-src="{{game.scrapTopImg}}"  class='midCard' class='col-xs-3'></img>
+                            <div class='col-xs-6'></div>
+                        </div>
+                    </div>
                 </div>
 
 

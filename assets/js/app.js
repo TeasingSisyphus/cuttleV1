@@ -76,7 +76,7 @@
 		this.topCard = null;
 		this.secondCard = null;
 		this.scrap = [];
-		this.scrapTop = '';
+		this.scrapTopImg = '/images/cards/emptyTopScrap.png';
 		this.turn = null;
 		this.pNum = null;
 		this.glasses = false;
@@ -98,13 +98,6 @@
 			}
 
 			io.socket.get('/game/ready', {id: $scope.game.gameId, pNum: $scope.game.pNum}, function(res) {
-				console.log(res);
-			});
-		};
-
-		this.playerTest = function() {
-			console.log('clicked playerTest');
-			io.socket.get('/game/playerTest', {id: $scope.game.gameId}, function(res){
 				console.log(res);
 			});
 		};
@@ -211,7 +204,7 @@
 							console.log('\nIn scuttle case');
 							$scope.game.players = obj.data.players;
 							$scope.game.scrap = obj.data.game.scrap;
-							$scope.game.scrapTop = obj.data.game.scrapTop;
+							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							break;
 					}
 					break;

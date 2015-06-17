@@ -20,7 +20,7 @@ module.exports = {
 	//Moves a card from a player's hand to that player's points
 	points: function(req, res) {
 		if (req.isSocket) {
-			console.log("\nPlayer " + req.socket.id + " requesting to play ponits");
+			console.log("\nPlayer " + req.socket.id + " requesting to play points");
 			if (req.body.hasOwnProperty('playerId') && req.body.hasOwnProperty('cardId')) {
 				Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function(err, player) {
 					if (err || !player) {
@@ -32,9 +32,6 @@ module.exports = {
 								console.log("Card " + req.body.cardId + " not found for points.");
 								res.send(404);
 							} else {
-								console.log("\n\nFound card and player");
-								console.log(player);
-
 								//Use the player's current game attribute to find the containing game to check the turn
 								//Server crashed when I tried populating the game here
 								Game.findOne(player.currentGame).exec(function(error, game){
@@ -53,8 +50,6 @@ module.exports = {
 											///////////////////
 
 											player.save(function(e, savedPlayer) {
-												console.log("Added card to player's ponits. Saving Player: ");
-												console.log(savedPlayer);
 												Player.publishUpdate(savedPlayer.id, {player: savedPlayer});
 												//The save was causing the server to crash when I populated the game in the find
 												game.save();
