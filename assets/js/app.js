@@ -2,6 +2,8 @@
 	var app = angular.module('homepage', []);
 	console.log('We made an app.js');
 
+
+
 	app.controller('homepageController', function($scope, $rootScope) {
 		this.formTitle = 'Type a name and submit to create a new game!';
 		this.gameName = '';
@@ -9,6 +11,13 @@
 		this.readyView = false;
 		this.gameView = false;
 
+		io.socket.get('/game/subscribe', function(res) {
+			res.forEach(function(game, index, list) {
+				$scope.homepage.gameList.push(game);
+			});
+			$scope.$apply();
+		});
+		
 		////////////////////////
 		// Controller Methods //
 		////////////////////////
@@ -45,17 +54,18 @@
 		///////////////////////////
 		// Socket Event Handlers //
 		///////////////////////////
-		io.socket.on('connect', function() {
-			io.socket.get('/game/subscribe', function(res) {
 
-				res.forEach(function(game, index, list) {
-					$scope.homepage.gameList.push(game);
-				});
+		// io.socket.on('connect', function() {
+		// 	io.socket.get('/game/subscribe', function(res) {
 
-				$scope.$apply();
+		// 		res.forEach(function(game, index, list) {
+		// 			$scope.homepage.gameList.push(game);
+		// 		});
 
-			});
-		});
+		// 		$scope.$apply();
+
+		// 	});
+		// });
 
 		io.socket.on('game', function(obj) {
 			console.log("\nGame event fired. Logging verb: ");
