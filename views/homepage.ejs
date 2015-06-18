@@ -33,15 +33,21 @@
                     </div>
                     <div class='field_wrap'>
                         <p>Opponent's Field:</p>
-                        <img ng-repeat="card in game.players[(game.pNum + 1) % 2].runes" class='card' id="{{card.id}}" ng-click="game.scuttle(card)" ng-src="{{card.img}}" alt="{{card.alt}}"></img>
-                        <img ng-repeat="card in game.players[(game.pNum + 1) % 2].points" class='card' id="{{card.id}}" ng-click="game.scuttle(card)" ng-src="{{card.img}}" alt="{{card.alt}}"></img>
+                        <div class='runes'>
+                            Opponent's Runes:
+                            <img ng-repeat="card in game.players[(game.pNum + 1) % 2].runes" class='card' id="{{card.id}}" ng-click="game.scuttle(card)" ng-src="{{card.img}}" alt="{{card.alt}}"></img>
+                        </div>
+                        <div class='points'>
+                            Opponent's Points:
+                            <img ng-repeat="card in game.players[(game.pNum + 1) % 2].points" class='card' id="{{card.id}}" ng-click="game.scuttle(card)" ng-src="{{card.img}}" alt="{{card.alt}}"></img>
+                        </div>
                     </div>
                 </div>
                 
                 <div id='midWrap'>
                     <div class='container-fluid'>
                         <div class='row'>
-                            <div class='col-xs-6 col-md-6 col-lg-6 col-sm-6'>{{game.deck.length + 2}} Cards in Deck fackem</div>
+                            <div class='col-xs-6 col-md-6 col-lg-6 col-sm-6'>{{game.deck.length + 2}} Cards in Deck</div>
                             <!-- <div class='span3'></div> -->
                             <div class='col-xs-6 col-md-6 col-lg-6 col-sm-6'>{{game.scrap.length}} Cards in Scrap</div>
                             <!-- <div class='span3'></div> -->
@@ -57,10 +63,16 @@
 
 
                 <div id="you_wrap">
-                    <div class='field_wrap' ng-click='game.points()'>
+                    <div class='field_wrap'>
                         <p>Your Field</p>
-                        <img ng-repeat="card in game.players[game.pNum].runes" class='card' id="{{card.id}}" ng-src="{{card.img}}" alt="{{card.alt}}"></img>
-                        <img ng-repeat="card in game.players[game.pNum].points" class='card' id="{{card.id}}" ng-src="{{card.img}}" alt="{{card.alt}}"></img>
+                        <div class='runes' ng-click='game.runes()'>
+                            Runes:
+                            <img ng-repeat="card in game.players[game.pNum].runes" class='card' id="{{card.id}}" ng-src="{{card.img}}" alt="{{card.alt}}"></img>
+                        </div>
+                        <div class='points' ng-click='game.points()'>
+                            Points:
+                            <img ng-repeat="card in game.players[game.pNum].points" class='card' id="{{card.id}}" ng-src="{{card.img}}" alt="{{card.alt}}"></img>
+                        </div>
                     </div>                
                     <div class='hand_wrap'>
                         <p>Your Hand</p>

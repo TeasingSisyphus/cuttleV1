@@ -125,24 +125,24 @@ module.exports = {
 
 											player.hand.remove(card.id);
 											player.points.add(card.id);
-											game.turn++;
 
 
 											player.save(function(e, savedPlayer) {
 												//Assign winner if player has won
 												var victor = winner(savedPlayer);
-												console.log("Victor: " + victor);
+												
 												if (victor) {
 													game.winner = savedPlayer.pNum;
 												}
 
 												Player.publishUpdate(savedPlayer.id, {change: 'points', victor: victor, player: savedPlayer});
-												//The save was causing the server to crash when I populated the game in the find
+												res.send({points: true, turn: game.turn % 2 === player.pNum, rank: card.rank <= 10});
+												game.turn++;
 												game.save();
 											});
 										} else {
 											console.log("not a legal move!");
-											res.send("Not a legal move!");
+											res.send({points: false, turn: game.turn % 2 === player.pNum, rank: card.rank <= 10});
 										}
 									}							
 								});
@@ -150,6 +150,57 @@ module.exports = {
 						});
 					}
 
+				});
+			}
+		}
+	},
+
+	runes: function(req, res) {
+		if (req.isSocket) {
+			console.log("\nPlayer " + req.socket.id + " requesting to play rune");
+			if (req.body.hasOwnProperty('playerId') && req.body.hasOwnProperty('cardId')) {
+				Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function(error, player) {
+					if (error || !player) {
+						console.log("Player " + req.body.playerId + " not found for runes");
+						res.send(404);
+					} else {
+						Card.findOne(req.body.cardId).exec(function(erro, card) {
+							if (erro || !card) {
+								console.log("Card " + req.body.cardId + " not found for runes");
+								res.send(404);
+							} else {
+								Game.findOne(player.currentGame).exec(function(err, game) {
+									if (err || !game) {
+										console.log("Game " + player.currentGame.id + " not found for runes");
+										res.send(404);
+									} else {
+										if (game.turn % 2 === player.pNum && (card.rank === 12 || card.rank === 13)) {
+
+											player.hand.remove(card.id);
+											player.runes.add(card.id);
+
+											player.save(function(er, savedPlayer) {
+												var victor = winner(savedPlayer);
+												console.log("Victory: " + victor);
+												if (victor) {
+													game.winner = savedPlayer.pNum;
+												}
+
+												Player.publishUpdate(savedPlayer.id, {change: 'runes', victor: victor, player: savedPlayer});
+												res.send({runes: true, turn: game.turn % 2 === player.pNum, rank: (card.rank === 12 || card.rank === 13)});
+												game.turn++;
+												game.save();
+
+											});
+										} else {
+											console.log("Not a legal move!");
+											res.send({runes: false, turn: game.turn % 2 === player.pNum, rank: (card.rank === 12 || card.rank === 13)});
+										}
+									}
+								});
+							}
+						});
+					}
 				});
 			}
 		}

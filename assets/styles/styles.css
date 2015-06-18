@@ -10,5 +10,11 @@
 }
 .midCard {
 	max-height: 5%
+}
 
+.runes {
+	background-color: red;
+}
+.points {
+	background-color: blue;
 }

@@ -125,9 +125,9 @@
 				$scope.game.selCard = card;
 			} else {
 				card.class = 'card';
-				$scope.game.selId = null;
+				$scope.game.selId    = null;
 				$scope.game.selIndex = null;
-				$scope.game.selCard = null;
+				$scope.game.selCard  = null;
 			};
 		};
 
@@ -140,9 +140,36 @@
 					cardId: $scope.game.selId
 				}, function(res) {
 					console.log(res);
+					//If the request was denied, deselect the requested card
+					if (!res.points) {
+						$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+					}
+					$scope.game.selId    = null;
+					$scope.game.selIndex = null;
+					$scope.game.selCard  = null;
 				});
 			}
 		};
+
+		//If a card is selected, request to play that card as a rune
+		this.runes = function () {
+			if ($scope.game.selId !== null) {
+				console.log("\nRequesting to play " + $scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].alt + ' as a rune');
+				io.socket.get('/player/runes', {
+					playerId: $scope.game.players[$scope.game.pNum].id,
+					cardId: $scope.game.selId
+				}, function(res) {
+					console.log(res);
+					//If the request was denied, deselect the requested card
+					if (!res.runes) {
+						$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+					}
+					$scope.game.selId    = null;
+					$scope.game.selIndex = null;
+					$scope.game.selCard  = null;					
+				});
+			}
+		}
 
 		//Draw a card from the deck to your hand
 		this.draw = function() {
@@ -158,7 +185,7 @@
 					playerId: $scope.game.players[$scope.game.pNum].id,
 					topCard: $scope.game.topCard,
 					secondCard: $scope.game.secondCard
-				}),
+				}), 
 				function(res) {
 					console.log(res);
 				}
@@ -176,6 +203,13 @@
 					target: target
 				}, function(res) {
 					console.log(res);
+					//If the request was denied, deselect the requested card
+					if (!res.scuttled) {
+						$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+					}
+					$scope.game.selId    = null;
+					$scope.game.selIndex = null;
+					$scope.game.selCard  = null;					
 				});
 			}
 		}
@@ -271,6 +305,11 @@
 							}
 							$scope.game.players[obj.data.player.pNum] = obj.data.player;
 							break;
+						case 'runes':
+							if (obj.data.victor === true) {
+								alert("Player " + obj.data.player.pNum + " has won!");
+							}
+							$scope.game.players[obj.data.player.pNum] = obj.data.player;
 					}
 					break;
 			}

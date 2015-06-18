@@ -5,8 +5,10 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 TODO:
 -Enable drawing a card
 	-Add the errors after findOnes
--Scuttling
-	-Look to refactor errors to send one JSON with all possible error booleans
+	-Fix the constraints that prevent drawing a card
+-One offs
+	-2's to destroy a face card
+	-2's to counter a One Off
 
 BUGS:
 -Sockets don't always connect properly/subscribe you to the game class room upon page load

@@ -397,13 +397,13 @@ module.exports = {
 								game.save(function (err, savedGame) {
 									playerSort[0].save(function (er, savedP0){
 										playerSort[1].save(function (e, savedP1){
-											res.send({highRank: req.body.scuttler.rank > req.body.target.rank, sameRank: req.body.scuttler.rank === req.body.target.rank, highSuit: req.body.scuttler.suit > req.body.target.suit, scuttled: true});
+											res.send({scuttled: true, highRank: req.body.scuttler.rank > req.body.target.rank, sameRank: req.body.scuttler.rank === req.body.target.rank, highSuit: req.body.scuttler.suit > req.body.target.suit});
 											Game.publishUpdate(game.id, {game: savedGame, players: [savedP0, savedP1], change: 'scuttle'});
 										});
 									});
 								});
 							} else {
-								res.send({potentialScuttler: req.body.scuttler.rank <= 10, highRank: req.body.scuttler.rank > req.body.target.rank, sameRank: req.body.scuttler.rank === req.body.target.rank, highSuit: req.body.scuttler.suit > req.body.target.suit, scuttled: false});
+								res.send({scuttled: false, potentialScuttler: req.body.scuttler.rank <= 10, highRank: req.body.scuttler.rank > req.body.target.rank, sameRank: req.body.scuttler.rank === req.body.target.rank, highSuit: req.body.scuttler.suit > req.body.target.suit});
 							}
 						}
 					});
