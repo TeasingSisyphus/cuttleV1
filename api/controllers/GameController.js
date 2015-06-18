@@ -344,7 +344,7 @@ module.exports = {
 					} else {
 						//Check if it is the current players turn.  If it is add a card to their hand and remove a card from the deck
 						//After that, make the second card of the deck the first card of the deck and find a new second card.
-						if (game.turn % 2 === foundPlayer.pNum) {
+						if (game.turn % 2 === foundPlayer.pNum && foundPlayer.hand.length !== 8 && game.deck.length !== 0) {
 							game.deck.remove(req.body.topCard.id);
 							foundPlayer.hand.add(req.body.topCard.id);
 							var max = game.deck.length;
@@ -355,14 +355,9 @@ module.exports = {
 							game.deck.remove(game.deck[random].id);
 							game.turn++;
 						} 
-						if (foundPlayer.hand.length !== 8) {
-							console.log('You have hit maximum hand size');
-						}
-						if (game.turn % 2 !== foundPlayer.pNum){
-							console.log('It is not your turn, you may not draw');
-						}
 						game.save(function (errrr, savedGame){
 							foundPlayer.save(function (errrrr, savedPlayer){
+								res.send({yourTurn: game.turn % 2 === foundPlayer.pNum, handSize: foundPlayer.hand.length !== 8, deckSize: game.deck.length !==0});
 								Game.publishUpdate(game.id, {game: savedGame, player: savedPlayer, change: 'draw'});
 								});
 							});	
@@ -370,6 +365,11 @@ module.exports = {
 				});
 			}
 		});
+	},
+
+	drawAnything: function(req, res) {
+		console.log('Logging req.body');
+		console.log(req.body);
 	},
 
 	scuttle: function(req, res) {
