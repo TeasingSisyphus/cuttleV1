@@ -185,10 +185,9 @@
 					playerId: $scope.game.players[$scope.game.pNum].id,
 					topCard: $scope.game.topCard,
 					secondCard: $scope.game.secondCard
-				}), 
-				function(res) {
+				}, function(res) {
 					console.log(res);
-				}
+				});
 			}
 		};
 
@@ -212,7 +211,21 @@
 					$scope.game.selCard  = null;					
 				});
 			}
-		}
+		};
+
+		this.drawAnything = function() {
+			console.log('In draw anything');
+			var rank = prompt('What is the rank of your desired card?');
+			var suit = prompt('What is the suit of your desired card?');
+			io.socket.get('/game/drawAnything', {
+				id: $scope.game.gameId,
+				playerId: $scope.game.players[$scope.game.pNum].id,
+				rank: rank,
+				suit: suit
+			}, function(res) {
+				console.log(res);
+			});
+		};
 
 
 		$rootScope.$on('readyView', function(event, game) {

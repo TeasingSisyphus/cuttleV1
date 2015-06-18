@@ -181,7 +181,6 @@ module.exports = {
 
 											player.save(function(er, savedPlayer) {
 												var victor = winner(savedPlayer);
-												console.log("Victory: " + victor);
 												if (victor) {
 													game.winner = savedPlayer.pNum;
 												}
