@@ -251,9 +251,15 @@
 							cardId  : $scope.game.selId,
 						}, function (res) {
 							console.log(res);
+							if (res.oneOff) {
+								$scope.game.players[res.player.pNum] = res.player;
+							} else {
+								$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+							}
 							$scope.game.selId    = null;
 							$scope.game.selIndex = null;
 							$scope.game.selCard  = null;
+							$scope.$apply();
 						});
 					} else {
 						var conf = confirm("You can only play a two as a reaction to a One Off! Would you like to counter with a two?");
@@ -275,8 +281,9 @@
 								cardId  :   $scope.game.selId
 							}, function(res) {
 								console.log(res);
-								//If the request was denied, deselect the requested card
-								if (!res.card) {
+								$scope.game.players[res.player.pNum] = res.player;
+								$scope.$apply();
+								if (!res.oneOff) {
 									$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
 								}
 								$scope.game.selId    = null;
@@ -359,6 +366,12 @@
 							$scope.game.players[obj.data.player.pNum] = obj.data.player;
 							break;
 
+						case 'resolvedFizzle':
+							if (obj.data.hasOwnProperty('game')) {
+								$scope.game.scrap = obj.data.game.scrap;
+								$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
+							}
+							break;
 						case 'resolvedAce':
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;

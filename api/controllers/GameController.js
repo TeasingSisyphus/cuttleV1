@@ -433,10 +433,8 @@ module.exports = {
 								} else {
 									var firstEffect = game.firstEffect === null;
 									if(firstEffect) {
-										console.log("This is the first effect");
 										var validRank = card.rank <= 9 && card.rank !== 8;
 										if (validRank) {
-											console.log('validRank');
 											var yourTurn = game.turn % 2 === player.pNum;
 											if (yourTurn) {
 												game.firstEffect = card;
@@ -444,6 +442,7 @@ module.exports = {
 												game.save(function (er, savedGame) {
 													player.save(function (e, savedPlayer) {
 														Game.publishUpdate(game.id, {change: 'oneOff', game: savedGame, player: savedPlayer, card: card}, req);
+														res.send({oneOff: true, firstEffect: true, validRank: validRank, yourTurn: yourTurn, game: savedGame, player: savedPlayer, card: card});
 													});
 												});
 											}
@@ -460,6 +459,7 @@ module.exports = {
 											game.save(function (er, savedGame) {
 												player.save(function (e, savedPlayer) {
 													Game.publishUpdate(game.id, {change: 'oneOff', game: savedGame, player: savedPlayer, card: card}, req);
+													res.send({oneOff: true, firstEffect: false, validRank: validRank, game: savedGame, player: savedPlayer});
 												});
 											});
 										}
@@ -509,15 +509,17 @@ module.exports = {
 														game.scrap.add(card.id);
 														players[1].points.remove(card.id);
 													});
+												game.twos.forEach(function (two, index, twos) {
+													game.twos.remove(two.id);
+													game.scrap.add(two.id);
+												});
 												game.scrapTop = game.firstEffect;
+												game.scrap.add(game.firstEffect);
 												game.firstEffect = null;
+												game.turn++;
 												game.save(function (er, savedGame) {
-													console.log('In saved game');
-													console.log(savedGame);
 													players[0].save(function (e, savedP0) {
-														console.log('In savedP0');
 														players[1].save(function (e6, savedP1) {
-															console.log('In savedP1');
 															var playerSort = sortPlayers([savedP0, savedP1]);
 															Game.publishUpdate(game.id, {change: 'resolvedAce', game: savedGame, players: playerSort});
 														});
@@ -534,7 +536,21 @@ module.exports = {
 							});
 							break;
 						case 1:
-							console.log('There is an odd amount twos');
+							console.log('There is an odd number twos');
+							game.twos.forEach(function (two, index, twos) {
+								game.scrap.add(two.id);
+								game.twos.remove(two.id);
+							});
+							Card.findOne(game.firstEffect).exec(function (err, card) {
+								game.scrapTop = card;
+								game.scrap.add(card.id);
+								game.firstEffect = null;
+								game.turn++;
+
+								game.save(function (er, savedGame) {
+									Game.publishUpdate(savedGame.id, {change: 'resolvedFizzle', game: savedGame});
+								});
+							}); 
 							break;
 					}
 				}
