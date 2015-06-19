@@ -20,7 +20,7 @@
 
             <div ng-show='game.gameView'>
 
-                <div> Game Name: {{game.name}}      Game Id: {{game.id}} Glasses: {{game.glasses}}
+                <div> Game Name: {{game.name}}      Game Id: {{game.id}} Glasses: {{game.glasses}}    Stacking: {{game.stacking}}
 
 
                 <div id="op_wrap">
@@ -35,7 +35,7 @@
                         <p>Opponent's Field:</p>
                         <div class='runes'>
                             Opponent's Runes:
-                            <img ng-repeat="card in game.players[(game.pNum + 1) % 2].runes" class='card' id="{{card.id}}" ng-click="game.scuttle(card)" ng-src="{{card.img}}" alt="{{card.alt}}"></img>
+                            <img ng-repeat="card in game.players[(game.pNum + 1) % 2].runes" class='card' id="{{card.id}}" ng-click="game.selectRune(card)" ng-src="{{card.img}}" alt="{{card.alt}}"></img>
                         </div>
                         <div class='points'>
                             Opponent's Points:

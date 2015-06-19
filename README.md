@@ -36,3 +36,4 @@ BUGS:
 -$scope.game.players[$scope.game.pNum] is sometimes undefined in app.js and this fucks up selection
 -Angular some times fails to load a card's picture, or loads it painfully slowly
 -Changing the border on one of the cards screws with the edges of the card images to the right of it
+-Game sometimes crashes upon drawing becasuse game.deck[random] is undefined

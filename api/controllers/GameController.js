@@ -437,14 +437,30 @@ module.exports = {
 										if (validRank) {
 											var yourTurn = game.turn % 2 === player.pNum;
 											if (yourTurn) {
+
 												game.firstEffect = card;
 												player.hand.remove(card.id);
+												//Switch to determine targeting requirements of the oneOff
+												switch (card.rank) {
+													case 2:
+													case 9:
+													console.log("Request made to play two or 9");
+														if (req.body.hasOwnProperty('targetId')) {
+															card.targetId = req.body.targetId;
+															card.save();
+														} else {
+															console.log("No target provided for oneOff requiring it");
+															return res.send({oneOff: false, firstEffect: true, validRank: validRank, yourTurn: yourTurn, game: savedGame, player: savedPlayer, card: card});
+														}
+														break;
+												}
 												game.save(function (er, savedGame) {
 													player.save(function (e, savedPlayer) {
 														Game.publishUpdate(game.id, {change: 'oneOff', game: savedGame, player: savedPlayer, card: card}, req);
 														res.send({oneOff: true, firstEffect: true, validRank: validRank, yourTurn: yourTurn, game: savedGame, player: savedPlayer, card: card});
 													});
 												});
+
 											}
 										} 
 									//Otherwise the requested card must be a two played as a counter
@@ -494,6 +510,7 @@ module.exports = {
 									res.send(404);
 								} else {
 									switch (card.rank) {
+										//Ace played to destroy all points
 										case 1:
 											console.log('The first effect is an Ace');
 											Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function (err, players) {
@@ -528,8 +545,45 @@ module.exports = {
 												}
 											});
 											break;
+										//Two played to destroy target rune
 										case 2:
 											console.log('The first effect is a two');
+											Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function (err, players) {
+												if (err || !players[0] || !players[1]) {
+													console.log("Players not found in game " + req.body.gameId + " for resolve");
+													res.send(404);
+												} else {
+													console.log(req.body);
+													var playerSort = sortPlayers(players);
+													playerSort[req.body.pNum].runes.remove(card.targetId);
+													game.scrap.add(card.targetId);
+
+													//firstEffect will no longer have target now that stack resolves
+													card.targetId = null;
+
+													//Move the countering two's to the scrap
+													game.twos.forEach(function (two, index, twos) {
+														game.twos.remove(two.id);
+														game.scrap.add(two.id);
+													});
+
+													//Move the firstEffect two to the scrap
+													game.scrapTop = card;
+													game.scrap.add(card.id);
+													game.firstEffect = null;
+													game.turn++;
+													game.save(function (er, savedGame) {
+														playerSort[0].save(function (e, savedP0) {
+															playerSort[1].save(function (e6, savedP1) {
+																Game.publishUpdate(game.id, {change: 'resolvedTwo', game: savedGame, players: [savedP0, savedP1]});
+																res.send()
+																card.save();
+															});
+														});
+													});
+
+												}
+											});
 											break;
 									}
 								}

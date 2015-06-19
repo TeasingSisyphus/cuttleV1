@@ -34,6 +34,10 @@ module.exports = {
       model: 'game',
     },
 
+    targetId: {
+      type: 'integer',
+    },
+
     class: {
       type: 'string',
       defaultsTo: 'card',

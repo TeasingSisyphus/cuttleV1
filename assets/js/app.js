@@ -225,7 +225,7 @@
 		};
 
 		this.drawAnything = function() {
-			console.log('In draw anything');
+			console.log('\nIn draw anything');
 			var rank = prompt('What is the rank of your desired card?');
 			var suit = prompt('What is the suit of your desired card?');
 			io.socket.get('/game/drawAnything', {
@@ -237,6 +237,34 @@
 				console.log(res);
 			});
 		};
+
+		//Used to make request involving selecting a single rune to target
+		this.selectRune = function (card) {
+			console.log("\nSelecting rune to target");
+			if ($scope.game.selId && !$scope.game.stacking) {
+				console.log("targeting");
+				switch ($scope.game.selCard.rank) {
+					case 2:
+						io.socket.get('/game/oneOff', {
+							gameId: $scope.game.gameId, 
+							playerId: $scope.game.players[$scope.game.pNum].id, 
+							cardId: $scope.game.selId, targetId: card.id
+							}, function (res) {
+								console.log(res);
+								if (res.change.resolvedTwo) {
+									$scope.game.players = res.players;
+								} else {
+									$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card'
+								}
+								$scope.game.selId    = null;
+								$scope.game.selIndex = null;
+								$scope.game.selCard  = null
+								$scope.$apply(); 
+							});
+				}
+			}
+		};
+
 
 		this.oneOff = function() {
 
@@ -301,6 +329,7 @@
 			console.log('Resolving');
 			io.socket.get('/game/resolve', {
 				gameId : $scope.game.gameId,
+				pNum   : $scope.game.pNum,
 			}, function(res) {
 				console.log(res);
 			});
@@ -349,8 +378,8 @@
 							break;
 						case 'scuttle':
 							console.log('\nIn scuttle case');
-							$scope.game.players = obj.data.players;
-							$scope.game.scrap = obj.data.game.scrap;
+							$scope.game.players     = obj.data.players;
+							$scope.game.scrap       = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							break;
 
@@ -368,15 +397,22 @@
 
 						case 'resolvedFizzle':
 							if (obj.data.hasOwnProperty('game')) {
-								$scope.game.scrap = obj.data.game.scrap;
+								$scope.game.scrap       = obj.data.game.scrap;
 								$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
+								$scope.game.stacking    = false;
 							}
 							break;
 						case 'resolvedAce':
-							$scope.game.scrap = obj.data.game.scrap;
+							$scope.game.scrap       = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
-							$scope.game.players = obj.data.players;
-							console.log($scope.game.players);
+							$scope.game.players     = obj.data.players;
+							$scope.game.stacking    = false;
+							break;
+						case 'resolvedTwo':
+							$scope.game.scrap       = obj.data.game.scrap;
+							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
+							$scope.game.players     = obj.data.players;
+							$scope.game.stacking    = false;
 							break;
 					}
 					break;
