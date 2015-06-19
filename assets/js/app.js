@@ -319,6 +319,23 @@
 								$scope.game.selCard  = null;							
 							});
 							break;
+						case 5:
+							console.log("Playing 5 to draw two");
+							io.socket.get('/game/oneOff', {
+								gameId   : $scope.game.gameId,
+								playerId : $scope.game.players[$scope.game.pNum].id,
+								cardId   : $scope.game.selId
+							}, function (res) {
+								$scope.game.players[res.player.pNum] = res.player;
+								$scope.$apply();
+								if (!res.onOff) {
+									$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+								}
+								$scope.game.selId    = null;
+								$scope.game.selIndex = null;
+								$scope.game.selCard  = null;
+							});
+							break;
 					}
 				}
 			}
