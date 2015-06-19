@@ -28,20 +28,6 @@ module.exports = {
   		via: 'currentGame',
   	},
     
-  	deck: {
-  		collection: 'card',
-  		via: 'deck',
-  	},
-
-  	scrap: {
-  		collection: 'card',
-  		via: 'scrap',
-  	},
-
-    scrapTop: {
-      model: 'card'
-    },
-
   	topCard: {
   		model: 'card',
   	},
@@ -49,6 +35,30 @@ module.exports = {
   	secondCard: {
   		model: 'card',
   	},
+
+    deck: {
+      collection: 'card',
+      via: 'deck',
+    },
+
+    scrapTop: {
+      model: 'card'
+    },
+
+    scrap: {
+      collection: 'card',
+      via: 'scrap',
+    },
+
+    firstEffect: {
+      model: 'card',
+      defaultsTo: null
+    },
+
+    twos: {
+      collection: 'card',
+      via: 'stackedTwo'
+    },
 
     turn: {
       type: 'integer',

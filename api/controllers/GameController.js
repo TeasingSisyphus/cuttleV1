@@ -344,7 +344,8 @@ module.exports = {
 					} else {
 						//Check if it is the current players turn.  If it is add a card to their hand and remove a card from the deck
 						//After that, make the second card of the deck the first card of the deck and find a new second card.
-						if (game.turn % 2 === foundPlayer.pNum && foundPlayer.hand.length !== 8 && game.deck.length !== 0) {
+						//Add back && foundPlayer.hand.length !== 8
+						if (game.turn % 2 === foundPlayer.pNum && game.deck.length !== 0) {
 							game.deck.remove(req.body.topCard.id);
 							foundPlayer.hand.add(req.body.topCard.id);
 							var max = game.deck.length;
@@ -407,6 +408,135 @@ module.exports = {
 							}
 						}
 					});
+				}
+			});
+		}
+	},
+
+	oneOff: function(req, res) {
+		if (req.isSocket) {
+			console.log("\nSocket " + req.socket.id + ' is requesting to play oneOff to stack');
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').populate('twos').exec(function (error, game) {
+				if (error || !game) {
+					console.log("Game " + req.body.gameId + " not found for oneOff");
+					res.send(404);
+				} else {
+					Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function (erro, player) {
+						if (erro || !player) {
+							console.log("Player " + req.body.playerId + " not found for oneOff");
+							res.send(404);
+						} else {
+							Card.findOne(req.body.cardId).exec(function (err, card) {
+								if (err || !card) {
+									console.log("Card " + req.body.cardId + " not found for oneOff");
+									res.send(404);
+								} else {
+									var firstEffect = game.firstEffect === null;
+									if(firstEffect) {
+										console.log("This is the first effect");
+										var validRank = card.rank <= 9 && card.rank !== 8;
+										if (validRank) {
+											console.log('validRank');
+											var yourTurn = game.turn % 2 === player.pNum;
+											if (yourTurn) {
+												game.firstEffect = card;
+												player.hand.remove(card.id);
+												game.save(function (er, savedGame) {
+													player.save(function (e, savedPlayer) {
+														Game.publishUpdate(game.id, {change: 'oneOff', game: savedGame, player: savedPlayer, card: card}, req);
+													});
+												});
+											}
+										} 
+									//Otherwise the requested card must be a two played as a counter
+									} else {
+										console.log("This better be a two");
+										var validRank = card.rank === 2;
+										if (validRank) {
+											console.log("'s a two");
+											game.twos.add(card.id);
+											player.hand.remove(card.id);
+
+											game.save(function (er, savedGame) {
+												player.save(function (e, savedPlayer) {
+													Game.publishUpdate(game.id, {change: 'oneOff', game: savedGame, player: savedPlayer, card: card}, req);
+												});
+											});
+										}
+									}
+
+								}
+							});
+						}
+					});
+				}
+			});
+		}
+	},
+
+	resolve: function(req, res) {
+		console.log("Logging req.body");
+		console.log(req.body);
+		if(req.isSocket) {
+			console.log("\nSocket " + req.socket.id + ' is requesting to resolve a one off');
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').populate('twos').exec(function (error, game) {
+				if (error || !game) {
+					console.log("Game " + req.body.gameId + " not found for RESOLVING a one off");
+					res.send(404);
+				} else if (game.firstEffect) {
+					console.log('There is a first effect and we are checking the number of twos');
+					switch (game.twos.length % 2) {
+						case 0:
+							console.log('There is an even amount of twos');
+							Card.findOne(game.firstEffect).exec(function (erro, card) {
+								if (erro || !card) {
+									console.log('Card is not found for RESOLVING a one off');
+									res.send(404);
+								} else {
+									switch (card.rank) {
+										case 1:
+											console.log('The first effect is an Ace');
+											Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function (err, players) {
+												if (err || !players[0] || !players[1]) {
+													console.log('Players not found in game ' + req.body.gameId + ' for RESOLVE');
+													res.send(404);
+												} else {
+													players[0].points.forEach(function (card, index, points) {
+														game.scrap.add(card.id);
+														players[0].points.remove(card.id);
+													});
+													players[1].points.forEach(function (card, index, points) {
+														game.scrap.add(card.id);
+														players[1].points.remove(card.id);
+													});
+												game.scrapTop = game.firstEffect;
+												game.firstEffect = null;
+												game.save(function (er, savedGame) {
+													console.log('In saved game');
+													console.log(savedGame);
+													players[0].save(function (e, savedP0) {
+														console.log('In savedP0');
+														players[1].save(function (e6, savedP1) {
+															console.log('In savedP1');
+															var playerSort = sortPlayers([savedP0, savedP1]);
+															Game.publishUpdate(game.id, {change: 'resolvedAce', game: savedGame, players: playerSort});
+														});
+													});
+												});
+												}
+											});
+											break;
+										case 2:
+											console.log('The first effect is a two');
+											break;
+									}
+								}
+							});
+							break;
+						case 1:
+							console.log('There is an odd amount twos');
+							break;
+					}
 				}
 			});
 		}

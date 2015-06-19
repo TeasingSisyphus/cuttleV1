@@ -30,6 +30,10 @@ module.exports = {
   		model: 'player',
    	},
 
+    stackedTwo: {
+      model: 'game',
+    },
+
     class: {
       type: 'string',
       defaultsTo: 'card',

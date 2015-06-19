@@ -100,6 +100,7 @@
 		this.selCard = null;
 		this.selId = null;
 		this.selIndex = null;
+		this.stacking = false;
 
 
 		this.ready = function() {
@@ -237,6 +238,67 @@
 			});
 		};
 
+		this.oneOff = function() {
+
+			if ($scope.game.selId !== null) {
+				if ($scope.game.stacking) {
+					if ($scope.game.selCard.rank === 2) {
+						console.log("Requesting to play " + $scope.game.selCard.alt + " as counter to One Off");
+						$scope.game.stacking = false;
+						io.socket.get('/game/oneOff', {
+							gameId  : $scope.game.gameId,
+							playerId: $scope.game.players[$scope.game.pNum].id,
+							cardId  : $scope.game.selId,
+						}, function (res) {
+							console.log(res);
+							$scope.game.selId    = null;
+							$scope.game.selIndex = null;
+							$scope.game.selCard  = null;
+						});
+					} else {
+						var conf = confirm("You can only play a two as a reaction to a One Off! Would you like to counter with a two?");
+						if (!conf) {
+							$scope.game.stacking = false;
+							console.log("Declined to counter. Requesting to resolve stack");
+							$scope.game.resolve();
+						}
+					}
+
+				} else {
+					switch ($scope.game.selCard.rank) {
+						case 1:
+							console.log('In case 1');
+							console.log("\nRequesting to play oneOff");
+							io.socket.get('/game/oneOff', {
+								gameId  :   $scope.game.gameId,
+								playerId:   $scope.game.players[$scope.game.pNum].id,
+								cardId  :   $scope.game.selId
+							}, function(res) {
+								console.log(res);
+								//If the request was denied, deselect the requested card
+								if (!res.card) {
+									$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+								}
+								$scope.game.selId    = null;
+								$scope.game.selIndex = null;
+								$scope.game.selCard  = null;							
+							});
+							break;
+					}
+				}
+			}
+
+		};
+
+		this.resolve = function() {
+			console.log('Resolving');
+			io.socket.get('/game/resolve', {
+				gameId : $scope.game.gameId,
+			}, function(res) {
+				console.log(res);
+			});
+		};
+
 
 		$rootScope.$on('readyView', function(event, game) {
 			console.log('\nChanging to readyView');
@@ -283,6 +345,25 @@
 							$scope.game.players = obj.data.players;
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
+							break;
+
+						case 'oneOff':
+							console.log('\nOne Off was played');
+							var conf = confirm("Your opponent has played the " + obj.data.card.alt + " as a oneOff. Would you like to counter with a two?");
+							if (conf) {
+								$scope.game.stacking = true;
+							} else {
+								console.log("Declined to counter. Requesting to resolve stack");
+								$scope.game.resolve();
+							}
+							$scope.game.players[obj.data.player.pNum] = obj.data.player;
+							break;
+
+						case 'resolvedAce':
+							$scope.game.scrap = obj.data.game.scrap;
+							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
+							$scope.game.players = obj.data.players;
+							console.log($scope.game.players);
 							break;
 					}
 					break;
