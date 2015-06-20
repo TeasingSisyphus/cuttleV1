@@ -25,6 +25,7 @@ ONE-OFF RESOLVES FRONT-END:
 -Three: Needs, target card
 -Four: Needs game, and player, will require an extra request
 -Five: Needs game, and player
+	-Works in traditional case, but doesn't handle the case where player only draws 1 card, or throw the proper errors if it doesn't work
 -Six: Same as Ace but with runes
 -Seven: Needs game and player
 -Eight: Save for later
@@ -37,3 +38,4 @@ BUGS:
 -Angular some times fails to load a card's picture, or loads it painfully slowly
 -Changing the border on one of the cards screws with the edges of the card images to the right of it
 -Game sometimes crashes upon drawing becasuse game.deck[random] is undefined
+	-I believe this is because random was allowed to be as big as game.deck.length, instead of game.deck.length - 1

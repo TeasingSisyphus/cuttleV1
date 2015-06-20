@@ -17,7 +17,7 @@
 			});
 			$scope.$apply();
 		});
-		
+
 		////////////////////////
 		// Controller Methods //
 		////////////////////////
@@ -136,9 +136,9 @@
 				$scope.game.selCard = card;
 			} else {
 				card.class = 'card';
-				$scope.game.selId    = null;
+				$scope.game.selId = null;
 				$scope.game.selIndex = null;
-				$scope.game.selCard  = null;
+				$scope.game.selCard = null;
 			};
 		};
 
@@ -155,15 +155,15 @@
 					if (!res.points) {
 						$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
 					}
-					$scope.game.selId    = null;
+					$scope.game.selId = null;
 					$scope.game.selIndex = null;
-					$scope.game.selCard  = null;
+					$scope.game.selCard = null;
 				});
 			}
 		};
 
 		//If a card is selected, request to play that card as a rune
-		this.runes = function () {
+		this.runes = function() {
 			if ($scope.game.selId !== null) {
 				console.log("\nRequesting to play " + $scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].alt + ' as a rune');
 				io.socket.get('/player/runes', {
@@ -175,9 +175,9 @@
 					if (!res.runes) {
 						$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
 					}
-					$scope.game.selId    = null;
+					$scope.game.selId = null;
 					$scope.game.selIndex = null;
-					$scope.game.selCard  = null;					
+					$scope.game.selCard = null;
 				});
 			}
 		}
@@ -217,9 +217,9 @@
 					if (!res.scuttled) {
 						$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
 					}
-					$scope.game.selId    = null;
+					$scope.game.selId = null;
 					$scope.game.selIndex = null;
-					$scope.game.selCard  = null;					
+					$scope.game.selCard = null;
 				});
 			}
 		};
@@ -239,28 +239,29 @@
 		};
 
 		//Used to make request involving selecting a single rune to target
-		this.selectRune = function (card) {
+		this.selectRune = function(card) {
 			console.log("\nSelecting rune to target");
 			if ($scope.game.selId && !$scope.game.stacking) {
 				console.log("targeting");
 				switch ($scope.game.selCard.rank) {
 					case 2:
 						io.socket.get('/game/oneOff', {
-							gameId: $scope.game.gameId, 
-							playerId: $scope.game.players[$scope.game.pNum].id, 
-							cardId: $scope.game.selId, targetId: card.id
-							}, function (res) {
-								console.log(res);
-								if (res.change.resolvedTwo) {
-									$scope.game.players = res.players;
-								} else {
-									$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card'
-								}
-								$scope.game.selId    = null;
-								$scope.game.selIndex = null;
-								$scope.game.selCard  = null
-								$scope.$apply(); 
-							});
+							gameId: $scope.game.gameId,
+							playerId: $scope.game.players[$scope.game.pNum].id,
+							cardId: $scope.game.selId,
+							targetId: card.id
+						}, function(res) {
+							console.log(res);
+							if (res.change.resolvedTwo) {
+								$scope.game.players = res.players;
+							} else {
+								$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card'
+							}
+							$scope.game.selId = null;
+							$scope.game.selIndex = null;
+							$scope.game.selCard = null
+							$scope.$apply();
+						});
 				}
 			}
 		};
@@ -274,19 +275,19 @@
 						console.log("Requesting to play " + $scope.game.selCard.alt + " as counter to One Off");
 						$scope.game.stacking = false;
 						io.socket.get('/game/oneOff', {
-							gameId  : $scope.game.gameId,
+							gameId: $scope.game.gameId,
 							playerId: $scope.game.players[$scope.game.pNum].id,
-							cardId  : $scope.game.selId,
-						}, function (res) {
+							cardId: $scope.game.selId,
+						}, function(res) {
 							console.log(res);
 							if (res.oneOff) {
 								$scope.game.players[res.player.pNum] = res.player;
 							} else {
 								$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
 							}
-							$scope.game.selId    = null;
+							$scope.game.selId = null;
 							$scope.game.selIndex = null;
-							$scope.game.selCard  = null;
+							$scope.game.selCard = null;
 							$scope.$apply();
 						});
 					} else {
@@ -304,9 +305,9 @@
 							console.log('In case 1');
 							console.log("\nRequesting to play oneOff");
 							io.socket.get('/game/oneOff', {
-								gameId  :   $scope.game.gameId,
-								playerId:   $scope.game.players[$scope.game.pNum].id,
-								cardId  :   $scope.game.selId
+								gameId: $scope.game.gameId,
+								playerId: $scope.game.players[$scope.game.pNum].id,
+								cardId: $scope.game.selId
 							}, function(res) {
 								console.log(res);
 								$scope.game.players[res.player.pNum] = res.player;
@@ -314,26 +315,26 @@
 								if (!res.oneOff) {
 									$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
 								}
-								$scope.game.selId    = null;
+								$scope.game.selId = null;
 								$scope.game.selIndex = null;
-								$scope.game.selCard  = null;							
+								$scope.game.selCard = null;
 							});
 							break;
 						case 5:
 							console.log("Playing 5 to draw two");
 							io.socket.get('/game/oneOff', {
-								gameId   : $scope.game.gameId,
-								playerId : $scope.game.players[$scope.game.pNum].id,
-								cardId   : $scope.game.selId
-							}, function (res) {
+								gameId: $scope.game.gameId,
+								playerId: $scope.game.players[$scope.game.pNum].id,
+								cardId: $scope.game.selId
+							}, function(res) {
 								$scope.game.players[res.player.pNum] = res.player;
 								$scope.$apply();
 								if (!res.onOff) {
 									$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
 								}
-								$scope.game.selId    = null;
+								$scope.game.selId = null;
 								$scope.game.selIndex = null;
-								$scope.game.selCard  = null;
+								$scope.game.selCard = null;
 							});
 							break;
 					}
@@ -345,8 +346,10 @@
 		this.resolve = function() {
 			console.log('Resolving');
 			io.socket.get('/game/resolve', {
-				gameId : $scope.game.gameId,
-				pNum   : $scope.game.pNum,
+				gameId: $scope.game.gameId,
+				pNum: $scope.game.pNum,
+				resolvingPlayerId: $scope.game.players[$scope.game.pNum].id,
+				otherPlayerId: $scope.game.players[($scope.game.pNum + 1) % 2].id,
 			}, function(res) {
 				console.log(res);
 			});
@@ -395,8 +398,8 @@
 							break;
 						case 'scuttle':
 							console.log('\nIn scuttle case');
-							$scope.game.players     = obj.data.players;
-							$scope.game.scrap       = obj.data.game.scrap;
+							$scope.game.players = obj.data.players;
+							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							break;
 
@@ -414,22 +417,30 @@
 
 						case 'resolvedFizzle':
 							if (obj.data.hasOwnProperty('game')) {
-								$scope.game.scrap       = obj.data.game.scrap;
+								$scope.game.scrap = obj.data.game.scrap;
 								$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
-								$scope.game.stacking    = false;
+								$scope.game.stacking = false;
 							}
 							break;
 						case 'resolvedAce':
-							$scope.game.scrap       = obj.data.game.scrap;
+							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
-							$scope.game.players     = obj.data.players;
-							$scope.game.stacking    = false;
+							$scope.game.players = obj.data.players;
+							$scope.game.stacking = false;
 							break;
 						case 'resolvedTwo':
-							$scope.game.scrap       = obj.data.game.scrap;
+							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
-							$scope.game.players     = obj.data.players;
-							$scope.game.stacking    = false;
+							$scope.game.players = obj.data.players;
+							$scope.game.stacking = false;
+							break;
+						case 'resolvedFive':
+							$scope.game.deck = obj.data.game.deck;
+							$scope.game.topCard = obj.data.game.topCard;
+							$scope.game.secondCard = obj.data.game.secondCard;
+							$scope.game.players[obj.data.player.pNum] = obj.data.player;
+							$scope.game.scrap = obj.data.game.scrap;
+							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							break;
 					}
 					break;

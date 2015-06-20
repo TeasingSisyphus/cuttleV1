@@ -58,7 +58,7 @@ var winner = function(player) {
 			}
 			break;
 		case 2:
-			if(points >= 10) {
+			if (points >= 10) {
 				console.log("Victory!");
 				return true;
 			} else {
@@ -89,7 +89,7 @@ module.exports = {
 		if (req.isSocket) {
 			console.log("\nRecieved request to subscribe socket " + req.socket.id + " to game class room");
 			Game.watch(req);
-			
+
 			Game.find({}).exec(function(err, games) {
 				res.send(games);
 			});
@@ -100,13 +100,18 @@ module.exports = {
 	create: function(req, res) {
 		if (req.isSocket) {
 			console.log("\nReceived request to create game from socket " + req.socket.id);
-			Game.create({name: req.body.name}).exec(function(err, newGame) {
+			Game.create({
+				name: req.body.name
+			}).exec(function(err, newGame) {
 				if (err || !newGame) {
 					console.log("Game not created!\n");
 					console.log(err);
 				} else {
 					console.log(newGame);
-					Game.publishCreate({id: newGame.id, newGame: newGame});
+					Game.publishCreate({
+						id: newGame.id,
+						newGame: newGame
+					});
 				}
 			});
 		}
@@ -116,21 +121,23 @@ module.exports = {
 		if (req.isSocket) {
 			console.log("\nReceived request to join game from socket: " + req.socket.id);
 			Game.findOne(req.body.id).populateAll().exec(function(err, game) {
-				if (err || !game){
+				if (err || !game) {
 					console.log("Game " + req.body + " not found for joinGame");
 					res.send(404);
 				} else {
 					switch (game.players.length) {
 						case 0:
-						console.log("0 players in game");
+							console.log("0 players in game");
 							Game.subscribe(req.socket, game);
-							Player.create( {
+							Player.create({
 								socketId: req.socket.id,
 								pNum: game.players.length,
 							}).exec(function(er, newPlayer) {
 								game.players.add(newPlayer.id);
 								game.save(function(er, savedGame) {
-									res.send({game: savedGame});
+									res.send({
+										game: savedGame
+									});
 								});
 							});
 							break;
@@ -143,62 +150,66 @@ module.exports = {
 							}).exec(function(er, newPlayer) {
 								game.players.add(newPlayer.id);
 
-									for (suit = 0; suit <= 3; suit++) {
-										for (rank = 1; rank <= 13; rank++) {
-											var path = 'images/cards/card_' + suit + '_' + rank + '.png';
+								for (suit = 0; suit <= 3; suit++) {
+									for (rank = 1; rank <= 13; rank++) {
+										var path = 'images/cards/card_' + suit + '_' + rank + '.png';
 
-											switch (rank) {
-												case 11:
-													var str_rank = 'Jack';
-													break;
-												case 12:
-													var str_rank = 'Queen';
-													break;
-												case 13:
-													var str_rank = 'King';
-													break;
-												default:
-													var str_rank = rank;
-													break;
-											}
-											switch (suit) {
-												case 0:
-													var str_suit = 'Clubs';
-													break;
-												case 1:
-													var str_suit = 'Diamonds';
-													break;
-												case 2:
-													var str_suit = 'Hearts';
-													break;
-												case 3:
-													var str_suit = 'Spades';
-													break;
-											}
-											var txt = str_rank + ' of ' + str_suit;
-											Card.create({
-												suit: suit,
-												rank: rank,
-												img: path,
-												alt: txt,
-												deck: game,
-											}).exec(function(cardError, card) {
-													if (cardError || !card) {
-														console.log("Card not created for game " + game.id);
-													} else {
-
-														game.deck.add(card.id);
-													}
-												});
+										switch (rank) {
+											case 11:
+												var str_rank = 'Jack';
+												break;
+											case 12:
+												var str_rank = 'Queen';
+												break;
+											case 13:
+												var str_rank = 'King';
+												break;
+											default:
+												var str_rank = rank;
+												break;
 										}
-									} //End of for loops	
+										switch (suit) {
+											case 0:
+												var str_suit = 'Clubs';
+												break;
+											case 1:
+												var str_suit = 'Diamonds';
+												break;
+											case 2:
+												var str_suit = 'Hearts';
+												break;
+											case 3:
+												var str_suit = 'Spades';
+												break;
+										}
+										var txt = str_rank + ' of ' + str_suit;
+										Card.create({
+											suit: suit,
+											rank: rank,
+											img: path,
+											alt: txt,
+											deck: game,
+										}).exec(function(cardError, card) {
+											if (cardError || !card) {
+												console.log("Card not created for game " + game.id);
+											} else {
+
+												game.deck.add(card.id);
+											}
+										});
+									}
+								} //End of for loops	
 
 
-									game.save(function(e, savedGame) {
-										res.send({game: savedGame});
-										Game.publishUpdate(game.id, {game: savedGame});
-									});							
-								
+								game.save(function(e, savedGame) {
+									res.send({
+										game: savedGame
+									});
+									Game.publishUpdate(game.id, {
+										game: savedGame
+									});
+								});
+
 							});
 
 							break;
@@ -208,9 +219,7 @@ module.exports = {
 							break;
 					}
 
-					
-					
-					
+
 
 				}
 			});
@@ -219,7 +228,7 @@ module.exports = {
 	},
 
 	ready: function(req, res) {
-		if ( req.isSocket && req.body.hasOwnProperty('id') ) {
+		if (req.isSocket && req.body.hasOwnProperty('id')) {
 			console.log("\nPlayer w/ socket: " + req.socket.id + " is ready to play.");
 			var deal = false;
 
@@ -252,74 +261,80 @@ module.exports = {
 								break;
 						}
 
-							if (deal) {
-								var dealt = [];
-								var min = 0;
-								var max = 51;
+						if (deal) {
+							var dealt = [];
+							var min = 0;
+							var max = 51;
 
-								var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+							var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
 
 
 
+							playerSort[0].hand.add(game.deck[random].id);
+							game.deck.remove(game.deck[random].id);
+							dealt.push(random);
+
+
+							for (var i = 0; i < 5; i++) {
+								while (dealt.indexOf(random) >= 0) {
+									random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+								}
 								playerSort[0].hand.add(game.deck[random].id);
 								game.deck.remove(game.deck[random].id);
-								dealt.push(random);	
-
-
-								for(var i=0; i<5; i++) {
-									while (dealt.indexOf(random) >= 0) {
-										random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-									}
-									playerSort[0].hand.add(game.deck[random].id);
-									game.deck.remove(game.deck[random].id);
-									dealt.push(random);
-
-									while (dealt.indexOf(random) >= 0) {
-										random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-									}
-
-									playerSort[1].hand.add(game.deck[random].id);
-									game.deck.remove(game.deck[random].id);
-									dealt.push(random);								
-
-								}
-
-								//Assign topCard
-								while (dealt.indexOf(random) >= 0)	{
-									random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-								}
 								dealt.push(random);
-								game.topCard = game.deck[random];
-								game.deck.remove(game.deck[random].id);
 
-
-								//Assign secondCard
-								while (dealt.indexOf(random) >= 0)	{
+								while (dealt.indexOf(random) >= 0) {
 									random = Math.floor((Math.random() * ((max + 1) - min)) + min);
 								}
-								//dealt.push(random);
-								game.secondCard = game.deck[random];
+
+								playerSort[1].hand.add(game.deck[random].id);
 								game.deck.remove(game.deck[random].id);
-
-
+								dealt.push(random);
 
 							}
 
-							game.save(function(er, savedGame) {
-								if (dealt) {
-									playerList[0].save(function(error, savedP0) {
+							//Assign topCard
+							while (dealt.indexOf(random) >= 0) {
+								random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+							}
+							dealt.push(random);
+							game.topCard = game.deck[random];
+							game.deck.remove(game.deck[random].id);
 
-										playerSort[1].save(function(errrrrr, savedP1) {
-											var players = [savedP0, savedP1];
-											Game.message(savedGame.id, {game: savedGame, players: players});
+
+							//Assign secondCard
+							while (dealt.indexOf(random) >= 0) {
+								random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+							}
+							//dealt.push(random);
+							game.secondCard = game.deck[random];
+							game.deck.remove(game.deck[random].id);
+
+
+
+						}
+
+						game.save(function(er, savedGame) {
+							if (dealt) {
+								playerList[0].save(function(error, savedP0) {
+
+									playerSort[1].save(function(errrrrr, savedP1) {
+										var players = [savedP0, savedP1];
+										Game.message(savedGame.id, {
+											game: savedGame,
+											players: players
 										});
 									});
+								});
 
-								}else{
+							} else {
 
-									Game.publishUpdate(game.id, {game: savedGame, change: 'ready'});
-								}
-							});
+								Game.publishUpdate(game.id, {
+									game: savedGame,
+									change: 'ready'
+								});
+							}
+						});
 					});
 
 				}
@@ -330,14 +345,14 @@ module.exports = {
 	draw: function(req, res) {
 		//Find the game id
 		//Had something funky happen with populate
-		Game.findOne(req.body.id).populate('deck').populate('players').populate('scrap').exec(function (err, game){
+		Game.findOne(req.body.id).populate('deck').populate('players').populate('scrap').exec(function(err, game) {
 			if (err || !game) {
-					console.log("Game " + req.body.id + " not found for scuttling");
-					res.send(404);
-				} else {
+				console.log("Game " + req.body.id + " not found for scuttling");
+				res.send(404);
+			} else {
 				//if (req.socket.id === game.players[0].socketId || req.socket.id === game.players[1].socketId);
 				//Find the player id
-				Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function (error, foundPlayer) {
+				Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function(error, foundPlayer) {
 					if (error || !foundPlayer) {
 						console.log("Player " + req.body.playerId + " not found for scuttling");
 						res.send(404);
@@ -348,21 +363,29 @@ module.exports = {
 						if (game.turn % 2 === foundPlayer.pNum && game.deck.length !== 0) {
 							game.deck.remove(req.body.topCard.id);
 							foundPlayer.hand.add(req.body.topCard.id);
-							var max = game.deck.length;
+							var max = game.deck.length - 1;
 							var min = 0;
 							var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
 							game.topCard = game.secondCard;
 							game.secondCard = game.deck[random];
 							game.deck.remove(game.deck[random].id);
 							game.turn++;
-						} 
-						game.save(function (errrr, savedGame){
-							foundPlayer.save(function (errrrr, savedPlayer){
-								res.send({yourTurn: game.turn % 2 === foundPlayer.pNum, handSize: foundPlayer.hand.length !== 8, deckSize: game.deck.length !==0});
-								Game.publishUpdate(game.id, {game: savedGame, player: savedPlayer, change: 'draw'});
-								});
-							});	
 						}
+						game.save(function(errrr, savedGame) {
+							foundPlayer.save(function(errrrr, savedPlayer) {
+								res.send({
+									yourTurn: game.turn % 2 === foundPlayer.pNum,
+									handSize: foundPlayer.hand.length !== 8,
+									deckSize: game.deck.length !== 0
+								});
+								Game.publishUpdate(game.id, {
+									game: savedGame,
+									player: savedPlayer,
+									change: 'draw'
+								});
+							});
+						});
+					}
 				});
 			}
 		});
@@ -376,17 +399,17 @@ module.exports = {
 	scuttle: function(req, res) {
 		if (req.isSocket) {
 			console.log('\nSocket ' + req.socket.id + ' is requesting to scuttle');
-			Game.findOne(req.body.id).populate('players').populate('deck').populate('scrap').exec(function (error, game){
+			Game.findOne(req.body.id).populate('players').populate('deck').populate('scrap').exec(function(error, game) {
 				if (error || !game) {
 					console.log("Game " + player.currentGame.id + " not found for scuttling");
 					res.send(404);
 				} else {
-					Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function (erro, players) {
+					Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function(erro, players) {
 						if (erro || !players) {
 							console.log("Player " + req.body.playerId + " not found for scuttling");
 							res.send(404);
 						} else if (game.turn % 2 === req.body.pNum) {
-							if(req.body.scuttler.rank <= 10 && (req.body.scuttler.rank > req.body.target.rank || (req.body.scuttler.rank === req.body.target.rank && req.body.scuttler.suit > req.body.target.suit))){
+							if (req.body.scuttler.rank <= 10 && (req.body.scuttler.rank > req.body.target.rank || (req.body.scuttler.rank === req.body.target.rank && req.body.scuttler.suit > req.body.target.suit))) {
 								var playerSort = sortPlayers(players);
 								playerSort[req.body.pNum].hand.remove(req.body.scuttler.id);
 								playerSort[(req.body.pNum + 1) % 2].points.remove(req.body.target.id);
@@ -395,16 +418,31 @@ module.exports = {
 								game.scrapTop = req.body.scuttler;
 								game.turn++;
 
-								game.save(function (err, savedGame) {
-									playerSort[0].save(function (er, savedP0){
-										playerSort[1].save(function (e, savedP1){
-											res.send({scuttled: true, highRank: req.body.scuttler.rank > req.body.target.rank, sameRank: req.body.scuttler.rank === req.body.target.rank, highSuit: req.body.scuttler.suit > req.body.target.suit});
-											Game.publishUpdate(game.id, {game: savedGame, players: [savedP0, savedP1], change: 'scuttle'});
+								game.save(function(err, savedGame) {
+									playerSort[0].save(function(er, savedP0) {
+										playerSort[1].save(function(e, savedP1) {
+											res.send({
+												scuttled: true,
+												highRank: req.body.scuttler.rank > req.body.target.rank,
+												sameRank: req.body.scuttler.rank === req.body.target.rank,
+												highSuit: req.body.scuttler.suit > req.body.target.suit
+											});
+											Game.publishUpdate(game.id, {
+												game: savedGame,
+												players: [savedP0, savedP1],
+												change: 'scuttle'
+											});
 										});
 									});
 								});
 							} else {
-								res.send({scuttled: false, potentialScuttler: req.body.scuttler.rank <= 10, highRank: req.body.scuttler.rank > req.body.target.rank, sameRank: req.body.scuttler.rank === req.body.target.rank, highSuit: req.body.scuttler.suit > req.body.target.suit});
+								res.send({
+									scuttled: false,
+									potentialScuttler: req.body.scuttler.rank <= 10,
+									highRank: req.body.scuttler.rank > req.body.target.rank,
+									sameRank: req.body.scuttler.rank === req.body.target.rank,
+									highSuit: req.body.scuttler.suit > req.body.target.suit
+								});
 							}
 						}
 					});
@@ -416,23 +454,23 @@ module.exports = {
 	oneOff: function(req, res) {
 		if (req.isSocket) {
 			console.log("\nSocket " + req.socket.id + ' is requesting to play oneOff to stack');
-			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').populate('twos').exec(function (error, game) {
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').populate('twos').exec(function(error, game) {
 				if (error || !game) {
 					console.log("Game " + req.body.gameId + " not found for oneOff");
 					res.send(404);
 				} else {
-					Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function (erro, player) {
+					Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function(erro, player) {
 						if (erro || !player) {
 							console.log("Player " + req.body.playerId + " not found for oneOff");
 							res.send(404);
 						} else {
-							Card.findOne(req.body.cardId).exec(function (err, card) {
+							Card.findOne(req.body.cardId).exec(function(err, card) {
 								if (err || !card) {
 									console.log("Card " + req.body.cardId + " not found for oneOff");
 									res.send(404);
 								} else {
 									var firstEffect = game.firstEffect === null;
-									if(firstEffect) {
+									if (firstEffect) {
 										var validRank = card.rank <= 9 && card.rank !== 8;
 										if (validRank) {
 											var yourTurn = game.turn % 2 === player.pNum;
@@ -444,26 +482,47 @@ module.exports = {
 												switch (card.rank) {
 													case 2:
 													case 9:
-													console.log("Request made to play two or 9");
+														console.log("Request made to play two or 9");
 														if (req.body.hasOwnProperty('targetId')) {
 															card.targetId = req.body.targetId;
 															card.save();
 														} else {
 															console.log("No target provided for oneOff requiring it");
-															return res.send({oneOff: false, firstEffect: true, validRank: validRank, yourTurn: yourTurn, game: savedGame, player: savedPlayer, card: card});
+															return res.send({
+																oneOff: false,
+																firstEffect: true,
+																validRank: validRank,
+																yourTurn: yourTurn,
+																game: savedGame,
+																player: savedPlayer,
+																card: card
+															});
 														}
 														break;
 												}
-												game.save(function (er, savedGame) {
-													player.save(function (e, savedPlayer) {
-														Game.publishUpdate(game.id, {change: 'oneOff', game: savedGame, player: savedPlayer, card: card}, req);
-														res.send({oneOff: true, firstEffect: true, validRank: validRank, yourTurn: yourTurn, game: savedGame, player: savedPlayer, card: card});
+												game.save(function(er, savedGame) {
+													player.save(function(e, savedPlayer) {
+														Game.publishUpdate(game.id, {
+															change: 'oneOff',
+															game: savedGame,
+															player: savedPlayer,
+															card: card
+														}, req);
+														res.send({
+															oneOff: true,
+															firstEffect: true,
+															validRank: validRank,
+															yourTurn: yourTurn,
+															game: savedGame,
+															player: savedPlayer,
+															card: card
+														});
 													});
 												});
 
 											}
-										} 
-									//Otherwise the requested card must be a two played as a counter
+										}
+										//Otherwise the requested card must be a two played as a counter
 									} else {
 										console.log("This better be a two");
 										var validRank = card.rank === 2;
@@ -472,10 +531,21 @@ module.exports = {
 											game.twos.add(card.id);
 											player.hand.remove(card.id);
 
-											game.save(function (er, savedGame) {
-												player.save(function (e, savedPlayer) {
-													Game.publishUpdate(game.id, {change: 'oneOff', game: savedGame, player: savedPlayer, card: card}, req);
-													res.send({oneOff: true, firstEffect: false, validRank: validRank, game: savedGame, player: savedPlayer});
+											game.save(function(er, savedGame) {
+												player.save(function(e, savedPlayer) {
+													Game.publishUpdate(game.id, {
+														change: 'oneOff',
+														game: savedGame,
+														player: savedPlayer,
+														card: card
+													}, req);
+													res.send({
+														oneOff: true,
+														firstEffect: false,
+														validRank: validRank,
+														game: savedGame,
+														player: savedPlayer
+													});
 												});
 											});
 										}
@@ -491,11 +561,11 @@ module.exports = {
 	},
 
 	resolve: function(req, res) {
-		console.log("Logging req.body");
+		console.log("Resolve stack requested");
 		console.log(req.body);
-		if(req.isSocket) {
+		if (req.isSocket) {
 			console.log("\nSocket " + req.socket.id + ' is requesting to resolve a one off');
-			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').populate('twos').exec(function (error, game) {
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').populate('twos').exec(function(error, game) {
 				if (error || !game) {
 					console.log("Game " + req.body.gameId + " not found for RESOLVING a one off");
 					res.send(404);
@@ -504,7 +574,7 @@ module.exports = {
 					switch (game.twos.length % 2) {
 						case 0:
 							console.log('There is an even amount of twos');
-							Card.findOne(game.firstEffect).exec(function (erro, card) {
+							Card.findOne(game.firstEffect).exec(function(erro, card) {
 								if (erro || !card) {
 									console.log('Card is not found for RESOLVING a one off');
 									res.send(404);
@@ -513,42 +583,46 @@ module.exports = {
 										//Ace played to destroy all points
 										case 1:
 											console.log('The first effect is an Ace');
-											Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function (err, players) {
+											Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function(err, players) {
 												if (err || !players[0] || !players[1]) {
 													console.log('Players not found in game ' + req.body.gameId + ' for RESOLVE');
 													res.send(404);
 												} else {
-													players[0].points.forEach(function (card, index, points) {
+													players[0].points.forEach(function(card, index, points) {
 														game.scrap.add(card.id);
 														players[0].points.remove(card.id);
 													});
-													players[1].points.forEach(function (card, index, points) {
+													players[1].points.forEach(function(card, index, points) {
 														game.scrap.add(card.id);
 														players[1].points.remove(card.id);
 													});
-												game.twos.forEach(function (two, index, twos) {
-													game.twos.remove(two.id);
-													game.scrap.add(two.id);
-												});
-												game.scrapTop = game.firstEffect;
-												game.scrap.add(game.firstEffect);
-												game.firstEffect = null;
-												game.turn++;
-												game.save(function (er, savedGame) {
-													players[0].save(function (e, savedP0) {
-														players[1].save(function (e6, savedP1) {
-															var playerSort = sortPlayers([savedP0, savedP1]);
-															Game.publishUpdate(game.id, {change: 'resolvedAce', game: savedGame, players: playerSort});
+													game.twos.forEach(function(two, index, twos) {
+														game.twos.remove(two.id);
+														game.scrap.add(two.id);
+													});
+													game.scrapTop = game.firstEffect;
+													game.scrap.add(game.firstEffect);
+													game.firstEffect = null;
+													game.turn++;
+													game.save(function(er, savedGame) {
+														players[0].save(function(e, savedP0) {
+															players[1].save(function(e6, savedP1) {
+																var playerSort = sortPlayers([savedP0, savedP1]);
+																Game.publishUpdate(game.id, {
+																	change: 'resolvedAce',
+																	game: savedGame,
+																	players: playerSort
+																});
+															});
 														});
 													});
-												});
 												}
 											});
 											break;
-										//Two played to destroy target rune
+											//Two played to destroy target rune
 										case 2:
 											console.log('The first effect is a two');
-											Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function (err, players) {
+											Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function(err, players) {
 												if (err || !players[0] || !players[1]) {
 													console.log("Players not found in game " + req.body.gameId + " for resolve");
 													res.send(404);
@@ -562,7 +636,7 @@ module.exports = {
 													card.targetId = null;
 
 													//Move the countering two's to the scrap
-													game.twos.forEach(function (two, index, twos) {
+													game.twos.forEach(function(two, index, twos) {
 														game.twos.remove(two.id);
 														game.scrap.add(two.id);
 													});
@@ -572,10 +646,14 @@ module.exports = {
 													game.scrap.add(card.id);
 													game.firstEffect = null;
 													game.turn++;
-													game.save(function (er, savedGame) {
-														playerSort[0].save(function (e, savedP0) {
-															playerSort[1].save(function (e6, savedP1) {
-																Game.publishUpdate(game.id, {change: 'resolvedTwo', game: savedGame, players: [savedP0, savedP1]});
+													game.save(function(er, savedGame) {
+														playerSort[0].save(function(e, savedP0) {
+															playerSort[1].save(function(e6, savedP1) {
+																Game.publishUpdate(game.id, {
+																	change: 'resolvedTwo',
+																	game: savedGame,
+																	players: [savedP0, savedP1]
+																});
 																res.send()
 																card.save();
 															});
@@ -585,26 +663,84 @@ module.exports = {
 												}
 											});
 											break;
+										case 5:
+											Player.findOne(req.body.otherPlayerId).populate('hand').populate('points').populate('runes').exec(function(err, player) {
+												if (err || !player) {
+													console.log("Player " + req.body.otherPlayerId + " not found for 5 effect");
+													res.send(404);
+												} else {
+
+													var handLength = player.hand.length;
+													if (handLength <= 6) {
+
+
+														player.hand.add(game.topCard);
+														player.hand.add(game.secondCard);
+														var min = 0;
+														var max = game.deck.length - 1;
+
+														var randomTop = Math.floor((Math.random() * ((max + 1) - min)) + min);
+														var randomSecond = Math.floor((Math.random() * ((max + 1) - min)) + min);;
+
+														while (randomSecond === randomTop) {
+															randomSecond = Math.floor((Math.random() * ((max + 1) - min)) + min);
+														}
+
+														console.log("randomTop: " + randomTop);
+														console.log("randomSecond " + randomSecond);
+
+														game.topCard = game.deck[randomTop];
+														game.secondCard = game.deck[randomSecond];
+														game.deck.remove(game.topCard.id);
+														game.deck.remove(game.secondCard.id);
+														game.scrap.add(card.id);
+														game.scrapTop = card;
+														game.turn++;
+
+														game.save(function(er, savedGame) {
+															player.save(function(e, savedPlayer) {
+																Game.publishUpdate(savedGame.id, {
+																	change: 'resolvedFive',
+																	game: savedGame,
+																	player: savedPlayer,
+																});
+																res.send({
+																	resolvedFive: true,
+																	yourTurn: true,
+																	validRank: true,
+																	handLength: handLength
+																});
+															});
+														});
+													}
+												}
+											});
+											break;
 									}
 								}
 							});
 							break;
+							//Odd Number of countering twos means the effect fizzles
+							//All One Offs are moved to the scrap pile and turn is incrimented
 						case 1:
 							console.log('There is an odd number twos');
-							game.twos.forEach(function (two, index, twos) {
+							game.twos.forEach(function(two, index, twos) {
 								game.scrap.add(two.id);
 								game.twos.remove(two.id);
 							});
-							Card.findOne(game.firstEffect).exec(function (err, card) {
+							Card.findOne(game.firstEffect).exec(function(err, card) {
 								game.scrapTop = card;
 								game.scrap.add(card.id);
 								game.firstEffect = null;
 								game.turn++;
 
-								game.save(function (er, savedGame) {
-									Game.publishUpdate(savedGame.id, {change: 'resolvedFizzle', game: savedGame});
+								game.save(function(er, savedGame) {
+									Game.publishUpdate(savedGame.id, {
+										change: 'resolvedFizzle',
+										game: savedGame
+									});
 								});
-							}); 
+							});
 							break;
 					}
 				}
@@ -612,4 +748,3 @@ module.exports = {
 		}
 	},
 };
-
