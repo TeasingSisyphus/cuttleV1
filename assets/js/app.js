@@ -303,7 +303,7 @@
 					switch ($scope.game.selCard.rank) {
 						case 1:
 							console.log('In case 1');
-							console.log("\nRequesting to play oneOff");
+							console.log("\nRequesting to play Ace to clear the points");
 							io.socket.get('/game/oneOff', {
 								gameId: $scope.game.gameId,
 								playerId: $scope.game.players[$scope.game.pNum].id,
@@ -330,6 +330,24 @@
 								$scope.game.players[res.player.pNum] = res.player;
 								$scope.$apply();
 								if (!res.onOff) {
+									$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+								}
+								$scope.game.selId = null;
+								$scope.game.selIndex = null;
+								$scope.game.selCard = null;
+							});
+							break;
+						case 6:
+							console.log('\nPlaying 6 to clear the runes');
+							io.socket.get('/game/oneOff', {
+								gameId: $scope.game.gameId,
+								playerId: $scope.game.players[$scope.game.pNum].id,
+								cardId: $scope.game.selId,
+							}, function(res) {
+								console.log(res);
+								$scope.game.players[res.player.pNum] = res.player;
+								$scope.$apply();
+								if (!res.oneOff) {
 									$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
 								}
 								$scope.game.selId = null;
@@ -441,6 +459,12 @@
 							$scope.game.players[obj.data.player.pNum] = obj.data.player;
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
+							break;
+						case 'resolvedSix':
+							$scope.game.scrap = obj.data.game.scrap;
+							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
+							$scope.game.players = obj.data.players;
+							$scope.game.stacking = false;
 							break;
 					}
 					break;
