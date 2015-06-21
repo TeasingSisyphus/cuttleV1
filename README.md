@@ -25,8 +25,8 @@ ONE-OFF RESOLVES FRONT-END:
 -Three: Needs, target card
 -Four: Needs game, and player, will require an extra request
 -Five: Needs game, and player
-	-Works in traditional case, but doesn't handle the case where player only draws 1 card, or throw the proper errors if it doesn't work
 -Six: Same as Ace but with runes
+	-Will need to be more robust after jacks are added
 -Seven: Needs game and player
 -Eight: Save for later
 -Nine: Needs game, needs player of target, needs target card

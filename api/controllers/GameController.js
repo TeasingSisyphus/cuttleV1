@@ -561,10 +561,8 @@ module.exports = {
 	},
 
 	resolve: function(req, res) {
-		console.log("Resolve stack requested");
-		console.log(req.body);
 		if (req.isSocket) {
-			console.log("\nSocket " + req.socket.id + ' is requesting to resolve a one off');
+			console.log("\nStack resolution requested from Socket " + req.socket.id);
 			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').populate('twos').exec(function (error, game) {
 				if (error || !game) {
 					console.log("Game " + req.body.gameId + " not found for RESOLVING a one off");
@@ -676,9 +674,10 @@ module.exports = {
 
 														player.hand.add(game.topCard);
 														player.hand.add(game.secondCard);
+
+														//Assign new top and second cards
 														var min = 0;
 														var max = game.deck.length - 1;
-
 														var randomTop = Math.floor((Math.random() * ((max + 1) - min)) + min);
 														var randomSecond = Math.floor((Math.random() * ((max + 1) - min)) + min);;
 
@@ -686,31 +685,67 @@ module.exports = {
 															randomSecond = Math.floor((Math.random() * ((max + 1) - min)) + min);
 														}
 
-														console.log("randomTop: " + randomTop);
-														console.log("randomSecond " + randomSecond);
-
-														game.topCard = game.deck[randomTop];
-														game.secondCard = game.deck[randomSecond];
+														game.firstEffect = null;
+														game.topCard     = game.deck[randomTop];
+														game.secondCard  = game.deck[randomSecond];
+														game.scrapTop    = card;
 														game.deck.remove(game.topCard.id);
 														game.deck.remove(game.secondCard.id);
 														game.scrap.add(card.id);
-														game.scrapTop = card;
 														game.turn++;
 
 														game.save(function (er, savedGame) {
 															player.save(function (e, savedPlayer) {
 																Game.publishUpdate(savedGame.id, {
-																	change: 'resolvedFive',
-																	game: savedGame,
-																	player: savedPlayer,
+																	change : 'resolvedFive',
+																	game   : savedGame,
+																	player : savedPlayer,
 																});
 																res.send({
-																	resolvedFive: true,
-																	yourTurn: true,
-																	validRank: true,
-																	handLength: handLength
+																	resolvedFive : true,
+																	yourTurn     : true,
+																	validRank    : true,
+																	handLength   : handLength
 																});
 															});
+														});
+													} else if (handLength === 7) {
+														player.hand.add(game.topCard);
+														game.topCard     = game.secondCard;
+														game.firstEffect = null;
+
+														//Assign new second card card
+														var min         = 0;
+														var max         = game.deck.length - 1;
+														var randomTop   = Math.floor((Math.random() * ((max + 1) - min)) + min);														
+														game.secondCard = game.deck[randomTop];
+														game.scrapTop   = card;
+														game.deck.remove(game.secondCard.id);
+														game.scrap.add(card.id);
+														game.turn++;
+
+														game.save(function (er, savedGame) {
+															player.save(function (e, savedPlayer) {
+																Game.publishUpdate(savedGame.id, {
+																	change : 'resolvedFive',
+																	game   : savedGame,
+																	player : savedPlayer
+																});
+																res.send({
+																	resolvedFive : true,
+																	yourTurn     : true,
+																	validRank    : true,
+																	handLength   : handLength
+																});
+															});
+														});
+
+													} else {
+														res.send({
+															resolvedFive : false,
+															yourTurn     : true,
+															validRank    : true,
+															handLength   : handLength
 														});
 													}
 												}
