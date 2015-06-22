@@ -79,6 +79,8 @@
                         <p>Your Hand</p>
                         <img ng-repeat="card in game.players[game.pNum].hand" ng-class='card.class' id="{{card.id}}" ng-src="{{card.img}}" alt="{{card.alt}}" ng-click="game.select(card, $index)"></img>
                     </div>
+                    Scrap Pile:
+                    <img ng-show='game.scrapPick' ng-repeat='card in game.scrap' ng-class='card.class' id="{{card.id}}" ng-src='{{card.img}}' alt='{{card.alt}}' ng-click='game.chooseScrap(card)'></img>
                 </div>      
                 <!-- <img ng-repeat='card in game.deck' class='card' id= '{{card.img}}' ng-src="{{card.img}}" alt='{{card.alt}}'></img> -->
 

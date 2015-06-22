@@ -101,6 +101,7 @@
 		this.selId = null;
 		this.selIndex = null;
 		this.stacking = false;
+		this.scrapPick = false;
 
 
 		this.ready = function() {
@@ -124,6 +125,8 @@
 		//If a card is already selected, use the previous index to find it and revert its class to normal
 		//If the requested card was already selected, deselect it
 		this.select = function(card, index) {
+			console.log("Selecting card. Previously selected:");
+			console.log($scope.game.selCard);
 			console.log(index)
 			console.log(card);
 			if (card.class === 'card') {
@@ -302,8 +305,9 @@
 				} else {
 					switch ($scope.game.selCard.rank) {
 						case 1:
+						case 3:
 							console.log('In case 1');
-							console.log("\nRequesting to play Ace to clear the points");
+							console.log("\nRequesting to play " + $scope.game.selCard.alt + " as oneOff");
 							io.socket.get('/game/oneOff', {
 								gameId: $scope.game.gameId,
 								playerId: $scope.game.players[$scope.game.pNum].id,
@@ -373,6 +377,16 @@
 			});
 		};
 
+		this.chooseScrap = function(card) {
+			console.log(card);
+			io.socket.get('/game/resolveThree', {
+				gameId       : $scope.game.gameId,
+				playerId   : $scope.game.players[$scope.game.pNum].id,
+				cardId     : card.id,
+			}, function(res) {
+				console.log(res);
+			});
+		};
 
 		$rootScope.$on('readyView', function(event, game) {
 			console.log('\nChanging to readyView');
@@ -424,13 +438,18 @@
 						case 'oneOff':
 							console.log('\nOne Off was played');
 							var conf = confirm("Your opponent has played the " + obj.data.card.alt + " as a oneOff. Would you like to counter with a two?");
-							if (conf) {
-								$scope.game.stacking = true;
-							} else {
+							$scope.game.stacking = true;
+							if (!conf) {
 								console.log("Declined to counter. Requesting to resolve stack");
 								$scope.game.resolve();
 							}
 							$scope.game.players[obj.data.player.pNum] = obj.data.player;
+							break;
+
+						case 'threeData':
+							$scope.game.scrapPick = true;
+							$scope.game.stacking = true;
+							alert('Please pick a card from the scrap pile to take to your hand');
 							break;
 
 						case 'resolvedFizzle':
@@ -452,6 +471,13 @@
 							$scope.game.players = obj.data.players;
 							$scope.game.stacking = false;
 							break;
+						case 'resolvedThree':
+							$scope.game.scrap = obj.data.game.scrap;
+							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
+							$scope.game.players[obj.data.player.pNum] = obj.data.player;
+							$scope.game.stacking = false;
+							$scope.game.scrapPick = false;
+							break;
 						case 'resolvedFive':
 							$scope.game.deck = obj.data.game.deck;
 							$scope.game.topCard = obj.data.game.topCard;
@@ -459,6 +485,7 @@
 							$scope.game.players[obj.data.player.pNum] = obj.data.player;
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
+							$scope.game.stacking = false;
 							break;
 						case 'resolvedSix':
 							$scope.game.scrap = obj.data.game.scrap;

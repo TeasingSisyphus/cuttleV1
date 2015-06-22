@@ -416,6 +416,7 @@ module.exports = {
 								game.scrap.add(req.body.target.id);
 								game.scrap.add(req.body.scuttler.id);
 								game.scrapTop = req.body.scuttler;
+								game.scrapTop.class = 'card';
 								game.turn++;
 
 								game.save(function (err, savedGame) {
@@ -661,6 +662,9 @@ module.exports = {
 												}
 											});
 											break;
+										case 3:
+											Game.publishUpdate(game.id, {change: 'threeData'}, req);
+											break;
 										case 5:
 											Player.findOne(req.body.otherPlayerId).populate('hand').populate('points').populate('runes').exec(function (err, player) {
 												if (err || !player) {
@@ -816,6 +820,36 @@ module.exports = {
 							});
 							break;
 					}
+				}
+			});
+		}
+	},
+
+	resolveThree: function (req, res) {
+		console.log("\n\nResolve three");
+		console.log(req.body);
+		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('playerId') && req.body.hasOwnProperty('cardId')) {
+			console.log("\nResolve Three requested for game: " + req.body.gameId);
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
+				if (error || !game) {
+					console.log("Game not found for reolveThree");
+					res.send(404);
+				} else {
+					Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function (erro, player) {
+						player.hand.add(req.body.cardId);
+						game.scrap.remove(req.body.cardId);
+						game.scrapTop = game.firstEffect;
+						game.firstEffect = null;
+						game.turn++;
+
+						game.save(function (err, savedGame) {
+							player.save(function (er, savedPlayer) {
+								Game.publishUpdate(game.id, {change: 'resolvedThree', game: savedGame, player: savedPlayer});
+
+							});
+
+						});
+					});
 				}
 			});
 		}
