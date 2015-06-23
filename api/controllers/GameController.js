@@ -1090,4 +1090,43 @@ module.exports = {
 		}		
 	},
 
+	sevenOneOff: function (req, res){
+		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('cardId') && req.body.hasOwnProperty('whichCard')) {
+			console.log("\n\nsevenOneOff requested from socket " + req.socket.id);
+			console.log(req.body);
+
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
+				if (error || !game) {
+					console.log("Game not found for sevenOneOff");
+					res.send(404);
+				} else {
+					switch (req.body.whichCard) {
+						case 0:
+							var oneOffId = game.topCard;
+							break;
+						case 1:
+							var oneOffId = game.secondCard;
+							break;
+					}
+
+					Card.findOne(oneOffId).exec(function (erro, card) {
+						if (erro || !card) {
+							console.log("Card not found for sevenOneOff");
+							res.send(404);
+						} else {
+							console.log("Found Card for sevenOneOff: " + card.alt);
+							//Initialize validRank as false; update it if rank is valid
+							var validRank = false;
+							if (card.rank <= 7 || card.rank === 9) {
+								validRank = true;
+							}
+						}
+					});
+				}
+			});
+
+
+		}
+	},
+
 };
