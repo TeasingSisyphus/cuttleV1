@@ -20,7 +20,12 @@
 
             <div ng-show='game.gameView'>
 
-                <div> Game Name: {{game.name}}      Game Id: {{game.id}} Glasses: {{game.glasses}}    Stacking: {{game.stacking}}
+                <div> Game Name: {{game.name}}      Game Id: {{game.id}} Glasses: {{game.glasses}}    Stacking: {{game.stacking}} Turn: {{game.turn}} Your Turn: {{game.turn % 2 === game.pNum}}      
+
+                    whoseTurn: {{game.turn % 2}}
+
+                    
+                    pNum: {{game.pNum}}
 
 
                 <div id="op_wrap">
@@ -59,6 +64,10 @@
                             <img ng-src="{{game.scrapTopImg}}"  class='midCard col-md-offset-4 col-xs-2 col-md-2 col-lg-2 col-sm-2 img-responsive' ng-click='game.oneOff()'></img>
                             <div class='col-xs-4 col-md-4 col-lg-4 col-sm-4'></div>
                         </div>
+                        <div class='row'>
+                            <img ng-show='game.topTwoPick' ng-repeat='card in game.topTwo' ng-click='game.select(card, $index)' ng-class='card.class' ng-src='{{card.img}}'></img>
+                            <div class='col-xs-4 col-md-4 col-lg-4 col-sm-4'></div>
+                        </div>
                     </div>
                 </div>
 
@@ -79,7 +88,7 @@
                         <p>Your Hand</p>
                         <img ng-repeat="card in game.players[game.pNum].hand" ng-class='card.class' id="{{card.id}}" ng-src="{{card.img}}" alt="{{card.alt}}" ng-click="game.select(card, $index)"></img>
                     </div>
-                    Scrap Pile:
+                    <p>Scrap Pile:</p>
                     <img ng-show='game.scrapPick' ng-repeat='card in game.scrap' ng-class='card.class' id="{{card.id}}" ng-src='{{card.img}}' alt='{{card.alt}}' ng-click='game.chooseScrap(card)'></img>
                 </div>      
                 <!-- <img ng-repeat='card in game.deck' class='card' id= '{{card.img}}' ng-src="{{card.img}}" alt='{{card.alt}}'></img> -->

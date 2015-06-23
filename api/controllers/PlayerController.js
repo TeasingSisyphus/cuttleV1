@@ -135,9 +135,9 @@ module.exports = {
 													game.winner = savedPlayer.pNum;
 												}
 
-												Player.publishUpdate(savedPlayer.id, {change: 'points', victor: victor, player: savedPlayer});
-												res.send({points: true, turn: game.turn % 2 === player.pNum, rank: card.rank <= 10});
 												game.turn++;
+												Player.publishUpdate(savedPlayer.id, {change: 'points', victor: victor, player: savedPlayer, turn: game.turn});
+												res.send({points: true, turn: game.turn % 2 === player.pNum, rank: card.rank <= 10});
 												game.save();
 											});
 										} else {
@@ -185,9 +185,9 @@ module.exports = {
 													game.winner = savedPlayer.pNum;
 												}
 
-												Player.publishUpdate(savedPlayer.id, {change: 'runes', victor: victor, player: savedPlayer});
-												res.send({runes: true, turn: game.turn % 2 === player.pNum, rank: (card.rank === 12 || card.rank === 13)});
 												game.turn++;
+												Player.publishUpdate(savedPlayer.id, {change: 'runes', victor: victor, player: savedPlayer, turn: game.turn});
+												res.send({runes: true, turn: game.turn % 2 === player.pNum, rank: (card.rank === 12 || card.rank === 13)});
 												game.save();
 
 											});

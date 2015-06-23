@@ -361,8 +361,8 @@ module.exports = {
 						//After that, make the second card of the deck the first card of the deck and find a new second card.
 						//Add back && foundPlayer.hand.length !== 8
 						if (game.turn % 2 === foundPlayer.pNum && game.deck.length !== 0) {
-							game.deck.remove(req.body.topCard.id);
-							foundPlayer.hand.add(req.body.topCard.id);
+
+							foundPlayer.hand.add(game.topCard);
 							var max = game.deck.length - 1;
 							var min = 0;
 							var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
@@ -663,9 +663,11 @@ module.exports = {
 											});
 											break;
 										case 3:
+											console.log("First effect is a three");
 											Game.publishUpdate(game.id, {change: 'threeData'}, req);
 											break;
 										case 5:
+											console.log("First effect is a five");
 											Player.findOne(req.body.otherPlayerId).populate('hand').populate('points').populate('runes').exec(function (err, player) {
 												if (err || !player) {
 													console.log("Player " + req.body.otherPlayerId + " not found for 5 effect");
@@ -756,7 +758,7 @@ module.exports = {
 											});
 											break;
 											case 6:
-												console.log('In the 6 case');
+												console.log('First effect is a six');
 												Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function (err, players) {
 													if (err || !players[0] || !players[1]) {
 														console.log('Players not found in game ' + req.body.gameId + ' for RESOLVE');
@@ -791,6 +793,26 @@ module.exports = {
 															});
 														});
 													}
+											});
+											break;
+										case 7:
+											console.log("First effect is a seven");
+											Player.findOne(req.body.otherPlayerId).populate('hand').populate('points').populate('runes').exec(function (err, player) {
+												if (err || !player) {
+													console.log("Player " + req.body.otherPlayerId + " not found for 7 resolution");
+													res.send(404);
+												} else {
+													player.hand.remove(card.id);
+													game.scrap.add(card.id);
+													game.scrapTop = card;
+													game.firstEffect = null;
+
+													game.save(function (er, savedGame) {
+														player.save(function (e, savedPlayer) {
+															Game.publishUpdate(game.id, {change: 'sevenData', game: savedGame, player: savedPlayer});
+														});
+													});
+												}
 											});
 											break;
 									}
@@ -839,6 +861,8 @@ module.exports = {
 						player.hand.add(req.body.cardId);
 						game.scrap.remove(req.body.cardId);
 						game.scrapTop = game.firstEffect;
+						//firstEffect is the ID of the three, not the three itself, since the value is unpopulated
+						game.scrap.add(game.firstEffect);
 						game.firstEffect = null;
 						game.turn++;
 
@@ -854,4 +878,216 @@ module.exports = {
 			});
 		}
 	},
+	//Play points from the top two cards using a seven
+	sevenPoints: function (req, res) {
+		console.log("\nPlaying points to resolve seven");
+		console.log(req.body);
+		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('playerId') && req.body.hasOwnProperty('cardId')) {
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
+				if (error || !game) {
+					console.log("Game not found for seven points");
+					res.send(404);
+				} else {
+					Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function (erro, player) {
+						if (erro || !player) {
+							console.log("Player not found for seven points");
+							res.send(404);
+						} else {
+							Card.findOne(req.body.cardId).exec(function (err, card) {
+								if (err || !card) {
+									console.log("Card not found for seven points");
+									res.send(404);
+								} else {
+									if (game.turn % 2 === player.pNum && card.rank <= 10) {
+										console.log("topCard: ");
+										console.log(game.topCard);
+										console.log("\n\nsecondCard: ");
+										console.log(game.secondCard);										
+
+										switch (req.body.whichCard) {
+											case 0:
+												console.log("Case 0");
+												var min         = 0;
+												var max         = game.deck.length - 1;
+												var random      = Math.floor((Math.random() * ((max + 1) - min)) + min);	
+												game.topCard    = game.secondCard;
+												game.secondCard = game.deck[random];
+												game.deck.remove(game.secondCard.id);
+												break;
+											case 1:
+												console.log("Case 1");
+												var min         = 0;
+												var max         = game.deck.length - 1;
+												var random      = Math.floor((Math.random() * ((max + 1) - min)) + min);	
+												game.secondCard = game.deck[random];
+												game.deck.remove(game.secondCard.id);
+												break;
+										}
+										player.points.add(card.id);
+
+
+										player.save(function (e, savedPlayer) {
+											//Assign winner if player has won
+											var victor = winner(savedPlayer);
+											
+											if (victor) {
+												game.winner = savedPlayer.pNum;
+											}
+
+											game.turn++;
+											game.save(function (e6, savedGame) {
+												Player.publishUpdate(savedPlayer.id, {change: 'points', victor: victor, player: savedPlayer, turn: game.turn});
+												res.send({points: true, turn: game.turn % 2 === player.pNum, rank: card.rank <= 10});
+											});
+										});
+									}									
+								}
+							});
+						}
+					});
+				}
+			});
+		}
+	},
+
+	//Play a rune from the top two cards to resolve a seven
+	sevenRunes: function (req, res) {
+		console.log("\nPlaying rune from seven");
+		console.log(req.body);
+		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('playerId') && req.body.hasOwnProperty('cardId')) {
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
+				if (error || !game) {
+					console.log("Game not found for seven runes");
+					res.send(404);
+				} else {
+					Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function (erro, player) {
+						if (erro || !player) {
+							console.log("Player not found for seven runes");
+							res.send(404);
+						} else {
+							Card.findOne(req.body.cardId).exec(function (err, card) {
+								if (err || !card) {
+									console.log("Card not found for seven runes");
+									res.send(404);
+								} else {
+									console.log(card.rank);
+									console.log(card.rank === 12 || card.rank === 13);
+									console.log(game.turn % 2 === player.pNum);
+									if (game.turn % 2 === player.pNum && (card.rank === 12 || card.rank === 13)) {
+										console.log("Correct turn and rank");
+										switch (req.body.whichCard) {
+											case 0:
+												console.log("Case 0");
+												var min         = 0;
+												var max         = game.deck.length - 1;
+												var random      = Math.floor((Math.random() * ((max + 1) - min)) + min);	
+												game.topCard    = game.secondCard;
+												game.secondCard = game.deck[random];
+												game.deck.remove(game.secondCard.id);
+												break;
+											case 1:
+												console.log("Case 1");
+												var min         = 0;
+												var max         = game.deck.length - 1;
+												var random      = Math.floor((Math.random() * ((max + 1) - min)) + min);	
+												game.secondCard = game.deck[random];
+												game.deck.remove(game.secondCard.id);
+												break;
+										}
+										player.runes.add(card.id);
+
+
+										player.save(function (e, savedPlayer) {
+											//Assign winner if player has won
+											var victor = winner(savedPlayer);
+											
+											if (victor) {
+												game.winner = savedPlayer.pNum;
+											}
+
+											game.turn++;
+											game.save(function (e6, savedGame) {
+												Player.publishUpdate(savedPlayer.id, {change: 'runes', victor: victor, player: savedPlayer, turn: game.turn});
+												res.send({runes: true, turn: game.turn % 2 === player.pNum, rank: card.rank <= 10});
+											});
+										});
+									}									
+								}
+							});
+						}
+					});
+				}
+			});
+		}		
+	},
+
+	sevenScuttle: function (req, res) {
+		console.log("\nScuttling from seven");
+		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('scuttledPlayerId') && req.body.hasOwnProperty('card') && req.body.hasOwnProperty('whichCard') && req.body.hasOwnProperty('target')) {
+			console.log("req.body has right properties");
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
+				if (error || !game) {
+					console.log("Game not found for sevenScuttle");
+					res.send(404);
+				} else {
+					Player.findOne(req.body.scuttledPlayerId).populate('hand').populate('points').populate('runes').exec(function (erro, player) {
+						if (erro || !player) {
+							console.log("Player not found for sevenScuttle");
+							res.send(404);
+						} else {
+							var highRank  = req.body.card.rank > req.body.target.rank;
+							var highSuit  = req.body.card.rank === req.body.target.rank && req.body.card.suit > req.body.target.suit;
+							var validRank = req.body.card.rank <= 10;
+							if ((game.turn + 1) % 2 === player.pNum && validRank && (highRank || highSuit)) {
+								switch (req.body.whichCard) {
+									case 0:
+										console.log("Case 0");
+										var min         = 0;
+										var max         = game.deck.length - 1;
+										var random      = Math.floor((Math.random() * ((max + 1) - min)) + min);	
+										game.topCard    = game.secondCard;
+										game.secondCard = game.deck[random];
+										game.deck.remove(game.secondCard.id);
+										break;
+									case 1:
+										console.log("Case 1");
+										var min         = 0;
+										var max         = game.deck.length - 1;
+										var random      = Math.floor((Math.random() * ((max + 1) - min)) + min);	
+										game.secondCard = game.deck[random];
+										game.deck.remove(game.secondCard.id);
+										break;
+								}
+								game.scrap.add(req.body.card.id);
+								game.scrapTop = req.body.card;
+								player.points.remove(req.body.target.id);
+								game.scrap.add(req.body.target.id);
+
+
+								player.save(function (e, savedPlayer) {
+									//Assign winner if player has won
+									var victor = winner(savedPlayer);
+									
+									if (victor) {
+										game.winner = savedPlayer.pNum;
+									}
+
+									game.turn++;
+									game.save(function (e6, savedGame) {
+										Game.publishUpdate(savedGame.id, {change: 'sevenScuttled', victor: victor, game: savedGame, player: savedPlayer});
+										res.send({scuttled: true, turn: (game.turn + 1) % 2 === player.pNum, validRank: validRank, highRank: highRank, highSuit: highSuit});
+									});
+								});
+							} else {
+								console.log("Scuttle is illigitimate");
+								res.send({scuttled: false, turn: (game.turn + 1) % 2 === player.pNum, validRank: validRank, highRank: highRank, highSuit: highSuit});
+							}									
+
+						}
+					});
+				}
+			});
+		}		
+	},
+
 };
