@@ -496,7 +496,8 @@ module.exports = {
 																yourTurn: yourTurn,
 																game: savedGame,
 																player: savedPlayer,
-																card: card
+																card: card,
+																hadTarget: false
 															});
 														}
 														break;
@@ -646,6 +647,7 @@ module.exports = {
 													game.firstEffect = null;
 													game.turn++;
 													game.save(function (er, savedGame) {
+														console.log("It is now turn: " + savedGame.turn);
 														playerSort[0].save(function (e, savedP0) {
 															playerSort[1].save(function (e6, savedP1) {
 																Game.publishUpdate(game.id, {
@@ -731,6 +733,7 @@ module.exports = {
 														game.turn++;
 
 														game.save(function (er, savedGame) {
+															console.log("It is now turn: " + savedGame.turn);
 															player.save(function (e, savedPlayer) {
 																Game.publishUpdate(savedGame.id, {
 																	change : 'resolvedFive',
@@ -781,6 +784,7 @@ module.exports = {
 														game.firstEffect = null;
 														game.turn++;
 														game.save(function (er, savedGame) {
+															console.log("It is now turn: " + savedGame.turn);
 															players[0].save(function (e, savedP0) {
 																players[1].save(function (e6, savedP1) {
 																	var playerSort = sortPlayers([savedP0, savedP1]);
@@ -808,6 +812,7 @@ module.exports = {
 													game.firstEffect = null;
 
 													game.save(function (er, savedGame) {
+														console.log("It is now turn: " + savedGame.turn);
 														player.save(function (e, savedPlayer) {
 															Game.publishUpdate(game.id, {change: 'sevenData', game: savedGame, player: savedPlayer});
 														});
@@ -1100,28 +1105,68 @@ module.exports = {
 					console.log("Game not found for sevenOneOff");
 					res.send(404);
 				} else {
-					switch (req.body.whichCard) {
-						case 0:
-							var oneOffId = game.topCard;
-							break;
-						case 1:
-							var oneOffId = game.secondCard;
-							break;
-					}
-
-					Card.findOne(oneOffId).exec(function (erro, card) {
-						if (erro || !card) {
-							console.log("Card not found for sevenOneOff");
-							res.send(404);
-						} else {
-							console.log("Found Card for sevenOneOff: " + card.alt);
-							//Initialize validRank as false; update it if rank is valid
-							var validRank = false;
-							if (card.rank <= 7 || card.rank === 9) {
-								validRank = true;
-							}
+					var yourTurn = game.turn % 2 === req.body.pNum;
+					console.log("Your Turn: " + yourTurn);
+					if (yourTurn) {
+						switch (req.body.whichCard) {
+							case 0:
+								var oneOffId = game.topCard;
+								break;
+							case 1:
+								var oneOffId = game.secondCard;
+								break;
 						}
-					});
+
+						Card.findOne(oneOffId).exec(function (erro, card) {
+							if (erro || !card) {
+								console.log("Card not found for sevenOneOff");
+								res.send(404);
+							} else {
+								console.log("Found Card for sevenOneOff: " + card.alt);
+								var validRank = card.rank <= 7 || card.rank === 9;
+								if (validRank) {
+									//sevenOneOff must always be the first effect on the stack
+									game.firstEffect = card;
+
+									//Remove oneOff from top two cards in deck, then replace it with a card from the deck
+									var max = game.deck.length - 1;
+									var min = 0;
+									var random = Math.floor((Math.random() * ((max + 1) - min)) + min);		
+									//If topCard was played, the card that was secondCard is now topCard					
+									if (req.body.whichCard === 0) {
+										game.topCard    = game.secondCard;
+									}
+									//Either way, get a new secondCard and remove it from the deck
+									game.secondCard = game.deck[random];
+									game.deck.remove(game.deck[random].id);
+
+									///////////////////////////////////////
+									// Handle Targets for Twos and Nines //
+									///////////////////////////////////////
+									game.save(function (err, savedGame) {
+										//Socket event sent to opponent to request counter to this oneOff
+										Game.publishUpdate(game.id, {
+											change   : 'sevenOneOff',
+											game     : savedGame,
+											card     : card,
+											whichCard: req.body.whichCard},
+											req);
+										//Response to requesting socket
+										res.send({
+											sevenOneOff : true,
+											validRank   : validRank,
+											yourTurn    : yourTurn,
+											game        : savedGame,
+											card        : card,
+											whichCard   : req.body.whichCard
+										});
+									});
+
+								}
+							}
+						});
+					}					
+					
 				}
 			});
 

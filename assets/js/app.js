@@ -386,32 +386,33 @@
 				if ($scope.game.topTwoPick) {
 					//Seven One Offs
 					console.log("Playing " + $scope.game.selCard.alt + " for oneOff after seven");
-						switch ($scope.game.selCard.rank) {
-							case 1:
-							case 3:
-							case 6:
-							case 7:
-								console.log("\nRequesting to play " + $scope.game.selCard.alt + " as oneOff after seven");
-								io.socket.get('/game/sevenOneOff', {
-									gameId: $scope.game.gameId,
-									// playerId: $scope.game.players[$scope.game.pNum].id,
-									cardId: $scope.game.selId,
-									whichCard: $scope.game.whichCard
-								}, function(res) {
-									console.log(res);
-									$scope.game.players[res.player.pNum] = res.player;
-									///////////////////////////////////////////////////
-									//Doesn't this need to update the scrap, as well?//
-									///////////////////////////////////////////////////
-									$scope.$apply();
-									if (!res.oneOff) {
-										$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
-									}
-									$scope.game.selId = null;
-									$scope.game.selIndex = null;
-									$scope.game.selCard = null;
-								});
-								break;
+
+						console.log("\nRequesting to play " + $scope.game.selCard.alt + " as oneOff after seven");
+						io.socket.get('/game/sevenOneOff', {
+							gameId    : $scope.game.gameId,
+							playerId  : $scope.game.players[$scope.game.pNum].id,
+							pNum      : $scope.game.pNum,
+							cardId    : $scope.game.selId,
+							whichCard : $scope.game.whichCard
+						}, function(res) {
+							console.log(res);
+							$scope.game.topCard    = res.game.topCard;
+							$scope.game.secondCard = res.game.secondCard;
+							$scope.game.topTwo     = [$scope.game.topCard, $scope.game.secondCard];
+							///////////////////////////////////////////////////
+							//Doesn't this need to update the scrap, as well?//
+							///////////////////////////////////////////////////
+							if (!res.sevenOneOff) {
+								//Then deselect the chosen card from the top two cards
+								//$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+							} else {
+								$scope.game.topTwoPick = false;
+							}
+							$scope.$apply();
+							$scope.game.selId = null;
+							$scope.game.selIndex = null;
+							$scope.game.selCard = null;
+						});
 							// case 5:
 							// 	console.log("Playing 5 to draw two");
 							// 	io.socket.get('/game/oneOff', {
@@ -447,7 +448,7 @@
 							// 		$scope.game.selCard = null;
 							// 	});
 							// 	break;
-						}
+						
 				} else {
 					if ($scope.game.stacking) {
 						if ($scope.game.selCard.rank === 2) {
@@ -619,34 +620,37 @@
 							break;
 
 						case 'oneOff':
+							$scope.game.stacking = true;
 							console.log('\nOne Off was played');
 							var conf = confirm("Your opponent has played the " + obj.data.card.alt + " as a oneOff. Would you like to counter with a two?");
-							$scope.game.stacking = true;
 							if (!conf) {
 								console.log("Declined to counter. Requesting to resolve stack");
 								$scope.game.resolve();
 							}
 							$scope.game.players[obj.data.player.pNum] = obj.data.player;
-							$scope.game.turn = obj.data.game.turn;
+							$scope.game.turn       = obj.data.game.turn;
 							$scope.game.topTwoPick = false;
 							break;
 
 						case 'threeData':
-							$scope.game.stacking = true;
-							$scope.game.scrapPick = true;
-							alert('Please pick a card from the scrap pile to take to your hand');
+							$scope.game.stacking   = true;
+							$scope.game.scrapPick  = true;
 							$scope.game.topTwoPick = false;
+							alert('Please pick a card from the scrap pile to take to your hand');
 							break;
 
 						case 'sevenData':
-							$scope.game.topTwoPick = true;
+							$scope.game.topTwoPick       = true;
 							$scope.game.players[obj.data.player.pNum].hand = obj.data.player.hand;
-							$scope.game.scrap = obj.data.game.scrap;
-							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
-							$scope.game.turn = obj.data.game.turn;
-							$scope.game.topCard.class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
+							$scope.game.scrap            = obj.data.game.scrap;
+							$scope.game.scrapTopImg      = obj.data.game.scrapTop.img;
+							$scope.game.turn             = obj.data.game.turn;
+							$scope.game.topCard          = obj.data.game.topCard;
+							$scope.game.secondCard       = obj.data.game.secondCard;
+							$scope.game.topTwo           = [obj.data.game.topCard, obj.data.game.secondCard];
+							$scope.game.topCard.class    = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
 							$scope.game.secondCard.class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
-							$scope.game.stacking = false;
+							$scope.game.stacking         = false;
 							break;
 
 						case 'sevenScuttled':
@@ -656,6 +660,20 @@
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.turn = obj.data.game.turn;
+							break;
+						case 'sevenOneOff':
+							$scope.game.stacking = true;
+							var conf = confirm("Your opponent has played the " + obj.data.card.alt + " as a oneOff after a seven. Would you like to counter with a two?");
+							if (!conf) {
+								console.log("Declined to counter. Requesting to resolve stack");
+								$scope.game.resolve();
+							}
+							$scope.game.turn       = obj.data.turn;
+							$scope.topTwoPick      = false;
+							$scope.game.deck       = obj.data.game.deck;
+							$scope.game.topCard    = obj.data.game.topCard;
+							$scope.game.secondCard = obj.data.game.secondCard;
+							$scope.game.topTwo     = [$scope.game.topCard, $scope.game.secondCard];
 							break;
 
 						case 'resolvedFizzle':

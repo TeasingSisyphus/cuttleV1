@@ -42,6 +42,7 @@ BUGS:
 -Changing the border on one of the cards screws with the edges of the card images to the right of it
 -FIXED: Game sometimes crashes upon drawing becasuse game.deck[random] is undefined
 	-I believe this is because random was allowed to be as big as game.deck.length, instead of game.deck.length - 1
+-Turn seemed not to incriment properly after 7-ing into a 5
 
 FUNKY INTERACTIONS/EXCEPTIONS
 -3 with nothing in scrap
