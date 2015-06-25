@@ -925,6 +925,7 @@ module.exports = {
 							game.scrap.add(req.body.secondDiscard);
 							game.scrap.add(game.firstEffect);
 							game.scrapTop = game.firstEffect;
+							game.firstEffect = null;
 							game.turn++;
 
 							game.save(function (err, savedGame) {

@@ -772,6 +772,7 @@
 							break;
 
 						case 'resolvedFour':
+							console.log("Resolved four");
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.players[obj.data.player.pNum] = obj.data.player;
