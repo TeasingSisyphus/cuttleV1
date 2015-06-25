@@ -254,6 +254,12 @@
 							whichCard: $scope.game.whichCard,
 						}, function (res){
 							console.log(res);
+							if (res.hasOwnProperty('glasses')) {
+								if (res.glasses) {
+									$scope.game.glasses = true;
+									$scope.$apply();
+								}
+							}
 							//If the request was denied, deselect the requested card
 							if (!res.runes) {
 								$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
@@ -274,6 +280,13 @@
 						cardId: $scope.game.selId
 					}, function(res) {
 						console.log(res);
+
+						if (res.hasOwnProperty('glasses')) {
+							if (res.glasses) {
+								$scope.game.glasses = true;
+								$scope.$apply();
+							}
+						}						
 						//If the request was denied, deselect the requested card
 						if (!res.runes) {
 							$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
@@ -753,12 +766,20 @@
 							break;
 
 						case 'resolvedTwo':
+							$scope.game.topTwoPick = false;
+							$scope.game.stacking = false;
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.players = obj.data.players;
-							$scope.game.stacking = false;
 							$scope.game.turn = obj.data.game.turn;
-							$scope.game.topTwoPick = false;
+
+							var glasses = false;
+							$scope.game.players[$scope.game.pNum].runes.forEach(function (rune, index, runes) {
+								if (rune.rank === 8) {
+									glasses = true;
+								}
+							});
+							$scope.game.glasses = glasses;
 							break;
 
 						case 'resolvedThree':
@@ -796,12 +817,13 @@
 							break;
 
 						case 'resolvedSix':
+							$scope.game.stacking = false;
+							$scope.game.topTwoPick = false;
+							$scope.game.glasses = false;
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.players = obj.data.players;
-							$scope.game.stacking = false;
 							$scope.game.turn = obj.data.game.turn;
-							$scope.game.topTwoPick = false;
 							break;
 					}
 					break;

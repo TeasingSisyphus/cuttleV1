@@ -2,14 +2,12 @@
 
 This is a multiplayer card game leveraging sails.js and angularjs.
 
-URGENT!!!!!!!!!!!
--Must do one-offs for sevens
 
 TODO:
 
 -One offs
-	-4's to discard 2 cards
-	-9's to bounce a card
+	- 7 for a 4 to discard 2 cards
+	- 9 to bounce and FREEZE a card
 
 REFACTORING
 -Change id to gameId in get requests
@@ -19,19 +17,8 @@ REFACTORING
 -Change conditionals to use temp variables
 	-Do this for turn checking
 
-TESTING
--Look up resolve() not a function issue
 
 ONE-OFF RESOLVES FRONT-END:
--Ace: Needs game, both players, can get by with just game potentially
--Two: Needs game, needs ONE player and a target card
--Three: Needs, target card
--Four: Needs game, and player, will require an extra request
--Five: Needs game, and player
--Six: Same as Ace but with runes
-	-Will need to be more robust after jacks are added
--Seven: Needs game and player
--Eight: Save for later
 -Nine: Needs game, needs player of target, needs target card
 
 BUGS:
@@ -42,10 +29,10 @@ BUGS:
 -Changing the border on one of the cards screws with the edges of the card images to the right of it
 -FIXED: Game sometimes crashes upon drawing becasuse game.deck[random] is undefined
 	-I believe this is because random was allowed to be as big as game.deck.length, instead of game.deck.length - 1
--Turn seemed not to incriment properly after 7-ing into a 5
 
 FUNKY INTERACTIONS/EXCEPTIONS
 -3 with nothing in scrap
--7 for 7
+-3 for a 3
+	-Remove the one-off three from the game????
 -7 with 1/no cards in deck
 -5 with 1/no cards in deck

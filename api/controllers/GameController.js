@@ -1036,8 +1036,25 @@ module.exports = {
 									console.log(card.rank);
 									console.log(card.rank === 12 || card.rank === 13);
 									console.log(game.turn % 2 === player.pNum);
-									if (game.turn % 2 === player.pNum && (card.rank === 12 || card.rank === 13)) {
-										console.log("Correct turn and rank");
+									if (game.turn % 2 === player.pNum && (card.rank === 12 || card.rank === 13 || card.rank === 8)) {
+										var glasses = card.rank === 8;
+										if (glasses) {
+											switch (card.suit) {
+												case 0:
+													card.img = '/images/cards/Glasses_Clubs.jpg';
+													break;
+												case 1:
+													card.img = '/images/cards/Glasses_Diamonds.jpg';
+													break;
+												case 2:
+													card.img = '/images/cards/Glasses_Hearts.jpg';
+													break;
+												case 3:
+													card.img = '/images/cards/Glasses_Spades.jpg';
+													break;		
+											}
+											card.save();
+										}										
 										switch (req.body.whichCard) {
 											case 0:
 												console.log("Case 0");
@@ -1071,7 +1088,7 @@ module.exports = {
 											game.turn++;
 											game.save(function (e6, savedGame) {
 												Player.publishUpdate(savedPlayer.id, {change: 'runes', victor: victor, player: savedPlayer, turn: game.turn});
-												res.send({runes: true, turn: game.turn % 2 === player.pNum, rank: card.rank <= 10});
+												res.send({runes: true, glasses: glasses, turn: game.turn % 2 === player.pNum, rank: card.rank <= 10});
 											});
 										});
 									}									

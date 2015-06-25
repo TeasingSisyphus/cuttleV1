@@ -174,8 +174,25 @@ module.exports = {
 										console.log("Game " + player.currentGame.id + " not found for runes");
 										res.send(404);
 									} else {
-										if (game.turn % 2 === player.pNum && (card.rank === 12 || card.rank === 13)) {
-
+										if (game.turn % 2 === player.pNum && (card.rank === 12 || card.rank === 13 || card.rank === 8)) {
+											var glasses = card.rank === 8;
+											if (glasses) {
+												switch (card.suit) {
+													case 0:
+														card.img = '/images/cards/Glasses_Clubs.jpg';
+														break;
+													case 1:
+														card.img = '/images/cards/Glasses_Diamonds.jpg';
+														break;
+													case 2:
+														card.img = '/images/cards/Glasses_Hearts.jpg';
+														break;
+													case 3:
+														card.img = '/images/cards/Glasses_Spades.jpg';
+														break;		
+												}
+												card.save();
+											}
 											player.hand.remove(card.id);
 											player.runes.add(card.id);
 
@@ -187,7 +204,7 @@ module.exports = {
 
 												game.turn++;
 												Player.publishUpdate(savedPlayer.id, {change: 'runes', victor: victor, player: savedPlayer, turn: game.turn});
-												res.send({runes: true, turn: game.turn % 2 === player.pNum, rank: (card.rank === 12 || card.rank === 13)});
+												res.send({runes: true, glasses: glasses, turn: game.turn % 2 === player.pNum, rank: (card.rank === 12 || card.rank === 13)});
 												game.save();
 
 											});
