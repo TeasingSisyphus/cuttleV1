@@ -672,6 +672,25 @@ module.exports = {
 											console.log("First effect is a three");
 											Game.publishUpdate(game.id, {change: 'threeData'}, req);
 											break;
+										case 4:
+											console.log('First effect is a four');
+											Player.findOne(req.body.otherPlayerId).populate('hand').populate('points').populate('runes').exec(function (err, player) {
+												if (err || !player) {
+													console.log("Player " + req.body.otherPlayerId + " not found for 4 resolution");
+													res.send(404);
+												} else {
+													player.hand.remove(card.id);
+													game.scrap.add(card.id);
+													game.scrapTop = card;
+
+													game.save(function (er, savedGame) {
+														player.save(function (e, savedPlayer) {
+															res.send({change: 'fourData', game: savedGame, player: savedPlayer});
+														});
+													});
+												}
+											});
+											break;
 										case 5:
 											console.log("First effect is a five");
 											Player.findOne(req.body.otherPlayerId).populate('hand').populate('points').populate('runes').exec(function (err, player) {
@@ -863,7 +882,7 @@ module.exports = {
 			console.log("\nResolve Three requested for game: " + req.body.gameId);
 			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
 				if (error || !game) {
-					console.log("Game not found for reolveThree");
+					console.log("Game not found for resolveThree");
 					res.send(404);
 				} else {
 					Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function (erro, player) {
@@ -878,15 +897,49 @@ module.exports = {
 						game.save(function (err, savedGame) {
 							player.save(function (er, savedPlayer) {
 								Game.publishUpdate(game.id, {change: 'resolvedThree', game: savedGame, player: savedPlayer});
-
 							});
-
 						});
 					});
 				}
 			});
 		}
 	},
+
+	resolveFour: function(req, res) {
+		console.log('\n\nResolve four');
+		console.log(req.body);
+		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('playerId') && req.body.hasOwnProperty('firstDiscard') && req.body.hasOwnProperty('secondDiscard')) {
+			console.log("\nResolve Four requested for game: " + req.body.gameId);
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
+				if (error || !game) {
+					console.log("Game not found for resolveFour");
+					res.send(404);
+				} else {
+					Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function (erro, player) {
+						if (erro || !player) {
+							console.log('Game not found for resolveFour');
+						} else {
+							player.hand.remove(req.body.firstDiscard);
+							player.hand.remove(req.body.secondDiscard);
+							game.scrap.add(req.body.firstDiscard);
+							game.scrap.add(req.body.secondDiscard);
+							game.scrap.add(game.firstEffect);
+							game.scrapTop = game.firstEffect;
+							game.turn++;
+
+							game.save(function (err, savedGame) {
+								console.log('Saving game');
+								player.save(function (er, savedPlayer) {
+									Game.publishUpdate(game.id, {change: 'resolvedFour', game: savedGame, player: savedPlayer});
+								});
+							});
+						}
+					});
+				}
+			});
+		}
+	},
+
 	//Play points from the top two cards using a seven
 	sevenPoints: function (req, res) {
 		console.log("\nPlaying points to resolve seven");

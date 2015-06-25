@@ -105,7 +105,8 @@
 		this.scrapPick = false;
 		this.topTwoPick = false;
 		//Represents which of the top two cards FUCKER
-		this.whichCard =null;
+		this.whichCard = null;
+		this.selectTwo = false;
 
 
 		this.ready = function() {
@@ -129,7 +130,23 @@
 		//If a card is already selected, use the previous index to find it and revert its class to normal
 		//If the requested card was already selected, deselect it
 		this.select = function(card, index) {
-
+			if ($scope.game.selectTwo) {
+				console.log('Selecting two cards for four discard');
+				if (($scope.game.turn + 1) % 2 === $scope.game.pNum) {
+					if ($scope.game.selCard) {
+						console.log('\n\nLogging selCard');
+						console.log($scope.game.selCard);
+						io.socket.get('/game/resolveFour', {
+							gameId           : $scope.game.gameId,
+							playerId         : $scope.game.players[$scope.game.pNum].id,
+							firstDiscard     : card.id,
+							secondDiscard    : $scope.game.selCard.id,
+						}, function(res) {
+							console.log(res);
+						});
+					}
+				}
+			}
 			if ($scope.game.topTwoPick) {
 				console.log("Choosing card for 7");
 				if ($scope.game.turn % 2 === $scope.game.pNum) {
@@ -510,6 +527,7 @@
 						switch ($scope.game.selCard.rank) {
 							case 1:
 							case 3:
+							case 4:
 							case 7:
 								console.log("\nRequesting to play " + $scope.game.selCard.alt + " as oneOff");
 								io.socket.get('/game/oneOff', {
@@ -579,19 +597,31 @@
 				otherPlayerId: $scope.game.players[($scope.game.pNum + 1) % 2].id,
 			}, function(res) {
 				console.log(res);
+				if (res.hasOwnProperty('change')) {
+					if (res.change === 'fourData') {
+						$scope.game.stacking   = true;
+						$scope.game.selectTwo  = true;
+						$scope.game.topTwoPick = false;
+						$scope.game.selId = null;
+						$scope.game.selIndex = null;
+						$scope.game.selCard = null;
+						alert('Please pick two cards from your hand to discard to the scrap pile');
+					}
+				}
 			});
 		};
 
 		this.chooseScrap = function(card) {
 			console.log(card);
 			io.socket.get('/game/resolveThree', {
-				gameId       : $scope.game.gameId,
+				gameId     : $scope.game.gameId,
 				playerId   : $scope.game.players[$scope.game.pNum].id,
 				cardId     : card.id,
 			}, function(res) {
 				console.log(res);
 			});
 		};
+
 
 		$rootScope.$on('readyView', function(event, game) {
 			console.log('\nChanging to readyView');
@@ -737,6 +767,16 @@
 							$scope.game.players[obj.data.player.pNum] = obj.data.player;
 							$scope.game.stacking = false;
 							$scope.game.scrapPick = false;
+							$scope.game.turn = obj.data.game.turn;
+							$scope.game.topTwoPick = false;
+							break;
+
+						case 'resolvedFour':
+							$scope.game.scrap = obj.data.game.scrap;
+							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
+							$scope.game.players[obj.data.player.pNum] = obj.data.player;
+							$scope.game.stacking = false;
+							$scope.game.selectTwo = false;
 							$scope.game.turn = obj.data.game.turn;
 							$scope.game.topTwoPick = false;
 							break;
