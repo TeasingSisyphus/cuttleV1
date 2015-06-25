@@ -354,27 +354,54 @@
 		//Used to make request involving selecting a single rune to target
 		this.selectRune = function(card) {
 			console.log("\nSelecting rune to target");
+			console.log("selId: " + $scope.game.selId);
+			console.log("stacking: " + $scope.game.stacking);
 			if ($scope.game.selId && !$scope.game.stacking) {
-				console.log("targeting");
-				switch ($scope.game.selCard.rank) {
-					case 2:
-						io.socket.get('/game/oneOff', {
+				console.log("got id and not stacking");
+				if ($scope.game.topTwoPick) {
+					console.log("from a seven");
+					if ($scope.game.selCard.rank === 2 || $scope.game.selCard.rank === 9) {
+						console.log("making request");
+						io.socket.get('/game/sevenOneOff', {
 							gameId: $scope.game.gameId,
-							playerId: $scope.game.players[$scope.game.pNum].id,
+							pNum:   $scope.game.pNum,
 							cardId: $scope.game.selId,
-							targetId: card.id
+							targetId: card.id,
+							whichCard: $scope.game.whichCard
 						}, function(res) {
 							console.log(res);
-							if (res.change.resolvedTwo) {
-								$scope.game.players = res.players;
-							} else {
-								$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card'
+							if (!res.resolvedTwo) {
+								$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
 							}
 							$scope.game.selId = null;
 							$scope.game.selIndex = null;
-							$scope.game.selCard = null
+							$scope.game.selCard = null;
 							$scope.$apply();
 						});
+					}
+				} else {
+					console.log("targeting");
+					switch ($scope.game.selCard.rank) {
+						case 2:
+							io.socket.get('/game/oneOff', {
+								gameId: $scope.game.gameId,
+								playerId: $scope.game.players[$scope.game.pNum].id,
+								cardId: $scope.game.selId,
+								targetId: card.id
+							}, function(res) {
+								console.log(res);
+								if (res.change.resolvedTwo) {
+									$scope.game.players = res.players;
+								} else {
+									$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card'
+								}
+								$scope.game.selId = null;
+								$scope.game.selIndex = null;
+								$scope.game.selCard = null
+								$scope.$apply();
+							});
+					}
+					
 				}
 			}
 		};

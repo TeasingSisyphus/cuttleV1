@@ -655,7 +655,11 @@ module.exports = {
 																	game: savedGame,
 																	players: [savedP0, savedP1]
 																});
-																res.send()
+																res.send({
+																	resolvedTwo: true,
+																	game: savedGame,
+																	players: [savedP0, savedP1]
+																}); 
 																card.save();
 															});
 														});
@@ -1125,6 +1129,22 @@ module.exports = {
 								console.log("Found Card for sevenOneOff: " + card.alt);
 								var validRank = card.rank <= 7 || card.rank === 9;
 								if (validRank) {
+									if (card.rank === 2 || card.rank === 9) {
+										if (req.body.hasOwnProperty('targetId')) {
+											card.targetId = req.body.targetId;
+											card.save();
+
+										} else {
+											res.send({
+												oneOff: false,
+												firstEffect: true,
+												validRank: validRank,
+												yourTurn: yourTurn,
+												hadTarget: false,						
+												card: card
+											});
+										}						
+									}
 									//sevenOneOff must always be the first effect on the stack
 									game.firstEffect = card;
 
