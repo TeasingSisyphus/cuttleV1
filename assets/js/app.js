@@ -133,6 +133,7 @@
 			if ($scope.game.selectTwo) {
 				console.log('Selecting two cards for four discard');
 				if (($scope.game.turn + 1) % 2 === $scope.game.pNum) {
+					console.log('proper turn');
 					if ($scope.game.selCard) {
 						console.log('\n\nLogging selCard');
 						console.log($scope.game.selCard);
@@ -470,41 +471,7 @@
 							$scope.game.selIndex = null;
 							$scope.game.selCard = null;
 						});
-							// case 5:
-							// 	console.log("Playing 5 to draw two");
-							// 	io.socket.get('/game/oneOff', {
-							// 		gameId: $scope.game.gameId,
-							// 		playerId: $scope.game.players[$scope.game.pNum].id,
-							// 		cardId: $scope.game.selId
-							// 	}, function(res) {
-							// 		$scope.game.players[res.player.pNum] = res.player;
-							// 		$scope.$apply();
-							// 		if (!res.onOff) {
-							// 			$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
-							// 		}
-							// 		$scope.game.selId = null;
-							// 		$scope.game.selIndex = null;
-							// 		$scope.game.selCard = null;
-							// 	});
-							// 	break;
-							// case 6:
-							// 	console.log('\nPlaying 6 to clear the runes');
-							// 	io.socket.get('/game/oneOff', {
-							// 		gameId: $scope.game.gameId,
-							// 		playerId: $scope.game.players[$scope.game.pNum].id,
-							// 		cardId: $scope.game.selId,
-							// 	}, function(res) {
-							// 		console.log(res);
-							// 		$scope.game.players[res.player.pNum] = res.player;
-							// 		$scope.$apply();
-							// 		if (!res.oneOff) {
-							// 			$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
-							// 		}
-							// 		$scope.game.selId = null;
-							// 		$scope.game.selIndex = null;
-							// 		$scope.game.selCard = null;
-							// 	});
-							// 	break;
+
 						
 				} else {
 					if ($scope.game.stacking) {
@@ -612,9 +579,11 @@
 				console.log(res);
 				if (res.hasOwnProperty('change')) {
 					if (res.change === 'fourData') {
+						$scope.game.topTwoPick = false;
+						$scope.game.turn = res.game.turn;
+						$scope.$apply();
 						$scope.game.stacking   = true;
 						$scope.game.selectTwo  = true;
-						$scope.game.topTwoPick = false;
 						$scope.game.selId = null;
 						$scope.game.selIndex = null;
 						$scope.game.selCard = null;

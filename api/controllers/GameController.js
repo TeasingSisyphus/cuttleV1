@@ -1173,7 +1173,6 @@ module.exports = {
 	sevenOneOff: function (req, res){
 		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('cardId') && req.body.hasOwnProperty('whichCard')) {
 			console.log("\n\nsevenOneOff requested from socket " + req.socket.id);
-			console.log(req.body);
 
 			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
 				if (error || !game) {

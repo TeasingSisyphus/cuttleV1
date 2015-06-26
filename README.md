@@ -6,7 +6,6 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 TODO:
 
 -One offs
-	- 7 for a 4 to discard 2 cards
 	- 9 to bounce and FREEZE a card
 
 REFACTORING
