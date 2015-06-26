@@ -1,17 +1,17 @@
 /**
-* Game.js
-*
-* @description :: TODO: You might write a short summary of how this model works and what it represents here.
-* @docs        :: http://sailsjs.org/#!documentation/models
-*/
+ * Game.js
+ *
+ * @description :: TODO: You might write a short summary of how this model works and what it represents here.
+ * @docs        :: http://sailsjs.org/#!documentation/models
+ */
 
 module.exports = {
 
   attributes: {
-  	name: {
-  		type: 'string',
-  		required: true,
-  	},
+    name: {
+      type: 'string',
+      required: true,
+    },
 
     p0Ready: {
       type: 'boolean',
@@ -22,19 +22,19 @@ module.exports = {
       type: 'boolean',
       defaultsTo: false,
     },
-    
-  	players: {
-  		collection: 'player',
-  		via: 'currentGame',
-  	},
-    
-  	topCard: {
-  		model: 'card',
-  	},
 
-  	secondCard: {
-  		model: 'card',
-  	},
+    players: {
+      collection: 'player',
+      via: 'currentGame',
+    },
+
+    topCard: {
+      model: 'card',
+    },
+
+    secondCard: {
+      model: 'card',
+    },
 
     deck: {
       collection: 'card',
@@ -70,9 +70,9 @@ module.exports = {
       defaultsTo: null
     },
 
-  	log: {
-  		type: 'array',
-  	},
+    log: {
+      type: 'array',
+      defaultsTo: []
+    },
   }
 };
-

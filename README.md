@@ -4,6 +4,7 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 
 
 TODO:
+-Game log for playing a two to counter
 
 -One offs
 	- 9 to bounce and FREEZE a card

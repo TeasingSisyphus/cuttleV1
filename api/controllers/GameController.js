@@ -6,14 +6,14 @@
  */
 
 
-var sortPlayers = function (players) {
+var sortPlayers = function(players) {
 	var sorted = [];
 
 	for (var i = 0; i < players.length; i++) {
 		sorted.push(players[i]);
 	}
 
-	sorted.sort(function (a, b) {
+	sorted.sort(function(a, b) {
 		return a.pNum - b.pNum
 	});
 
@@ -27,14 +27,14 @@ var winner = function(player) {
 	var points = 0;
 
 	//Check kings for p0
-	player.runes.forEach(function (rune, index, runes) {
+	player.runes.forEach(function(rune, index, runes) {
 		if (rune.rank === 13) {
 			kings++;
 		}
 	});
 
 	//Check points for p0
-	player.points.forEach(function (point, index, ponits) {
+	player.points.forEach(function(point, index, ponits) {
 		points += point.rank;
 	});
 
@@ -90,7 +90,7 @@ module.exports = {
 			console.log("\nRecieved request to subscribe socket " + req.socket.id + " to game class room");
 			Game.watch(req);
 
-			Game.find({}).exec(function (err, games) {
+			Game.find({}).exec(function(err, games) {
 				res.send(games);
 			});
 		}
@@ -102,7 +102,7 @@ module.exports = {
 			console.log("\nReceived request to create game from socket " + req.socket.id);
 			Game.create({
 				name: req.body.name
-			}).exec(function (err, newGame) {
+			}).exec(function(err, newGame) {
 				if (err || !newGame) {
 					console.log("Game not created!\n");
 					console.log(err);
@@ -120,7 +120,7 @@ module.exports = {
 	joinGame: function(req, res) {
 		if (req.isSocket) {
 			console.log("\nReceived request to join game from socket: " + req.socket.id);
-			Game.findOne(req.body.id).populateAll().exec(function (err, game) {
+			Game.findOne(req.body.id).populateAll().exec(function(err, game) {
 				if (err || !game) {
 					console.log("Game " + req.body + " not found for joinGame");
 					res.send(404);
@@ -132,9 +132,9 @@ module.exports = {
 							Player.create({
 								socketId: req.socket.id,
 								pNum: game.players.length,
-							}).exec(function (er, newPlayer) {
+							}).exec(function(er, newPlayer) {
 								game.players.add(newPlayer.id);
-								game.save(function (er, savedGame) {
+								game.save(function(er, savedGame) {
 									res.send({
 										game: savedGame
 									});
@@ -147,7 +147,7 @@ module.exports = {
 							Player.create({
 								socketId: req.socket.id,
 								pNum: game.players.length
-							}).exec(function (er, newPlayer) {
+							}).exec(function(er, newPlayer) {
 								game.players.add(newPlayer.id);
 
 								for (suit = 0; suit <= 3; suit++) {
@@ -189,7 +189,7 @@ module.exports = {
 											img: path,
 											alt: txt,
 											deck: game,
-										}).exec(function (cardError, card) {
+										}).exec(function(cardError, card) {
 											if (cardError || !card) {
 												console.log("Card not created for game " + game.id);
 											} else {
@@ -201,7 +201,7 @@ module.exports = {
 								} //End of for loops	
 
 
-								game.save(function (e, savedGame) {
+								game.save(function(e, savedGame) {
 									res.send({
 										game: savedGame
 									});
@@ -232,7 +232,7 @@ module.exports = {
 			console.log("\nPlayer w/ socket: " + req.socket.id + " is ready to play.");
 			var deal = false;
 
-			Game.findOne(req.body.id).populateAll().exec(function (err, game) {
+			Game.findOne(req.body.id).populateAll().exec(function(err, game) {
 				if (err || !game) {
 					console.log("Game " + req.body.id + " not found for ready");
 					res.send(404);
@@ -240,7 +240,7 @@ module.exports = {
 					console.log("P0 is ready: " + game.p0Ready);
 					console.log("P1 is ready: " + game.p1Ready);
 
-					Player.find([game.players[0].id, game.players[1].id]).populate('hand').exec(function (errr, playerList) {
+					Player.find([game.players[0].id, game.players[1].id]).populate('hand').exec(function(errr, playerList) {
 
 						var playerSort = sortPlayers(playerList);
 
@@ -314,11 +314,11 @@ module.exports = {
 
 						}
 
-						game.save(function (er, savedGame) {
+						game.save(function(er, savedGame) {
 							if (dealt) {
-								playerList[0].save(function (error, savedP0) {
+								playerList[0].save(function(error, savedP0) {
 
-									playerSort[1].save(function (errrrrr, savedP1) {
+									playerSort[1].save(function(errrrrr, savedP1) {
 										var players = [savedP0, savedP1];
 										Game.message(savedGame.id, {
 											game: savedGame,
@@ -345,14 +345,14 @@ module.exports = {
 	draw: function(req, res) {
 		//Find the game id
 		//Had something funky happen with populate
-		Game.findOne(req.body.id).populate('deck').populate('players').populate('scrap').exec(function (err, game) {
+		Game.findOne(req.body.id).populate('deck').populate('players').populate('scrap').exec(function(err, game) {
 			if (err || !game) {
 				console.log("Game " + req.body.id + " not found for scuttling");
 				res.send(404);
 			} else {
 				//if (req.socket.id === game.players[0].socketId || req.socket.id === game.players[1].socketId);
 				//Find the player id
-				Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function (error, foundPlayer) {
+				Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function(error, foundPlayer) {
 					if (error || !foundPlayer) {
 						console.log("Player " + req.body.playerId + " not found for scuttling");
 						res.send(404);
@@ -370,9 +370,12 @@ module.exports = {
 							game.secondCard = game.deck[random];
 							game.deck.remove(game.deck[random].id);
 							game.turn++;
+
+							var log = "Player " + foundPlayer.pNum + " has drawn a card";
+							game.log.push(log);
 						}
-						game.save(function (errrr, savedGame) {
-							foundPlayer.save(function (errrrr, savedPlayer) {
+						game.save(function(errrr, savedGame) {
+							foundPlayer.save(function(errrrr, savedPlayer) {
 								res.send({
 									yourTurn: game.turn % 2 === foundPlayer.pNum,
 									handSize: foundPlayer.hand.length !== 8,
@@ -399,12 +402,12 @@ module.exports = {
 	scuttle: function(req, res) {
 		if (req.isSocket) {
 			console.log('\nSocket ' + req.socket.id + ' is requesting to scuttle');
-			Game.findOne(req.body.id).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
+			Game.findOne(req.body.id).populate('players').populate('deck').populate('scrap').exec(function(error, game) {
 				if (error || !game) {
 					console.log("Game " + player.currentGame.id + " not found for scuttling");
 					res.send(404);
 				} else {
-					Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function (erro, players) {
+					Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function(erro, players) {
 						if (erro || !players) {
 							console.log("Player " + req.body.playerId + " not found for scuttling");
 							res.send(404);
@@ -419,9 +422,12 @@ module.exports = {
 								game.scrapTop.class = 'card';
 								game.turn++;
 
-								game.save(function (err, savedGame) {
-									playerSort[0].save(function (er, savedP0) {
-										playerSort[1].save(function (e, savedP1) {
+								var log = "Player " + req.body.pNum + " has scuttled Player " + (req.body.pNum + 1) % 2 + "'s " + req.body.target.alt + " with the " + req.body.scuttler.alt;
+								game.log.push(log);
+
+								game.save(function(err, savedGame) {
+									playerSort[0].save(function(er, savedP0) {
+										playerSort[1].save(function(e, savedP1) {
 											res.send({
 												scuttled: true,
 												highRank: req.body.scuttler.rank > req.body.target.rank,
@@ -455,17 +461,17 @@ module.exports = {
 	oneOff: function(req, res) {
 		if (req.isSocket) {
 			console.log("\nSocket " + req.socket.id + ' is requesting to play oneOff to stack');
-			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').populate('twos').exec(function (error, game) {
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').populate('twos').exec(function(error, game) {
 				if (error || !game) {
 					console.log("Game " + req.body.gameId + " not found for oneOff");
 					res.send(404);
 				} else {
-					Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function (erro, player) {
+					Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function(erro, player) {
 						if (erro || !player) {
 							console.log("Player " + req.body.playerId + " not found for oneOff");
 							res.send(404);
 						} else {
-							Card.findOne(req.body.cardId).exec(function (err, card) {
+							Card.findOne(req.body.cardId).exec(function(err, card) {
 								if (err || !card) {
 									console.log("Card " + req.body.cardId + " not found for oneOff");
 									res.send(404);
@@ -479,6 +485,9 @@ module.exports = {
 
 												game.firstEffect = card;
 												player.hand.remove(card.id);
+
+												var log = "Player " + player.pNum + " has played the " + card.alt + " for its one off effect.";
+												game.log.push(log);
 												//Switch to determine targeting requirements of the oneOff
 												switch (card.rank) {
 													case 2:
@@ -502,8 +511,8 @@ module.exports = {
 														}
 														break;
 												}
-												game.save(function (er, savedGame) {
-													player.save(function (e, savedPlayer) {
+												game.save(function(er, savedGame) {
+													player.save(function(e, savedPlayer) {
 														Game.publishUpdate(game.id, {
 															change: 'oneOff',
 															game: savedGame,
@@ -533,8 +542,11 @@ module.exports = {
 											game.twos.add(card.id);
 											player.hand.remove(card.id);
 
-											game.save(function (er, savedGame) {
-												player.save(function (e, savedPlayer) {
+											var log = "Player " + player.pNum + " has played the " + card.alt + " to counter.";
+											game.log.push(log);
+
+											game.save(function(er, savedGame) {
+												player.save(function(e, savedPlayer) {
 													Game.publishUpdate(game.id, {
 														change: 'oneOff',
 														game: savedGame,
@@ -565,7 +577,7 @@ module.exports = {
 	resolve: function(req, res) {
 		if (req.isSocket) {
 			console.log("\nStack resolution requested from Socket " + req.socket.id);
-			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').populate('twos').exec(function (error, game) {
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').populate('twos').exec(function(error, game) {
 				if (error || !game) {
 					console.log("Game " + req.body.gameId + " not found for RESOLVING a one off");
 					res.send(404);
@@ -574,29 +586,31 @@ module.exports = {
 					switch (game.twos.length % 2) {
 						case 0:
 							console.log('There is an even amount of twos');
-							Card.findOne(game.firstEffect).exec(function (erro, card) {
+							Card.findOne(game.firstEffect).exec(function(erro, card) {
 								if (erro || !card) {
 									console.log('Card is not found for RESOLVING a one off');
 									res.send(404);
 								} else {
+									var log = "The " + card.alt + " resolves successfully.";
+									game.log.push(log);
 									switch (card.rank) {
 										//Ace played to destroy all points
 										case 1:
 											console.log('The first effect is an Ace');
-											Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function (err, players) {
+											Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function(err, players) {
 												if (err || !players[0] || !players[1]) {
 													console.log('Players not found in game ' + req.body.gameId + ' for RESOLVE');
 													res.send(404);
 												} else {
-													players[0].points.forEach(function (card, index, points) {
+													players[0].points.forEach(function(card, index, points) {
 														game.scrap.add(card.id);
 														players[0].points.remove(card.id);
 													});
-													players[1].points.forEach(function (card, index, points) {
+													players[1].points.forEach(function(card, index, points) {
 														game.scrap.add(card.id);
 														players[1].points.remove(card.id);
 													});
-													game.twos.forEach(function (two, index, twos) {
+													game.twos.forEach(function(two, index, twos) {
 														game.twos.remove(two.id);
 														game.scrap.add(two.id);
 													});
@@ -604,9 +618,9 @@ module.exports = {
 													game.scrap.add(game.firstEffect);
 													game.firstEffect = null;
 													game.turn++;
-													game.save(function (er, savedGame) {
-														players[0].save(function (e, savedP0) {
-															players[1].save(function (e6, savedP1) {
+													game.save(function(er, savedGame) {
+														players[0].save(function(e, savedP0) {
+															players[1].save(function(e6, savedP1) {
 																var playerSort = sortPlayers([savedP0, savedP1]);
 																Game.publishUpdate(game.id, {
 																	change: 'resolvedAce',
@@ -622,7 +636,7 @@ module.exports = {
 											//Two played to destroy target rune
 										case 2:
 											console.log('The first effect is a two');
-											Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function (err, players) {
+											Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function(err, players) {
 												if (err || !players[0] || !players[1]) {
 													console.log("Players not found in game " + req.body.gameId + " for resolve");
 													res.send(404);
@@ -636,7 +650,7 @@ module.exports = {
 													card.targetId = null;
 
 													//Move the countering two's to the scrap
-													game.twos.forEach(function (two, index, twos) {
+													game.twos.forEach(function(two, index, twos) {
 														game.twos.remove(two.id);
 														game.scrap.add(two.id);
 													});
@@ -646,10 +660,10 @@ module.exports = {
 													game.scrap.add(card.id);
 													game.firstEffect = null;
 													game.turn++;
-													game.save(function (er, savedGame) {
+													game.save(function(er, savedGame) {
 														console.log("It is now turn: " + savedGame.turn);
-														playerSort[0].save(function (e, savedP0) {
-															playerSort[1].save(function (e6, savedP1) {
+														playerSort[0].save(function(e, savedP0) {
+															playerSort[1].save(function(e6, savedP1) {
 																Game.publishUpdate(game.id, {
 																	change: 'resolvedTwo',
 																	game: savedGame,
@@ -659,7 +673,7 @@ module.exports = {
 																	resolvedTwo: true,
 																	game: savedGame,
 																	players: [savedP0, savedP1]
-																}); 
+																});
 																card.save();
 															});
 														});
@@ -670,11 +684,13 @@ module.exports = {
 											break;
 										case 3:
 											console.log("First effect is a three");
-											Game.publishUpdate(game.id, {change: 'threeData'}, req);
+											Game.publishUpdate(game.id, {
+												change: 'threeData'
+											}, req);
 											break;
 										case 4:
 											console.log('First effect is a four');
-											Player.findOne(req.body.otherPlayerId).populate('hand').populate('points').populate('runes').exec(function (err, player) {
+											Player.findOne(req.body.otherPlayerId).populate('hand').populate('points').populate('runes').exec(function(err, player) {
 												if (err || !player) {
 													console.log("Player " + req.body.otherPlayerId + " not found for 4 resolution");
 													res.send(404);
@@ -683,9 +699,13 @@ module.exports = {
 													game.scrap.add(card.id);
 													game.scrapTop = card;
 
-													game.save(function (er, savedGame) {
-														player.save(function (e, savedPlayer) {
-															res.send({change: 'fourData', game: savedGame, player: savedPlayer});
+													game.save(function(er, savedGame) {
+														player.save(function(e, savedPlayer) {
+															res.send({
+																change: 'fourData',
+																game: savedGame,
+																player: savedPlayer
+															});
 														});
 													});
 												}
@@ -693,7 +713,7 @@ module.exports = {
 											break;
 										case 5:
 											console.log("First effect is a five");
-											Player.findOne(req.body.otherPlayerId).populate('hand').populate('points').populate('runes').exec(function (err, player) {
+											Player.findOne(req.body.otherPlayerId).populate('hand').populate('points').populate('runes').exec(function(err, player) {
 												if (err || !player) {
 													console.log("Player " + req.body.otherPlayerId + " not found for 5 effect");
 													res.send(404);
@@ -717,114 +737,114 @@ module.exports = {
 														}
 
 														game.firstEffect = null;
-														game.topCard     = game.deck[randomTop];
-														game.secondCard  = game.deck[randomSecond];
-														game.scrapTop    = card;
+														game.topCard = game.deck[randomTop];
+														game.secondCard = game.deck[randomSecond];
+														game.scrapTop = card;
 														game.deck.remove(game.topCard.id);
 														game.deck.remove(game.secondCard.id);
 														game.scrap.add(card.id);
 														game.turn++;
 
-														game.save(function (er, savedGame) {
-															player.save(function (e, savedPlayer) {
+														game.save(function(er, savedGame) {
+															player.save(function(e, savedPlayer) {
 																Game.publishUpdate(savedGame.id, {
-																	change : 'resolvedFive',
-																	game   : savedGame,
-																	player : savedPlayer,
+																	change: 'resolvedFive',
+																	game: savedGame,
+																	player: savedPlayer,
 																});
 																res.send({
-																	resolvedFive : true,
-																	yourTurn     : true,
-																	validRank    : true,
-																	handLength   : handLength
+																	resolvedFive: true,
+																	yourTurn: true,
+																	validRank: true,
+																	handLength: handLength
 																});
 															});
 														});
 													} else if (handLength === 7) {
 														player.hand.add(game.topCard);
-														game.topCard     = game.secondCard;
+														game.topCard = game.secondCard;
 														game.firstEffect = null;
 
 														//Assign new second card card
-														var min         = 0;
-														var max         = game.deck.length - 1;
-														var randomTop   = Math.floor((Math.random() * ((max + 1) - min)) + min);														
+														var min = 0;
+														var max = game.deck.length - 1;
+														var randomTop = Math.floor((Math.random() * ((max + 1) - min)) + min);
 														game.secondCard = game.deck[randomTop];
-														game.scrapTop   = card;
+														game.scrapTop = card;
 														game.deck.remove(game.secondCard.id);
 														game.scrap.add(card.id);
 														game.turn++;
 
-														game.save(function (er, savedGame) {
+														game.save(function(er, savedGame) {
 															console.log("It is now turn: " + savedGame.turn);
-															player.save(function (e, savedPlayer) {
+															player.save(function(e, savedPlayer) {
 																Game.publishUpdate(savedGame.id, {
-																	change : 'resolvedFive',
-																	game   : savedGame,
-																	player : savedPlayer
+																	change: 'resolvedFive',
+																	game: savedGame,
+																	player: savedPlayer
 																});
 																res.send({
-																	resolvedFive : true,
-																	yourTurn     : true,
-																	validRank    : true,
-																	handLength   : handLength
+																	resolvedFive: true,
+																	yourTurn: true,
+																	validRank: true,
+																	handLength: handLength
 																});
 															});
 														});
 
 													} else {
 														res.send({
-															resolvedFive : false,
-															yourTurn     : true,
-															validRank    : true,
-															handLength   : handLength
+															resolvedFive: false,
+															yourTurn: true,
+															validRank: true,
+															handLength: handLength
 														});
 													}
 												}
 											});
 											break;
-											case 6:
-												console.log('First effect is a six');
-												Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function (err, players) {
-													if (err || !players[0] || !players[1]) {
-														console.log('Players not found in game ' + req.body.gameId + ' for RESOLVE');
-														res.send(404);
-													} else {
-														players[0].runes.forEach(function (card, index, runes) {
-															game.scrap.add(card.id);
-															players[0].runes.remove(card.id);
-														});
-														players[1].runes.forEach(function (card, index, runes) {
-															game.scrap.add(card.id);
-															players[1].runes.remove(card.id);
-														});
-														game.twos.forEach(function (two, index, twos) {
-															game.twos.remove(two.id);
-															game.scrap.add(two.id);
-														});
-														game.scrapTop = game.firstEffect;
-														game.scrap.add(game.firstEffect);
-														game.firstEffect = null;
-														game.turn++;
-														game.save(function (er, savedGame) {
-															console.log("It is now turn: " + savedGame.turn);
-															players[0].save(function (e, savedP0) {
-																players[1].save(function (e6, savedP1) {
-																	var playerSort = sortPlayers([savedP0, savedP1]);
-																	Game.publishUpdate(game.id, {
-																		change: 'resolvedSix',
-																		game: savedGame,
-																		players: playerSort
-																	});
+										case 6:
+											console.log('First effect is a six');
+											Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function(err, players) {
+												if (err || !players[0] || !players[1]) {
+													console.log('Players not found in game ' + req.body.gameId + ' for RESOLVE');
+													res.send(404);
+												} else {
+													players[0].runes.forEach(function(card, index, runes) {
+														game.scrap.add(card.id);
+														players[0].runes.remove(card.id);
+													});
+													players[1].runes.forEach(function(card, index, runes) {
+														game.scrap.add(card.id);
+														players[1].runes.remove(card.id);
+													});
+													game.twos.forEach(function(two, index, twos) {
+														game.twos.remove(two.id);
+														game.scrap.add(two.id);
+													});
+													game.scrapTop = game.firstEffect;
+													game.scrap.add(game.firstEffect);
+													game.firstEffect = null;
+													game.turn++;
+													game.save(function(er, savedGame) {
+														console.log("It is now turn: " + savedGame.turn);
+														players[0].save(function(e, savedP0) {
+															players[1].save(function(e6, savedP1) {
+																var playerSort = sortPlayers([savedP0, savedP1]);
+																Game.publishUpdate(game.id, {
+																	change: 'resolvedSix',
+																	game: savedGame,
+																	players: playerSort
 																});
 															});
 														});
-													}
+													});
+												}
 											});
 											break;
 										case 7:
 											console.log("First effect is a seven");
-											Player.findOne(req.body.otherPlayerId).populate('hand').populate('points').populate('runes').exec(function (err, player) {
+											Player.findOne(req.body.otherPlayerId).populate('hand').populate('points').populate('runes').exec(function(err, player) {
 												if (err || !player) {
 													console.log("Player " + req.body.otherPlayerId + " not found for 7 resolution");
 													res.send(404);
@@ -834,10 +854,14 @@ module.exports = {
 													game.scrapTop = card;
 													game.firstEffect = null;
 
-													game.save(function (er, savedGame) {
+													game.save(function(er, savedGame) {
 														console.log("It is now turn: " + savedGame.turn);
-														player.save(function (e, savedPlayer) {
-															Game.publishUpdate(game.id, {change: 'sevenData', game: savedGame, player: savedPlayer});
+														player.save(function(e, savedPlayer) {
+															Game.publishUpdate(game.id, {
+																change: 'sevenData',
+																game: savedGame,
+																player: savedPlayer
+															});
 														});
 													});
 												}
@@ -851,17 +875,21 @@ module.exports = {
 							//All One Offs are moved to the scrap pile and turn is incrimented
 						case 1:
 							console.log('There is an odd number twos');
-							game.twos.forEach(function (two, index, twos) {
+							game.twos.forEach(function(two, index, twos) {
 								game.scrap.add(two.id);
 								game.twos.remove(two.id);
 							});
-							Card.findOne(game.firstEffect).exec(function (err, card) {
+							Card.findOne(game.firstEffect).exec(function(err, card) {
 								game.scrapTop = card;
 								game.scrap.add(card.id);
 								game.firstEffect = null;
 								game.turn++;
 
-								game.save(function (er, savedGame) {
+								var log = "The " + card.alt + " is countered and has no effect.";
+								game.log.push(log);
+
+
+								game.save(function(er, savedGame) {
 									Game.publishUpdate(savedGame.id, {
 										change: 'resolvedFizzle',
 										game: savedGame
@@ -875,17 +903,17 @@ module.exports = {
 		}
 	},
 
-	resolveThree: function (req, res) {
+	resolveThree: function(req, res) {
 		console.log("\n\nResolve three");
 		console.log(req.body);
 		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('playerId') && req.body.hasOwnProperty('cardId')) {
 			console.log("\nResolve Three requested for game: " + req.body.gameId);
-			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function(error, game) {
 				if (error || !game) {
 					console.log("Game not found for resolveThree");
 					res.send(404);
 				} else {
-					Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function (erro, player) {
+					Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function(erro, player) {
 						player.hand.add(req.body.cardId);
 						game.scrap.remove(req.body.cardId);
 						game.scrapTop = game.firstEffect;
@@ -894,9 +922,13 @@ module.exports = {
 						game.firstEffect = null;
 						game.turn++;
 
-						game.save(function (err, savedGame) {
-							player.save(function (er, savedPlayer) {
-								Game.publishUpdate(game.id, {change: 'resolvedThree', game: savedGame, player: savedPlayer});
+						game.save(function(err, savedGame) {
+							player.save(function(er, savedPlayer) {
+								Game.publishUpdate(game.id, {
+									change: 'resolvedThree',
+									game: savedGame,
+									player: savedPlayer
+								});
 							});
 						});
 					});
@@ -910,12 +942,12 @@ module.exports = {
 		console.log(req.body);
 		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('playerId') && req.body.hasOwnProperty('firstDiscard') && req.body.hasOwnProperty('secondDiscard')) {
 			console.log("\nResolve Four requested for game: " + req.body.gameId);
-			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function(error, game) {
 				if (error || !game) {
 					console.log("Game not found for resolveFour");
 					res.send(404);
 				} else {
-					Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function (erro, player) {
+					Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function(erro, player) {
 						if (erro || !player) {
 							console.log('Game not found for resolveFour');
 						} else {
@@ -928,10 +960,14 @@ module.exports = {
 							game.firstEffect = null;
 							game.turn++;
 
-							game.save(function (err, savedGame) {
+							game.save(function(err, savedGame) {
 								console.log('Saving game');
-								player.save(function (er, savedPlayer) {
-									Game.publishUpdate(game.id, {change: 'resolvedFour', game: savedGame, player: savedPlayer});
+								player.save(function(er, savedPlayer) {
+									Game.publishUpdate(game.id, {
+										change: 'resolvedFour',
+										game: savedGame,
+										player: savedPlayer
+									});
 								});
 							});
 						}
@@ -942,21 +978,21 @@ module.exports = {
 	},
 
 	//Play points from the top two cards using a seven
-	sevenPoints: function (req, res) {
+	sevenPoints: function(req, res) {
 		console.log("\nPlaying points to resolve seven");
 		console.log(req.body);
 		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('playerId') && req.body.hasOwnProperty('cardId')) {
-			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function(error, game) {
 				if (error || !game) {
 					console.log("Game not found for seven points");
 					res.send(404);
 				} else {
-					Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function (erro, player) {
+					Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function(erro, player) {
 						if (erro || !player) {
 							console.log("Player not found for seven points");
 							res.send(404);
 						} else {
-							Card.findOne(req.body.cardId).exec(function (err, card) {
+							Card.findOne(req.body.cardId).exec(function(err, card) {
 								if (err || !card) {
 									console.log("Card not found for seven points");
 									res.send(404);
@@ -965,45 +1001,56 @@ module.exports = {
 										console.log("topCard: ");
 										console.log(game.topCard);
 										console.log("\n\nsecondCard: ");
-										console.log(game.secondCard);										
+										console.log(game.secondCard);
 
 										switch (req.body.whichCard) {
 											case 0:
 												console.log("Case 0");
-												var min         = 0;
-												var max         = game.deck.length - 1;
-												var random      = Math.floor((Math.random() * ((max + 1) - min)) + min);	
-												game.topCard    = game.secondCard;
+												var min = 0;
+												var max = game.deck.length - 1;
+												var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+												game.topCard = game.secondCard;
 												game.secondCard = game.deck[random];
 												game.deck.remove(game.secondCard.id);
 												break;
 											case 1:
 												console.log("Case 1");
-												var min         = 0;
-												var max         = game.deck.length - 1;
-												var random      = Math.floor((Math.random() * ((max + 1) - min)) + min);	
+												var min = 0;
+												var max = game.deck.length - 1;
+												var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
 												game.secondCard = game.deck[random];
 												game.deck.remove(game.secondCard.id);
 												break;
 										}
 										player.points.add(card.id);
 
+										var log = "Player " + player.pNum + " has played the " + card.alt + " for points after playing a seven.";
+										game.log.push(log);
 
-										player.save(function (e, savedPlayer) {
+										player.save(function(e, savedPlayer) {
 											//Assign winner if player has won
 											var victor = winner(savedPlayer);
-											
+
 											if (victor) {
 												game.winner = savedPlayer.pNum;
 											}
 
 											game.turn++;
-											game.save(function (e6, savedGame) {
-												Player.publishUpdate(savedPlayer.id, {change: 'points', victor: victor, player: savedPlayer, turn: game.turn});
-												res.send({points: true, turn: game.turn % 2 === player.pNum, rank: card.rank <= 10});
+											game.save(function(e6, savedGame) {
+												Player.publishUpdate(savedPlayer.id, {
+													change: 'points',
+													victor: victor,
+													player: savedPlayer,
+													turn: game.turn
+												});
+												res.send({
+													points: true,
+													turn: game.turn % 2 === player.pNum,
+													rank: card.rank <= 10
+												});
 											});
 										});
-									}									
+									}
 								}
 							});
 						}
@@ -1014,21 +1061,21 @@ module.exports = {
 	},
 
 	//Play a rune from the top two cards to resolve a seven
-	sevenRunes: function (req, res) {
+	sevenRunes: function(req, res) {
 		console.log("\nPlaying rune from seven");
 		console.log(req.body);
 		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('playerId') && req.body.hasOwnProperty('cardId')) {
-			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function(error, game) {
 				if (error || !game) {
 					console.log("Game not found for seven runes");
 					res.send(404);
 				} else {
-					Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function (erro, player) {
+					Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function(erro, player) {
 						if (erro || !player) {
 							console.log("Player not found for seven runes");
 							res.send(404);
 						} else {
-							Card.findOne(req.body.cardId).exec(function (err, card) {
+							Card.findOne(req.body.cardId).exec(function(err, card) {
 								if (err || !card) {
 									console.log("Card not found for seven runes");
 									res.send(404);
@@ -1051,89 +1098,101 @@ module.exports = {
 													break;
 												case 3:
 													card.img = '/images/cards/Glasses_Spades.jpg';
-													break;		
+													break;
 											}
 											card.save();
-										}										
+										}
 										switch (req.body.whichCard) {
 											case 0:
 												console.log("Case 0");
-												var min         = 0;
-												var max         = game.deck.length - 1;
-												var random      = Math.floor((Math.random() * ((max + 1) - min)) + min);	
-												game.topCard    = game.secondCard;
+												var min = 0;
+												var max = game.deck.length - 1;
+												var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+												game.topCard = game.secondCard;
 												game.secondCard = game.deck[random];
 												game.deck.remove(game.secondCard.id);
 												break;
 											case 1:
 												console.log("Case 1");
-												var min         = 0;
-												var max         = game.deck.length - 1;
-												var random      = Math.floor((Math.random() * ((max + 1) - min)) + min);	
+												var min = 0;
+												var max = game.deck.length - 1;
+												var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
 												game.secondCard = game.deck[random];
 												game.deck.remove(game.secondCard.id);
 												break;
 										}
 										player.runes.add(card.id);
 
+										var log = "Player " + player.pNum + " has played the " + card.alt + " as a rune after playing a seven.";
+										game.log.push(log);
 
-										player.save(function (e, savedPlayer) {
+										player.save(function(e, savedPlayer) {
 											//Assign winner if player has won
 											var victor = winner(savedPlayer);
-											
+
 											if (victor) {
 												game.winner = savedPlayer.pNum;
 											}
 
 											game.turn++;
-											game.save(function (e6, savedGame) {
-												Player.publishUpdate(savedPlayer.id, {change: 'runes', victor: victor, player: savedPlayer, turn: game.turn});
-												res.send({runes: true, glasses: glasses, turn: game.turn % 2 === player.pNum, rank: card.rank <= 10});
+											game.save(function(e6, savedGame) {
+												Player.publishUpdate(savedPlayer.id, {
+													change: 'runes',
+													victor: victor,
+													player: savedPlayer,
+													turn: game.turn
+												});
+												res.send({
+													runes: true,
+													glasses: glasses,
+													turn: game.turn % 2 === player.pNum,
+													rank: card.rank <= 10
+												});
 											});
 										});
-									}									
+									}
 								}
 							});
 						}
 					});
 				}
 			});
-		}		
+		}
 	},
 
-	sevenScuttle: function (req, res) {
+	sevenScuttle: function(req, res) {
 		console.log("\nScuttling from seven");
 		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('scuttledPlayerId') && req.body.hasOwnProperty('card') && req.body.hasOwnProperty('whichCard') && req.body.hasOwnProperty('target')) {
 			console.log("req.body has right properties");
-			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function(error, game) {
 				if (error || !game) {
 					console.log("Game not found for sevenScuttle");
 					res.send(404);
 				} else {
-					Player.findOne(req.body.scuttledPlayerId).populate('hand').populate('points').populate('runes').exec(function (erro, player) {
+					Player.findOne(req.body.scuttledPlayerId).populate('hand').populate('points').populate('runes').exec(function(erro, player) {
 						if (erro || !player) {
 							console.log("Player not found for sevenScuttle");
 							res.send(404);
 						} else {
-							var highRank  = req.body.card.rank > req.body.target.rank;
-							var highSuit  = req.body.card.rank === req.body.target.rank && req.body.card.suit > req.body.target.suit;
+							var highRank = req.body.card.rank > req.body.target.rank;
+							var highSuit = req.body.card.rank === req.body.target.rank && req.body.card.suit > req.body.target.suit;
 							var validRank = req.body.card.rank <= 10;
 							if ((game.turn + 1) % 2 === player.pNum && validRank && (highRank || highSuit)) {
 								switch (req.body.whichCard) {
 									case 0:
 										console.log("Case 0");
-										var min         = 0;
-										var max         = game.deck.length - 1;
-										var random      = Math.floor((Math.random() * ((max + 1) - min)) + min);	
-										game.topCard    = game.secondCard;
+										var min = 0;
+										var max = game.deck.length - 1;
+										var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+										game.topCard = game.secondCard;
 										game.secondCard = game.deck[random];
 										game.deck.remove(game.secondCard.id);
 										break;
 									case 1:
 										console.log("Case 1");
-										var min         = 0;
-										var max         = game.deck.length - 1;
-										var random      = Math.floor((Math.random() * ((max + 1) - min)) + min);	
+										var min = 0;
+										var max = game.deck.length - 1;
+										var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
 										game.secondCard = game.deck[random];
 										game.deck.remove(game.secondCard.id);
 										break;
@@ -1143,38 +1202,57 @@ module.exports = {
 								player.points.remove(req.body.target.id);
 								game.scrap.add(req.body.target.id);
 
+								var log = "Player " + (player.pNum + 1) % 2 + " has scuttled the " + req.body.target.alt + " with the " + req.body.card.alt + " after playing a seven";
+								game.log.push(log);
 
-								player.save(function (e, savedPlayer) {
+								player.save(function(e, savedPlayer) {
 									//Assign winner if player has won
 									var victor = winner(savedPlayer);
-									
+
 									if (victor) {
 										game.winner = savedPlayer.pNum;
 									}
 
 									game.turn++;
-									game.save(function (e6, savedGame) {
-										Game.publishUpdate(savedGame.id, {change: 'sevenScuttled', victor: victor, game: savedGame, player: savedPlayer});
-										res.send({scuttled: true, turn: (game.turn + 1) % 2 === player.pNum, validRank: validRank, highRank: highRank, highSuit: highSuit});
+									game.save(function(e6, savedGame) {
+										Game.publishUpdate(savedGame.id, {
+											change: 'sevenScuttled',
+											victor: victor,
+											game: savedGame,
+											player: savedPlayer
+										});
+										res.send({
+											scuttled: true,
+											turn: (game.turn + 1) % 2 === player.pNum,
+											validRank: validRank,
+											highRank: highRank,
+											highSuit: highSuit
+										});
 									});
 								});
 							} else {
 								console.log("Scuttle is illigitimate");
-								res.send({scuttled: false, turn: (game.turn + 1) % 2 === player.pNum, validRank: validRank, highRank: highRank, highSuit: highSuit});
-							}									
+								res.send({
+									scuttled: false,
+									turn: (game.turn + 1) % 2 === player.pNum,
+									validRank: validRank,
+									highRank: highRank,
+									highSuit: highSuit
+								});
+							}
 
 						}
 					});
 				}
 			});
-		}		
+		}
 	},
 
-	sevenOneOff: function (req, res){
+	sevenOneOff: function(req, res) {
 		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('cardId') && req.body.hasOwnProperty('whichCard')) {
 			console.log("\n\nsevenOneOff requested from socket " + req.socket.id);
 
-			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function(error, game) {
 				if (error || !game) {
 					console.log("Game not found for sevenOneOff");
 					res.send(404);
@@ -1191,7 +1269,7 @@ module.exports = {
 								break;
 						}
 
-						Card.findOne(oneOffId).exec(function (erro, card) {
+						Card.findOne(oneOffId).exec(function(erro, card) {
 							if (erro || !card) {
 								console.log("Card not found for sevenOneOff");
 								res.send(404);
@@ -1210,10 +1288,10 @@ module.exports = {
 												firstEffect: true,
 												validRank: validRank,
 												yourTurn: yourTurn,
-												hadTarget: false,						
+												hadTarget: false,
 												card: card
 											});
-										}						
+										}
 									}
 									//sevenOneOff must always be the first effect on the stack
 									game.firstEffect = card;
@@ -1221,42 +1299,45 @@ module.exports = {
 									//Remove oneOff from top two cards in deck, then replace it with a card from the deck
 									var max = game.deck.length - 1;
 									var min = 0;
-									var random = Math.floor((Math.random() * ((max + 1) - min)) + min);		
+									var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
 									//If topCard was played, the card that was secondCard is now topCard					
 									if (req.body.whichCard === 0) {
-										game.topCard    = game.secondCard;
+										game.topCard = game.secondCard;
 									}
 									//Either way, get a new secondCard and remove it from the deck
 									game.secondCard = game.deck[random];
 									game.deck.remove(game.deck[random].id);
 
-									///////////////////////////////////////
-									// Handle Targets for Twos and Nines //
-									///////////////////////////////////////
-									game.save(function (err, savedGame) {
+
+									var log = "Player " + req.body.pNum + " has played the " + card.alt + " for its one off effect after playing a seven";
+									game.log.push(log);
+
+
+									game.save(function(err, savedGame) {
 										//Socket event sent to opponent to request counter to this oneOff
 										Game.publishUpdate(game.id, {
-											change   : 'sevenOneOff',
-											game     : savedGame,
-											card     : card,
-											whichCard: req.body.whichCard},
+												change: 'sevenOneOff',
+												game: savedGame,
+												card: card,
+												whichCard: req.body.whichCard
+											},
 											req);
 										//Response to requesting socket
 										res.send({
-											sevenOneOff : true,
-											validRank   : validRank,
-											yourTurn    : yourTurn,
-											game        : savedGame,
-											card        : card,
-											whichCard   : req.body.whichCard
+											sevenOneOff: true,
+											validRank: validRank,
+											yourTurn: yourTurn,
+											game: savedGame,
+											card: card,
+											whichCard: req.body.whichCard
 										});
 									});
 
 								}
 							}
 						});
-					}					
-					
+					}
+
 				}
 			});
 
