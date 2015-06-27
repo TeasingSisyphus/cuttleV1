@@ -240,102 +240,114 @@ module.exports = {
 					console.log("P0 is ready: " + game.p0Ready);
 					console.log("P1 is ready: " + game.p1Ready);
 
-					Player.find([game.players[0].id, game.players[1].id]).populate('hand').exec(function(errr, playerList) {
+					if (game.players.length === 1) {
+						game.p0Ready = true;
+						game.save(function(erro, savedGame) {
+							Game.publishUpdate(game.id, {
+								game: savedGame,
+								change: 'ready'
+							});
+						});
+					} else {
 
-						var playerSort = sortPlayers(playerList);
+						Player.find([game.players[0].id, game.players[1].id]).populate('hand').exec(function(errr, playerList) {
 
-						switch (req.body.pNum) {
-							case 0:
-								game.p0Ready = true;
-								if (game.p1Ready) {
-									console.log("Both players ready. Firing gameView");
-									deal = true;
-								}
-								break;
-							case 1:
-								game.p1Ready = true;
-								if (game.p0Ready) {
-									console.log("Both players ready. Firing gameView");
-									deal = true;
-								}
-								break;
-						}
+							var playerSort = sortPlayers(playerList);
 
-						if (deal) {
-							var dealt = [];
-							var min = 0;
-							var max = 51;
+							switch (req.body.pNum) {
+								case 0:
+									game.p0Ready = true;
+									if (game.p1Ready) {
+										console.log("Both players ready. Firing gameView");
+										deal = true;
+									}
+									break;
+								case 1:
+									game.p1Ready = true;
+									if (game.p0Ready) {
+										console.log("Both players ready. Firing gameView");
+										deal = true;
+									}
+									break;
+							}
 
-							var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+							if (deal) {
+								var dealt = [];
+								var min = 0;
+								var max = 51;
 
-
-
-							playerSort[0].hand.add(game.deck[random].id);
-							game.deck.remove(game.deck[random].id);
-							dealt.push(random);
+								var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
 
 
-							for (var i = 0; i < 5; i++) {
-								while (dealt.indexOf(random) >= 0) {
-									random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-								}
+
 								playerSort[0].hand.add(game.deck[random].id);
 								game.deck.remove(game.deck[random].id);
 								dealt.push(random);
 
+
+								for (var i = 0; i < 5; i++) {
+									while (dealt.indexOf(random) >= 0) {
+										random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+									}
+									playerSort[0].hand.add(game.deck[random].id);
+									game.deck.remove(game.deck[random].id);
+									dealt.push(random);
+
+									while (dealt.indexOf(random) >= 0) {
+										random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+									}
+
+									playerSort[1].hand.add(game.deck[random].id);
+									game.deck.remove(game.deck[random].id);
+									dealt.push(random);
+
+								}
+
+								//Assign topCard
 								while (dealt.indexOf(random) >= 0) {
 									random = Math.floor((Math.random() * ((max + 1) - min)) + min);
 								}
-
-								playerSort[1].hand.add(game.deck[random].id);
-								game.deck.remove(game.deck[random].id);
 								dealt.push(random);
+								game.topCard = game.deck[random];
+								game.deck.remove(game.deck[random].id);
+
+
+								//Assign secondCard
+								while (dealt.indexOf(random) >= 0) {
+									random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+								}
+								//dealt.push(random);
+								game.secondCard = game.deck[random];
+								game.deck.remove(game.deck[random].id);
+
+
 
 							}
 
-							//Assign topCard
-							while (dealt.indexOf(random) >= 0) {
-								random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-							}
-							dealt.push(random);
-							game.topCard = game.deck[random];
-							game.deck.remove(game.deck[random].id);
+							game.save(function(er, savedGame) {
+								if (dealt) {
+									playerList[0].save(function(error, savedP0) {
 
-
-							//Assign secondCard
-							while (dealt.indexOf(random) >= 0) {
-								random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-							}
-							//dealt.push(random);
-							game.secondCard = game.deck[random];
-							game.deck.remove(game.deck[random].id);
-
-
-
-						}
-
-						game.save(function(er, savedGame) {
-							if (dealt) {
-								playerList[0].save(function(error, savedP0) {
-
-									playerSort[1].save(function(errrrrr, savedP1) {
-										var players = [savedP0, savedP1];
-										Game.message(savedGame.id, {
-											game: savedGame,
-											players: players
+										playerSort[1].save(function(errrrrr, savedP1) {
+											var players = [savedP0, savedP1];
+											Game.message(savedGame.id, {
+												game: savedGame,
+												players: players
+											});
 										});
 									});
-								});
 
-							} else {
+								} else {
 
-								Game.publishUpdate(game.id, {
-									game: savedGame,
-									change: 'ready'
-								});
-							}
+									Game.publishUpdate(game.id, {
+										game: savedGame,
+										change: 'ready'
+									});
+								}
+							});
 						});
-					});
+					}
+
 
 				}
 			});
