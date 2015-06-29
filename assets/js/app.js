@@ -107,6 +107,7 @@
 		//Represents which of the top two cards FUCKER
 		this.whichCard = null;
 		this.selectTwo = false;
+		this.putOnTop = false;
 
 
 		this.ready = function() {
@@ -368,15 +369,31 @@
 			}
 		};
 
-		this.drawAnything = function() {
-			console.log('\nIn draw anything');
-			var rank = prompt('What is the rank of your desired card?');
-			var suit = prompt('What is the suit of your desired card?');
-			io.socket.get('/game/drawAnything', {
-				id: $scope.game.gameId,
-				playerId: $scope.game.players[$scope.game.pNum].id,
-				rank: rank,
-				suit: suit
+		this.chooseScrap = function(card) {
+			console.log(card);
+			io.socket.get('/game/resolveThree', {
+				gameId     : $scope.game.gameId,
+				playerId   : $scope.game.players[$scope.game.pNum].id,
+				cardId     : card.id,
+			}, function(res) {
+				console.log(res);
+			});
+		};
+
+		this.placeTopCard = function(card) {
+			console.log(card);
+			io.socket.get('/game/placeTopCard', {
+				gameId  : $scope.game.gameId,
+				cardId  : card.id,
+			}, function(res) {
+				console.log(res);
+			});
+		};
+
+		this.chooseTopCard = function() {
+			console.log('\nIn chooseTopCard');
+			io.socket.get('/game/chooseTopCard', {
+				gameId     : $scope.game.gameId,
 			}, function(res) {
 				console.log(res);
 			});
@@ -593,17 +610,6 @@
 			});
 		};
 
-		this.chooseScrap = function(card) {
-			console.log(card);
-			io.socket.get('/game/resolveThree', {
-				gameId     : $scope.game.gameId,
-				playerId   : $scope.game.players[$scope.game.pNum].id,
-				cardId     : card.id,
-			}, function(res) {
-				console.log(res);
-			});
-		};
-
 
 		$rootScope.$on('readyView', function(event, game) {
 			console.log('\nChanging to readyView');
@@ -676,6 +682,12 @@
 							$scope.game.scrapPick  = true;
 							$scope.game.topTwoPick = false;
 							alert('Please pick a card from the scrap pile to take to your hand');
+							break;
+
+						case 'topCardPickData':
+							$scope.game.topTwoPick = false;
+							$scope.game.putOnTop = true;
+							alert('Select the card you want on the top of the deck for testing');
 							break;
 
 						case 'sevenData':
@@ -794,6 +806,12 @@
 							$scope.game.players = obj.data.players;
 							$scope.game.turn = obj.data.game.turn;
 							break;
+
+						case 'topCardChange':
+							$scope.game.topCard = obj.data.game.topCard;
+							$scope.game.stacking = false;
+							$scope.game.topTwoPick = false;
+							
 					}
 					break;
 

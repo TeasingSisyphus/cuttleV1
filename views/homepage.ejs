@@ -58,7 +58,7 @@
                             <!-- <div class='span3'></div> -->
                         </div>
                         <div class='row'>
-                            <button ng-click='game.drawAnything()'>Draw any card</button>
+                            <button ng-click='game.chooseTopCard()'>Put card on top</button>
                             <img src='/images/word-ace-card-back.jpg' ng-click="game.draw()" class='midCard col-xs-2 col-md-2 col-lg-2 col-sm-2 img-responsive'></img>
                             <!-- <div class='col-xs-5 col-md-5 col-lg-5 col-sm-5'></div> -->
                             <img ng-src="{{game.scrapTopImg}}"  class='midCard col-md-offset-4 col-xs-2 col-md-2 col-lg-2 col-sm-2 img-responsive' ng-click='game.oneOff()'></img>
@@ -90,6 +90,9 @@
                     </div>
                     <p>Scrap Pile:</p>
                     <img ng-show='game.scrapPick' ng-repeat='card in game.scrap' ng-class='card.class' id="{{card.id}}" ng-src='{{card.img}}' alt='{{card.alt}}' ng-click='game.chooseScrap(card)'></img>
+                    <p>Open Deck</p>
+                    <img ng-show='game.putOnTop' ng-repeat='card in game.deck' ng-class='card.class' id="{{card.id}}" ng-src='{{card.img}}' alt='{{card.alt}}' 
+                    ng-click='game.placeTopCard(card)'></img>
                 </div>      
                 <!-- <img ng-repeat='card in game.deck' class='card' id= '{{card.img}}' ng-src="{{card.img}}" alt='{{card.alt}}'></img> -->
 

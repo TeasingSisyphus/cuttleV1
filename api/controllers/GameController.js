@@ -406,15 +406,49 @@ module.exports = {
 		});
 	},
 
-	drawAnything: function(req, res) {
-		console.log('Logging req.body');
+	chooseTopCard: function(req, res) {
+		console.log('\nServer is requesting to choose the top card')
+		if (req.isSocket) {
+			console.log("\nchooseTopCard requested from Socket " + req.socket.id);
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').populate('twos').exec(function(error, game) {
+				if (error || !game) {
+					console.log("Game " + req.body.gameId + " not found for RESOLVING a one off");
+					res.send(404);
+				} else {
+					Game.publishUpdate(game.id, {
+						change: 'topCardPickData'
+					}, req);
+				}
+			});
+		}
+	},
+
+	placeTopCard: function(req, res) {
+		console.log('Logging req.body of placeTopCard');
 		console.log(req.body);
+		if (req.isSocket) {
+			console.log('\nSocket ' + req.socket.id + ' is requesting to place a top card');
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
+				if (error || !game) {
+					console.log('Game ' + req.body.gameId + ' not found for placeTopCard');
+					res.send(404);
+				} else {
+					game.topCard = req.body.cardId;
+					game.save(function(erro, savedGame) {
+						Game.publishUpdate(game.id, {
+							game: savedGame,
+							change: 'topCardChange'
+						});
+					});
+				}
+			});
+		}
 	},
 
 	scuttle: function(req, res) {
 		if (req.isSocket) {
 			console.log('\nSocket ' + req.socket.id + ' is requesting to scuttle');
-			Game.findOne(req.body.id).populate('players').populate('deck').populate('scrap').exec(function(error, game) {
+			Game.findOne(req.body.id).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
 				if (error || !game) {
 					console.log("Game " + player.currentGame.id + " not found for scuttling");
 					res.send(404);
