@@ -372,9 +372,10 @@ module.exports = {
 						//Check if it is the current players turn.  If it is add a card to their hand and remove a card from the deck
 						//After that, make the second card of the deck the first card of the deck and find a new second card.
 						//Add back && foundPlayer.hand.length !== 8
-						if (game.turn % 2 === foundPlayer.pNum && game.deck.length !== 0) {
+						if (game.turn % 2 === foundPlayer.pNum && game.deck.length !== 0 && foundPlayer.hand.length <= 7) {
 
 							foundPlayer.hand.add(game.topCard);
+							foundPlayer.frozenId = null;
 							var max = game.deck.length - 1;
 							var min = 0;
 							var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
@@ -460,41 +461,57 @@ module.exports = {
 						} else if (game.turn % 2 === req.body.pNum) {
 							if (req.body.scuttler.rank <= 10 && (req.body.scuttler.rank > req.body.target.rank || (req.body.scuttler.rank === req.body.target.rank && req.body.scuttler.suit > req.body.target.suit))) {
 								var playerSort = sortPlayers(players);
-								playerSort[req.body.pNum].hand.remove(req.body.scuttler.id);
-								playerSort[(req.body.pNum + 1) % 2].points.remove(req.body.target.id);
-								game.scrap.add(req.body.target.id);
-								game.scrap.add(req.body.scuttler.id);
-								game.scrapTop = req.body.scuttler;
-								game.scrapTop.class = 'card';
-								game.turn++;
+								var cardIsFrozen = playerSort[req.body.pNum].frozenId === req.body.scuttler.id;
+								if (!cardIsFrozen) {
+									playerSort[req.body.pNum].hand.remove(req.body.scuttler.id);
+									playerSort[(req.body.pNum + 1) % 2].points.remove(req.body.target.id);
+									game.scrap.add(req.body.target.id);
+									game.scrap.add(req.body.scuttler.id);
+									game.scrapTop = req.body.scuttler;
+									game.scrapTop.class = 'card';
+									playerSort[req.body.pNum].frozenId = null;
+									game.turn++;
 
-								var log = "Player " + req.body.pNum + " has scuttled Player " + (req.body.pNum + 1) % 2 + "'s " + req.body.target.alt + " with the " + req.body.scuttler.alt;
-								game.log.push(log);
+									var log = "Player " + req.body.pNum + " has scuttled Player " + (req.body.pNum + 1) % 2 + "'s " + req.body.target.alt + " with the " + req.body.scuttler.alt;
+									game.log.push(log);
 
-								game.save(function(err, savedGame) {
-									playerSort[0].save(function(er, savedP0) {
-										playerSort[1].save(function(e, savedP1) {
-											res.send({
-												scuttled: true,
-												highRank: req.body.scuttler.rank > req.body.target.rank,
-												sameRank: req.body.scuttler.rank === req.body.target.rank,
-												highSuit: req.body.scuttler.suit > req.body.target.suit
-											});
-											Game.publishUpdate(game.id, {
-												game: savedGame,
-												players: [savedP0, savedP1],
-												change: 'scuttle'
+									game.save(function(err, savedGame) {
+										playerSort[0].save(function(er, savedP0) {
+											playerSort[1].save(function(e, savedP1) {
+												res.send({
+													scuttled: true,
+													highRank: req.body.scuttler.rank > req.body.target.rank,
+													sameRank: req.body.scuttler.rank === req.body.target.rank,
+													highSuit: req.body.scuttler.suit > req.body.target.suit,
+													frozen: cardIsFrozen
+												});
+												Game.publishUpdate(game.id, {
+													game: savedGame,
+													players: [savedP0, savedP1],
+													change: 'scuttle'
+												});
 											});
 										});
 									});
-								});
+								} else {
+									console.log("Card was frozen. Doing nothing");
+									res.send({
+										scuttled: false,
+										potentialScuttler: req.body.scuttler.rank <= 10,
+										highRank: req.body.scuttler.rank > req.body.target.rank,
+										sameRank: req.body.scuttler.rank === req.body.target.rank,
+										highSuit: req.body.scuttler.suit > req.body.target.suit,
+										frozen: cardIsFrozen
+									});									
+								}
 							} else {
 								res.send({
 									scuttled: false,
 									potentialScuttler: req.body.scuttler.rank <= 10,
 									highRank: req.body.scuttler.rank > req.body.target.rank,
 									sameRank: req.body.scuttler.rank === req.body.target.rank,
-									highSuit: req.body.scuttler.suit > req.body.target.suit
+									highSuit: req.body.scuttler.suit > req.body.target.suit,
+									frozen: cardIsFrozen
 								});
 							}
 						}
@@ -528,54 +545,66 @@ module.exports = {
 										if (validRank) {
 											var yourTurn = game.turn % 2 === player.pNum;
 											if (yourTurn) {
+												var cardIsFrozen = player.frozenId === card.id;
+												if (!cardIsFrozen) {
+													game.firstEffect = card;
+													player.hand.remove(card.id);
 
-												game.firstEffect = card;
-												player.hand.remove(card.id);
-
-												var log = "Player " + player.pNum + " has played the " + card.alt + " for its one off effect.";
-												game.log.push(log);
-												//Switch to determine targeting requirements of the oneOff
-												switch (card.rank) {
-													case 2:
-													case 9:
-														console.log("Request made to play two or 9");
-														if (req.body.hasOwnProperty('targetId')) {
-															card.targetId = req.body.targetId;
-															card.save();
-														} else {
-															console.log("No target provided for oneOff requiring it");
-															return res.send({
-																oneOff: false,
+													var log = "Player " + player.pNum + " has played the " + card.alt + " for its one off effect.";
+													game.log.push(log);
+													//Switch to determine targeting requirements of the oneOff
+													switch (card.rank) {
+														case 2:
+														case 9:
+															console.log("Request made to play two or 9");
+															if (req.body.hasOwnProperty('targetId')) {
+																card.targetId = req.body.targetId;
+																card.save();
+															} else {
+																console.log("No target provided for oneOff requiring it");
+																return res.send({
+																	oneOff: false,
+																	firstEffect: true,
+																	validRank: validRank,
+																	yourTurn: yourTurn,
+																	game: savedGame,
+																	player: savedPlayer,
+																	card: card,
+																	hadTarget: false
+																});
+															}
+															break;
+													}
+													game.save(function(er, savedGame) {
+														player.save(function(e, savedPlayer) {
+															Game.publishUpdate(game.id, {
+																change: 'oneOff',
+																game: savedGame,
+																player: savedPlayer,
+																card: card
+															}, req);
+															res.send({
+																oneOff: true,
 																firstEffect: true,
 																validRank: validRank,
 																yourTurn: yourTurn,
 																game: savedGame,
 																player: savedPlayer,
-																card: card,
-																hadTarget: false
+																card: card
 															});
-														}
-														break;
-												}
-												game.save(function(er, savedGame) {
-													player.save(function(e, savedPlayer) {
-														Game.publishUpdate(game.id, {
-															change: 'oneOff',
-															game: savedGame,
-															player: savedPlayer,
-															card: card
-														}, req);
-														res.send({
-															oneOff: true,
-															firstEffect: true,
-															validRank: validRank,
-															yourTurn: yourTurn,
-															game: savedGame,
-															player: savedPlayer,
-															card: card
 														});
 													});
-												});
+													
+												} else {
+													console.log("Card was frozen for playing firstEffect");
+													res.send({
+															oneOff: false,
+															firstEffect: true,
+															validRank: validRank,
+															game: game,
+															player: player
+														});													
+												}
 
 											}
 										}
@@ -663,6 +692,8 @@ module.exports = {
 													game.scrapTop = game.firstEffect;
 													game.scrap.add(game.firstEffect);
 													game.firstEffect = null;
+													players[0].frozenId = null;
+													players[1].frozenId = null;
 													game.turn++;
 													game.save(function(er, savedGame) {
 														players[0].save(function(e, savedP0) {
@@ -705,6 +736,8 @@ module.exports = {
 													game.scrapTop = card;
 													game.scrap.add(card.id);
 													game.firstEffect = null;
+													players[0].frozenId = null;
+													players[1].frozenId = null;													
 													game.turn++;
 													game.save(function(er, savedGame) {
 														console.log("It is now turn: " + savedGame.turn);
@@ -789,6 +822,7 @@ module.exports = {
 														game.deck.remove(game.topCard.id);
 														game.deck.remove(game.secondCard.id);
 														game.scrap.add(card.id);
+														player.frozenId = null;														
 														game.turn++;
 
 														game.save(function(er, savedGame) {
@@ -871,6 +905,8 @@ module.exports = {
 													game.scrapTop = game.firstEffect;
 													game.scrap.add(game.firstEffect);
 													game.firstEffect = null;
+													players[0].frozenId = null;
+													players[1].frozenId = null;													
 													game.turn++;
 													game.save(function(er, savedGame) {
 														console.log("It is now turn: " + savedGame.turn);
@@ -910,6 +946,70 @@ module.exports = {
 															});
 														});
 													});
+												}
+											});
+											break;
+
+										case 9:
+											console.log("First effect is a nine");
+											Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function (err, players) {
+												if (err || !players[0] || !players[1]) {
+													console.log("Player(s) not found for 9 resolution");
+													res.send(404);
+												} else {
+													var playerSort = sortPlayers(players);
+
+													playerSort[req.body.pNum].hand.add(card.targetId);
+													playerSort[req.body.pNum].points.remove(card.targetId);
+													playerSort[req.body.pNum].runes.remove(card.targetId);
+													playerSort[req.body.pNum].frozenId = card.targetId;
+
+													playerSort[(req.body.pNum + 1) % 2].hand.remove(card.id);
+													game.scrap.add(card.id);
+													game.scrapTop = card;
+													game.firstEffect = null;
+													game.turn++;
+
+													Card.findOne(card.targetId).exec(function (e7, targetCard) {
+														if (targetCard.rank === 8) {
+															var path = 'images/cards/card_' + targetCard.suit + '_' + targetCard.rank + '.png';
+															targetCard.img = path;
+
+
+																game.save(function (er, savedGame) {
+																	targetCard.save(function (e8, savedTargetCard) {
+																		playerSort[0].save(function (e, savedP0) {
+																			playerSort[1].save(function (e6, savedP1) {
+																				Game.publishUpdate(game.id, {
+																					change: 'resolvedNine',
+																					game: savedGame,
+																					players: [savedP0, savedP1]
+																				});
+																			});
+																		});
+																});
+															});
+														} else {
+																game.save(function (er, savedGame) {
+																	playerSort[0].save(function (e, savedP0) {
+																		playerSort[1].save(function (e6, savedP1) {
+																			Game.publishUpdate(game.id, {
+																				change: 'resolvedNine',
+																				game: savedGame,
+																				players: [savedP0, savedP1]
+																			});
+																		});
+																	})
+																});															
+														}
+													});
+
+													///////////////////////////////////////////////////////////////////////////////////////////////////
+													// Populate Enchantments and deal with case where point card being bounced was previously jacked //
+													///////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
 												}
 											});
 											break;
@@ -961,6 +1061,7 @@ module.exports = {
 				} else {
 					Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function(erro, player) {
 						player.hand.add(req.body.cardId);
+						player.frozenId = null;
 						game.scrap.remove(req.body.cardId);
 						game.scrapTop = game.firstEffect;
 						//firstEffect is the ID of the three, not the three itself, since the value is unpopulated
@@ -999,6 +1100,7 @@ module.exports = {
 						} else {
 							player.hand.remove(req.body.firstDiscard);
 							player.hand.remove(req.body.secondDiscard);
+							player.frozenId = null;
 							game.scrap.add(req.body.firstDiscard);
 							game.scrap.add(req.body.secondDiscard);
 							game.scrap.add(game.firstEffect);
@@ -1069,6 +1171,7 @@ module.exports = {
 												break;
 										}
 										player.points.add(card.id);
+										player.frozenId = null;
 
 										var log = "Player " + player.pNum + " has played the " + card.alt + " for points after playing a seven.";
 										game.log.push(log);
@@ -1168,6 +1271,7 @@ module.exports = {
 												break;
 										}
 										player.runes.add(card.id);
+										player.frozenId = null;
 
 										var log = "Player " + player.pNum + " has played the " + card.alt + " as a rune after playing a seven.";
 										game.log.push(log);
@@ -1243,6 +1347,26 @@ module.exports = {
 										game.deck.remove(game.secondCard.id);
 										break;
 								}
+
+								var playerId = null;
+								if (game.players[0].id === player.id) {
+									playerId = game.players[1].id;
+								} if (game.players[1].id === player.id) {
+									playerId = game.players[0].id;
+								}
+								if (playerId) {
+									Player.findOne(playerId).populate('hand').populate('points').populate('runes').exec(function (e7, scuttler) {
+										if (e7 || !scuttler) {
+											console.log("Couldn't find player to unfreeze for sevenScuttle");
+											res.send(404);
+										} else {
+											scuttler.frozenId = null;
+											scuttler.save();
+										}
+									});
+								}
+
+
 								game.scrap.add(req.body.card.id);
 								game.scrapTop = req.body.card;
 								player.points.remove(req.body.target.id);
@@ -1260,7 +1384,7 @@ module.exports = {
 									}
 
 									game.turn++;
-									game.save(function(e6, savedGame) {
+									game.save(function (e6, savedGame) {
 										Game.publishUpdate(savedGame.id, {
 											change: 'sevenScuttled',
 											victor: victor,

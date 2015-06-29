@@ -369,6 +369,48 @@
 			}
 		};
 
+		this.selectPoint = function(card) {
+			if ($scope.game.selCard != null) {
+				if ($scope.game.selCard.rank === 9) {
+					if (card.rank === 10) {
+						$scope.game.requestNine(card);
+					} else {
+						var scuttle = confirm("Do you want to scuttle? Hit 'Okay' to scuttle and 'Cancel' to play your Nine as a one-off");
+						if (scuttle) {
+							$scope.game.scuttle(card);
+						} else {
+							$scope.game.requestNine(card);
+						}
+					}
+				} else {
+					$scope.game.scuttle(card);
+				}
+				
+			}
+		};
+
+		this.requestNine = function(card) {
+			console.log("Requesting to play nine on a point card");
+			io.socket.get('/game/oneOff', {
+				gameId: $scope.game.gameId,
+				playerId: $scope.game.players[$scope.game.pNum].id,
+				cardId: $scope.game.selId,
+				targetId: card.id
+			}, function(res) {
+				console.log(res);
+				if (res.change.resolvedTwo) {
+					$scope.game.players = res.players;
+				} else {
+					$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card'
+				}
+				$scope.game.selId = null;
+				$scope.game.selIndex = null;
+				$scope.game.selCard = null
+				$scope.$apply();
+			});
+		};
+
+
 		this.chooseScrap = function(card) {
 			console.log(card);
 			io.socket.get('/game/resolveThree', {
@@ -429,8 +471,7 @@
 					}
 				} else {
 					console.log("targeting");
-					switch ($scope.game.selCard.rank) {
-						case 2:
+					if ($scope.game.selCard.rank === 2 || $scope.game.selCard.rank === 9) {
 							io.socket.get('/game/oneOff', {
 								gameId: $scope.game.gameId,
 								playerId: $scope.game.players[$scope.game.pNum].id,
@@ -804,6 +845,23 @@
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.players = obj.data.players;
+							$scope.game.turn = obj.data.game.turn;
+							break;
+						case 'resolvedNine':
+							$scope.game.stacking = false;
+							$scope.game.topTwoPick = false;
+							$scope.game.players = obj.data.players;
+							var glasses = false;
+							$scope.game.players[$scope.game.pNum].runes.forEach(function (rune, index, runes) {
+								console.log(rune);
+								console.log(rune.rank === 8);
+								if (rune.rank === 8) {
+									glasses = true;
+								}
+							});
+							$scope.game.glasses = glasses;	
+							$scope.game.scrap = obj.data.game.scrap;
+							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.turn = obj.data.game.turn;
 							break;
 

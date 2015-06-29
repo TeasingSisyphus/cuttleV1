@@ -121,36 +121,50 @@ module.exports = {
 									} else {
 										if (game.turn % 2 === player.pNum && card.rank <= 10) {
 
-											player.hand.remove(card.id);
-											player.points.add(card.id);
+											var cardIsFrozen = player.frozenId === card.id;
 
-											var log = "Player " + player.pNum + " has played the " + card.alt + " for points";
-											game.log.push(log);
+											if (!cardIsFrozen) {
+												player.hand.remove(card.id);
+												player.points.add(card.id);
+												player.frozenId = null;
 
-											player.save(function(e, savedPlayer) {
-												//Assign winner if player has won
-												var victor = winner(savedPlayer);
+												var log = "Player " + player.pNum + " has played the " + card.alt + " for points";
+												game.log.push(log);
 
-												if (victor) {
-													game.winner = savedPlayer.pNum;
-													log = "Player " + player.pNum + " has won!";
-													game.log.push(log);
-												}
+												player.save(function(e, savedPlayer) {
+													//Assign winner if player has won
+													var victor = winner(savedPlayer);
 
-												game.turn++;
-												Player.publishUpdate(savedPlayer.id, {
-													change: 'points',
-													victor: victor,
-													player: savedPlayer,
-													turn: game.turn
+													if (victor) {
+														game.winner = savedPlayer.pNum;
+														log = "Player " + player.pNum + " has won!";
+														game.log.push(log);
+													}
+
+													game.turn++;
+													Player.publishUpdate(savedPlayer.id, {
+														change: 'points',
+														victor: victor,
+														player: savedPlayer,
+														turn: game.turn
+													});
+													res.send({
+														points: true,
+														turn: game.turn % 2 === player.pNum,
+														rank: card.rank <= 10,
+														frozen: cardIsFrozen
+													});
+													game.save();
 												});
+											} else {
+												console.log("Card was frozen for playing points");
 												res.send({
-													points: true,
+													points: false,
 													turn: game.turn % 2 === player.pNum,
-													rank: card.rank <= 10
-												});
-												game.save();
-											});
+													rank: card.rank <= 10,
+													frozen: cardIsFrozen
+												});												
+											}
 										} else {
 											console.log("not a legal move!");
 											res.send({
@@ -208,36 +222,49 @@ module.exports = {
 												}
 												card.save();
 											}
-											player.hand.remove(card.id);
-											player.runes.add(card.id);
+											var cardIsFrozen = player.frozenId === card.id;
+											if (!cardIsFrozen) {
+												player.hand.remove(card.id);
+												player.runes.add(card.id);
+												player.frozenId = null;
 
-											var log = "Player " + player.pNum + " has played the " + card.alt + " as a rune";
-											game.log.push(log);
+												var log = "Player " + player.pNum + " has played the " + card.alt + " as a rune";
+												game.log.push(log);
 
-											player.save(function(er, savedPlayer) {
-												var victor = winner(savedPlayer);
-												if (victor) {
-													game.winner = savedPlayer.pNum;
-													log = "Player " + player.pNum + " has won!";
-													game.log.push(log);
-												}
+												player.save(function(er, savedPlayer) {
+													var victor = winner(savedPlayer);
+													if (victor) {
+														game.winner = savedPlayer.pNum;
+														log = "Player " + player.pNum + " has won!";
+														game.log.push(log);
+													}
 
-												game.turn++;
-												Player.publishUpdate(savedPlayer.id, {
-													change: 'runes',
-													victor: victor,
-													player: savedPlayer,
-													turn: game.turn
+													game.turn++;
+													Player.publishUpdate(savedPlayer.id, {
+														change: 'runes',
+														victor: victor,
+														player: savedPlayer,
+														turn: game.turn
+													});
+													res.send({
+														runes: true,
+														glasses: glasses,
+														turn: game.turn % 2 === player.pNum,
+														rank: (card.rank === 12 || card.rank === 13),
+														frozen: cardIsFrozen
+													});
+													game.save();
+
 												});
+											} else {
+												console.log("Card was frozen for playing rune");
 												res.send({
-													runes: true,
-													glasses: glasses,
+													runes: false,
 													turn: game.turn % 2 === player.pNum,
-													rank: (card.rank === 12 || card.rank === 13)
+													rank: (card.rank === 12 || card.rank === 13),
+													frozen: cardIsFrozen
 												});
-												game.save();
-
-											});
+											}
 										} else {
 											console.log("Not a legal move!");
 											res.send({

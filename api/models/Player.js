@@ -29,6 +29,10 @@ module.exports = {
   		collection: 'card',
   		via: 'runes',
   	},
+    frozenId: {
+      type: 'integer',
+      defaultsTo: null
+    },
   }
 };
 

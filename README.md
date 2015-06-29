@@ -5,9 +5,10 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 
 TODO:
 -Game log for playing a two to counter
+-Jacks
+	-Add enchantments to card model
+-Queens
 
--One offs
-	- 9 to bounce and FREEZE a card
 
 REFACTORING
 -Change id to gameId in get requests
@@ -23,13 +24,16 @@ ONE-OFF RESOLVES FRONT-END:
 -Nine: Needs game, needs player of target, needs target card
 
 BUGS:
-- FIXED: Sockets don't always connect properly/subscribe you to the game class room upon page load
+-FIXED: Sockets don't always connect properly/subscribe you to the game class room upon page load
 -FIXED: Server crashes if a player clicks 'ready' before opponent joins the game
 -FIXED: $scope.game.players[$scope.game.pNum] is sometimes undefined in app.js and this fucks up selection
--Angular some times fails to load a card's picture, or loads it painfully slowly
--Changing the border on one of the cards screws with the edges of the card images to the right of it
 -FIXED: Game sometimes crashes upon drawing becasuse game.deck[random] is undefined
 	-I believe this is because random was allowed to be as big as game.deck.length, instead of game.deck.length - 1
+
+-Angular some times fails to load a card's picture, or loads it painfully slowly
+-Changing the border on one of the cards screws with the edges of the card images to the right of it
+-In app.js $scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card'; is sometimes undefined
+	-This fucks up selecting a card until the next turn
 
 FUNKY INTERACTIONS/EXCEPTIONS
 -3 with nothing in scrap
