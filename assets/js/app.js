@@ -137,16 +137,24 @@
 				if (($scope.game.turn + 1) % 2 === $scope.game.pNum) {
 					console.log('proper turn');
 					if ($scope.game.selCard) {
-						console.log('\n\nLogging selCard');
-						console.log($scope.game.selCard);
-						io.socket.get('/game/resolveFour', {
-							gameId           : $scope.game.gameId,
-							playerId         : $scope.game.players[$scope.game.pNum].id,
-							firstDiscard     : card.id,
-							secondDiscard    : $scope.game.selCard.id,
-						}, function(res) {
-							console.log(res);
-						});
+						if ($scope.game.selCard != card) {
+							console.log('\n\nLogging selCard');
+							console.log($scope.game.selCard);
+							io.socket.get('/game/resolveFour', {
+								gameId           : $scope.game.gameId,
+								playerId         : $scope.game.players[$scope.game.pNum].id,
+								firstDiscard     : card.id,
+								secondDiscard    : $scope.game.selCard.id,
+							}, function(res) {
+								console.log(res);
+							});
+						} else {
+							//If the same card is clicked twice, deselect it
+							card.class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
+							$scope.game.selId = null;
+							$scope.game.selIndex = null;
+							$scope.game.selCard = null;							
+						}
 					}
 				}
 			}

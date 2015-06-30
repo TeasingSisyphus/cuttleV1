@@ -30,12 +30,16 @@ BUGS:
 -FIXED: Game sometimes crashes upon drawing becasuse game.deck[random] is undefined
 	-I believe this is because random was allowed to be as big as game.deck.length, instead of game.deck.length - 1
 
+-SEMI-FIXED: 4's- Clicking the same card twice discards only that card
+	-Front end doesn't permit selecting the same card twice
+	-Back end will still allow the two id's to be identical
+
 -Angular some times fails to load a card's picture, or loads it painfully slowly
 -Changing the border on one of the cards screws with the edges of the card images to the right of it
 -In app.js $scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card'; is sometimes undefined
 	-This fucks up selecting a card until the next turn
--4's: Clicking the same card twice discards only that card
 
+	
 FUNKY INTERACTIONS/EXCEPTIONS
 -3 with nothing in scrap
 -3 for a 3
