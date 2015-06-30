@@ -407,22 +407,6 @@ module.exports = {
 		});
 	},
 
-	chooseTopCard: function(req, res) {
-		console.log('\nServer is requesting to choose the top card')
-		if (req.isSocket) {
-			console.log("\nchooseTopCard requested from Socket " + req.socket.id);
-			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').populate('twos').exec(function(error, game) {
-				if (error || !game) {
-					console.log("Game " + req.body.gameId + " not found for RESOLVING a one off");
-					res.send(404);
-				} else {
-					Game.publishUpdate(game.id, {
-						change: 'topCardPickData'
-					}, req);
-				}
-			});
-		}
-	},
 
 	placeTopCard: function(req, res) {
 		console.log('Logging req.body of placeTopCard');
@@ -434,7 +418,9 @@ module.exports = {
 					console.log('Game ' + req.body.gameId + ' not found for placeTopCard');
 					res.send(404);
 				} else {
+					game.deck.add(game.topCard);
 					game.topCard = req.body.cardId;
+					game.deck.remove(req.body.cardId);
 					game.save(function(erro, savedGame) {
 						Game.publishUpdate(game.id, {
 							game: savedGame,

@@ -53,7 +53,6 @@ module.exports.routes = {
 '/game/draw'             :          'GameController.draw',
 '/game/scuttle'          :          'GameController.scuttle',
 '/game/placeTopCard'     :          'GameController.placeTopCard',
-'/game/chooseTopCard'    :          'GameController.chooseTopCard',
 '/game/oneOff'           :          'GameController.oneOff',
 '/game/resolve'          :          'GameController.resolve',
 '/game/resolveThree'     :          'GameController.resolveThree',

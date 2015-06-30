@@ -104,10 +104,11 @@
 		this.stacking = false;
 		this.scrapPick = false;
 		this.topTwoPick = false;
-		//Represents which of the top two cards FUCKER
+		//Represents which of the top two cards is being chosen during a seven's one off
 		this.whichCard = null;
 		this.selectTwo = false;
 		this.putOnTop = false;
+		this.showDeck = false;
 
 
 		this.ready = function() {
@@ -432,14 +433,6 @@
 			});
 		};
 
-		this.chooseTopCard = function() {
-			console.log('\nIn chooseTopCard');
-			io.socket.get('/game/chooseTopCard', {
-				gameId     : $scope.game.gameId,
-			}, function(res) {
-				console.log(res);
-			});
-		};
 
 		//Used to make request involving selecting a single rune to target
 		this.selectRune = function(card) {
@@ -673,13 +666,14 @@
 					switch (obj.data.change) {
 						case 'draw':
 							console.log('\nIn draw case');
+							$scope.game.stacking = false;
+							$scope.game.topTwoPick = false;
 							$scope.game.deck = obj.data.game.deck;
 							$scope.game.topCard = obj.data.game.topCard;
 							$scope.game.secondCard = obj.data.game.secondCard;
 							$scope.game.topTwo = [obj.data.game.topCard, obj.data.game.secondCard];
 							$scope.game.players[obj.data.player.pNum].hand = obj.data.player.hand;
 							$scope.game.turn = obj.data.game.turn;
-							$scope.game.topTwoPick = false;
 							break;
 
 						case 'ready':
@@ -732,6 +726,7 @@
 							break;
 
 						case 'sevenData':
+							$scope.game.stacking         = false;
 							$scope.game.topTwoPick       = true;
 							$scope.game.players[obj.data.player.pNum].hand = obj.data.player.hand;
 							$scope.game.scrap            = obj.data.game.scrap;
@@ -742,7 +737,6 @@
 							$scope.game.topTwo           = [obj.data.game.topCard, obj.data.game.secondCard];
 							$scope.game.topCard.class    = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
 							$scope.game.secondCard.class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
-							$scope.game.stacking         = false;
 							break;
 
 						case 'sevenScuttled':
@@ -751,6 +745,7 @@
 							$scope.game.players[obj.data.player.pNum] = obj.data.player;
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
+							$scope.game.deck = obj.data.game.deck;
 							$scope.game.turn = obj.data.game.turn;
 							break;
 						case 'sevenOneOff':
@@ -826,6 +821,8 @@
 							break;
 
 						case 'resolvedFive':
+							$scope.game.stacking = false;
+							$scope.game.topTwoPick = false;
 							$scope.game.deck = obj.data.game.deck;
 							$scope.game.topCard = obj.data.game.topCard;
 							$scope.game.secondCard = obj.data.game.secondCard;
@@ -833,9 +830,7 @@
 							$scope.game.players[obj.data.player.pNum] = obj.data.player;
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
-							$scope.game.stacking = false;
 							$scope.game.turn = obj.data.game.turn;
-							$scope.game.topTwoPick = false;
 							break;
 
 						case 'resolvedSix':
@@ -866,10 +861,11 @@
 							break;
 
 						case 'topCardChange':
-							$scope.game.topCard = obj.data.game.topCard;
 							$scope.game.stacking = false;
 							$scope.game.topTwoPick = false;
-							
+							$scope.game.topCard = obj.data.game.topCard;
+							$scope.game.deck = obj.data.game.deck;
+							break;
 					}
 					break;
 

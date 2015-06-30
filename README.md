@@ -34,6 +34,7 @@ BUGS:
 -Changing the border on one of the cards screws with the edges of the card images to the right of it
 -In app.js $scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card'; is sometimes undefined
 	-This fucks up selecting a card until the next turn
+-4's: Clicking the same card twice discards only that card
 
 FUNKY INTERACTIONS/EXCEPTIONS
 -3 with nothing in scrap
