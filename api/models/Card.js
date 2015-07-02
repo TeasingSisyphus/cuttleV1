@@ -38,6 +38,15 @@ module.exports = {
       type: 'integer',
     },
 
+    attachments: {
+      collection: 'card',
+      via: 'attached'
+    },
+
+    attached: {
+      model: 'card'
+    },
+    
     class: {
       type: 'string',
       defaultsTo: 'card',

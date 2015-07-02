@@ -60,6 +60,7 @@ module.exports.routes = {
 '/game/sevenRunes'       :          'GameController.sevenRunes',
 '/game/sevenScuttle'     :          'GameController.sevenScuttle',
 '/game/sevenOneOff'      :          'GameController.sevenOneOff',
+'/game/jack'             :          'GameController.jack',
 
 
 

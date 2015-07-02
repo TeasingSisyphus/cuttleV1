@@ -1501,4 +1501,80 @@ module.exports = {
 		}
 	},
 
+	jack: function (req, res) {
+		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('pNum') && req.body.hasOwnProperty('thiefId')  && req.body.hasOwnProperty('victimId') && req.body.hasOwnProperty('jackId') && req.body.hasOwnProperty('targetId') ) {
+			console.log("\n\nJack requested for game " + req.body.gameId);
+
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
+				if (error || !game) {
+					console.log("Game " + req.body.gameId + " not found for jack");
+					res.send(404);
+				} else {
+					Player.find([req.body.thiefId, req.body.victimId]).populate('hand').populate('points').populate('runes').exec(function (erro, players) {
+						if (erro || !players[0] || !players[1]) {
+							console.log("Can't find players for jack");
+							res.send(404);
+						} else {
+							var playerSort = sortPlayers(players);
+
+							Card.findOne(req.body.targetId).populate('attachments').exec(function (err, target) {
+								if (err || !target) {
+									console.log("Card " + req.body.targetId + " not found for jack");
+									res.send(404);
+								} else {
+									var yourTurn = req.body.pNum === game.turn % 2;
+									if (yourTurn) {
+										var cardIsFrozen = playerSort[req.body.pNum].frozenId === req.body.jackId;
+
+										if (!cardIsFrozen) {	
+											console.log("Jack isn't frozen");
+
+											//////////////////////////
+											//  Check for validRank //
+											//////////////////////////									
+											playerSort[(req.body.pNum + 1) % 2].points.remove(target.id);									
+											playerSort[req.body.pNum].points.add(target.id);
+											playerSort[req.body.pNum].hand.remove(req.body.jackId);
+
+											target.attachments.add(req.body.jackId);
+
+											playerSort[req.body.pNum].frozenId = null;
+											game.turn++;
+											game.save(function (er, savedGame) {
+												target.save(function (e, savedTarget) {
+													playerSort[0].save(function (e6, savedP0) {
+														playerSort[1].save(function (e7, savedP1) {
+															console.log("\nsavedP0: ");
+															console.log(savedP0);
+															console.log("\n\nsavedP1: ");
+															console.log(savedP1);
+															Game.publishUpdate(game.id, {
+																change: 'jack',
+																game: savedGame,
+																players: [savedP0, savedP1],
+																thief: req.body.pNum,
+																targetCard: savedTarget
+															});
+
+														});
+													});
+												});
+											});
+										}
+
+									} 
+									res.send({
+										jack: true,
+										yourTurn: yourTurn,
+										frozen: cardIsFrozen
+									});
+								}
+							});
+						}
+					});
+				}
+			});
+		}
+	},
+
 };

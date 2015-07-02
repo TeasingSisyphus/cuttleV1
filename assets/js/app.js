@@ -91,6 +91,8 @@
 		this.secondCard = null;
 		this.topTwo = [];
 		this.scrap = [];
+		this.opJacks = [];
+		this.yourJacks = [];
 		this.scrapTopImg = '/images/emptyScrap.png';
 		this.turn = null;
 		this.pNum = null;
@@ -378,7 +380,7 @@
 			}
 		};
 
-		this.selectPoint = function(card) {
+		this.selectPoint = function (card) {
 			if ($scope.game.selCard != null) {
 				if ($scope.game.selCard.rank === 9) {
 					if (card.rank === 10) {
@@ -391,6 +393,8 @@
 							$scope.game.requestNine(card);
 						}
 					}
+				} else if ($scope.game.selCard.rank === 11) {
+					$scope.game.jack(card);
 				} else {
 					$scope.game.scuttle(card);
 				}
@@ -398,7 +402,21 @@
 			}
 		};
 
-		this.requestNine = function(card) {
+		this.jack = function (card) {
+			console.log("Requesting to jack " + card.alt);
+			io.socket.get('/game/jack', {
+				gameId: $scope.game.gameId,
+				pNum: $scope.game.pNum,
+				thiefId: $scope.game.players[$scope.game.pNum].id,
+				victimId: $scope.game.players[($scope.game.pNum + 1) % 2].id,
+				jackId: $scope.game.selId,
+				targetId: card.id
+			}, function (res) {
+				console.log(res);
+			});
+		};
+
+		this.requestNine = function (card) {
 			console.log("Requesting to play nine on a point card");
 			io.socket.get('/game/oneOff', {
 				gameId: $scope.game.gameId,
@@ -867,6 +885,37 @@
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.turn = obj.data.game.turn;
 							break;
+
+						case 'jack':
+							$scope.game.stacking = false;
+							$scope.game.topTwoPick = false;
+							$scope.game.players = obj.data.players;
+							$scope.game.turn = obj.data.turn;
+							switch (obj.data.thief === $scope.game.pNum) {
+								case true:
+								console.log("Your jack");
+									obj.data.targetCard.attachments.forEach(function (jack, index, attachments) {
+										console.log(jack);
+										console.log($scope.game.yourJacks.indexOf(jack));
+										if ($scope.game.yourJacks.indexOf(jack) < 0) {
+											console.log("pushing jack");
+
+											$scope.game.yourJacks.push(jack);
+										}
+									});
+									break;
+								case false:
+									console.log("His jack");
+									obj.data.targetCard.attachments.forEach(function (jack, index, attachments) {
+										console.log(jack);
+										console.log($scope.game.opJacks.indexOf(jack));
+										if ($scope.game.opJacks.indexOf(jack) < 0) {
+											console.log("pushing jack");
+											$scope.game.opJacks.push(jack);
+										}
+									});
+									break;
+							}
 
 						case 'topCardChange':
 							$scope.game.stacking = false;
