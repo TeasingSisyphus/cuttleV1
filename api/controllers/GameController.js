@@ -413,7 +413,7 @@ module.exports = {
 		console.log(req.body);
 		if (req.isSocket) {
 			console.log('\nSocket ' + req.socket.id + ' is requesting to place a top card');
-			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function(error, game) {
 				if (error || !game) {
 					console.log('Game ' + req.body.gameId + ' not found for placeTopCard');
 					res.send(404);
@@ -435,7 +435,7 @@ module.exports = {
 	scuttle: function(req, res) {
 		if (req.isSocket) {
 			console.log('\nSocket ' + req.socket.id + ' is requesting to scuttle');
-			Game.findOne(req.body.id).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
+			Game.findOne(req.body.id).populate('players').populate('deck').populate('scrap').exec(function(error, game) {
 				if (error || !game) {
 					console.log("Game " + player.currentGame.id + " not found for scuttling");
 					res.send(404);
@@ -488,7 +488,7 @@ module.exports = {
 										sameRank: req.body.scuttler.rank === req.body.target.rank,
 										highSuit: req.body.scuttler.suit > req.body.target.suit,
 										frozen: cardIsFrozen
-									});									
+									});
 								}
 							} else {
 								res.send({
@@ -580,16 +580,16 @@ module.exports = {
 															});
 														});
 													});
-													
+
 												} else {
 													console.log("Card was frozen for playing firstEffect");
 													res.send({
-															oneOff: false,
-															firstEffect: true,
-															validRank: validRank,
-															game: game,
-															player: player
-														});													
+														oneOff: false,
+														firstEffect: true,
+														validRank: validRank,
+														game: game,
+														player: player
+													});
 												}
 
 											}
@@ -723,7 +723,7 @@ module.exports = {
 													game.scrap.add(card.id);
 													game.firstEffect = null;
 													players[0].frozenId = null;
-													players[1].frozenId = null;													
+													players[1].frozenId = null;
 													game.turn++;
 													game.save(function(er, savedGame) {
 														console.log("It is now turn: " + savedGame.turn);
@@ -808,7 +808,7 @@ module.exports = {
 														game.deck.remove(game.topCard.id);
 														game.deck.remove(game.secondCard.id);
 														game.scrap.add(card.id);
-														player.frozenId = null;														
+														player.frozenId = null;
 														game.turn++;
 
 														game.save(function(er, savedGame) {
@@ -892,7 +892,7 @@ module.exports = {
 													game.scrap.add(game.firstEffect);
 													game.firstEffect = null;
 													players[0].frozenId = null;
-													players[1].frozenId = null;													
+													players[1].frozenId = null;
 													game.turn++;
 													game.save(function(er, savedGame) {
 														console.log("It is now turn: " + savedGame.turn);
@@ -938,7 +938,7 @@ module.exports = {
 
 										case 9:
 											console.log("First effect is a nine");
-											Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function (err, players) {
+											Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function(err, players) {
 												if (err || !players[0] || !players[1]) {
 													console.log("Player(s) not found for 9 resolution");
 													res.send(404);
@@ -956,37 +956,37 @@ module.exports = {
 													game.firstEffect = null;
 													game.turn++;
 
-													Card.findOne(card.targetId).exec(function (e7, targetCard) {
+													Card.findOne(card.targetId).exec(function(e7, targetCard) {
 														if (targetCard.rank === 8) {
 															var path = 'images/cards/card_' + targetCard.suit + '_' + targetCard.rank + '.png';
 															targetCard.img = path;
 
 
-																game.save(function (er, savedGame) {
-																	targetCard.save(function (e8, savedTargetCard) {
-																		playerSort[0].save(function (e, savedP0) {
-																			playerSort[1].save(function (e6, savedP1) {
-																				Game.publishUpdate(game.id, {
-																					change: 'resolvedNine',
-																					game: savedGame,
-																					players: [savedP0, savedP1]
-																				});
-																			});
-																		});
-																});
-															});
-														} else {
-																game.save(function (er, savedGame) {
-																	playerSort[0].save(function (e, savedP0) {
-																		playerSort[1].save(function (e6, savedP1) {
+															game.save(function(er, savedGame) {
+																targetCard.save(function(e8, savedTargetCard) {
+																	playerSort[0].save(function(e, savedP0) {
+																		playerSort[1].save(function(e6, savedP1) {
 																			Game.publishUpdate(game.id, {
 																				change: 'resolvedNine',
 																				game: savedGame,
 																				players: [savedP0, savedP1]
 																			});
 																		});
-																	})
-																});															
+																	});
+																});
+															});
+														} else {
+															game.save(function(er, savedGame) {
+																playerSort[0].save(function(e, savedP0) {
+																	playerSort[1].save(function(e6, savedP1) {
+																		Game.publishUpdate(game.id, {
+																			change: 'resolvedNine',
+																			game: savedGame,
+																			players: [savedP0, savedP1]
+																		});
+																	});
+																})
+															});
 														}
 													});
 
@@ -1101,6 +1101,11 @@ module.exports = {
 										change: 'resolvedFour',
 										game: savedGame,
 										player: savedPlayer
+									});
+
+									res.send({
+										resolvedFour: true,
+										frozen: false
 									});
 								});
 							});
@@ -1337,11 +1342,12 @@ module.exports = {
 								var playerId = null;
 								if (game.players[0].id === player.id) {
 									playerId = game.players[1].id;
-								} if (game.players[1].id === player.id) {
+								}
+								if (game.players[1].id === player.id) {
 									playerId = game.players[0].id;
 								}
 								if (playerId) {
-									Player.findOne(playerId).populate('hand').populate('points').populate('runes').exec(function (e7, scuttler) {
+									Player.findOne(playerId).populate('hand').populate('points').populate('runes').exec(function(e7, scuttler) {
 										if (e7 || !scuttler) {
 											console.log("Couldn't find player to unfreeze for sevenScuttle");
 											res.send(404);
@@ -1370,7 +1376,7 @@ module.exports = {
 									}
 
 									game.turn++;
-									game.save(function (e6, savedGame) {
+									game.save(function(e6, savedGame) {
 										Game.publishUpdate(savedGame.id, {
 											change: 'sevenScuttled',
 											victor: victor,
@@ -1501,23 +1507,23 @@ module.exports = {
 		}
 	},
 
-	jack: function (req, res) {
-		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('pNum') && req.body.hasOwnProperty('thiefId')  && req.body.hasOwnProperty('victimId') && req.body.hasOwnProperty('jackId') && req.body.hasOwnProperty('targetId') ) {
+	jack: function(req, res) {
+		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('pNum') && req.body.hasOwnProperty('thiefId') && req.body.hasOwnProperty('victimId') && req.body.hasOwnProperty('jackId') && req.body.hasOwnProperty('targetId')) {
 			console.log("\n\nJack requested for game " + req.body.gameId);
 
-			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function (error, game) {
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function(error, game) {
 				if (error || !game) {
 					console.log("Game " + req.body.gameId + " not found for jack");
 					res.send(404);
 				} else {
-					Player.find([req.body.thiefId, req.body.victimId]).populate('hand').populate('points').populate('runes').exec(function (erro, players) {
+					Player.find([req.body.thiefId, req.body.victimId]).populate('hand').populate('points').populate('runes').exec(function(erro, players) {
 						if (erro || !players[0] || !players[1]) {
 							console.log("Can't find players for jack");
 							res.send(404);
 						} else {
 							var playerSort = sortPlayers(players);
 
-							Card.findOne(req.body.targetId).populate('attachments').exec(function (err, target) {
+							Card.findOne(req.body.targetId).populate('attachments').exec(function(err, target) {
 								if (err || !target) {
 									console.log("Card " + req.body.targetId + " not found for jack");
 									res.send(404);
@@ -1526,13 +1532,13 @@ module.exports = {
 									if (yourTurn) {
 										var cardIsFrozen = playerSort[req.body.pNum].frozenId === req.body.jackId;
 
-										if (!cardIsFrozen) {	
+										if (!cardIsFrozen) {
 											console.log("Jack isn't frozen");
 
 											//////////////////////////
 											//  Check for validRank //
 											//////////////////////////									
-											playerSort[(req.body.pNum + 1) % 2].points.remove(target.id);									
+											playerSort[(req.body.pNum + 1) % 2].points.remove(target.id);
 											playerSort[req.body.pNum].points.add(target.id);
 											playerSort[req.body.pNum].hand.remove(req.body.jackId);
 
@@ -1540,10 +1546,10 @@ module.exports = {
 
 											playerSort[req.body.pNum].frozenId = null;
 											game.turn++;
-											game.save(function (er, savedGame) {
-												target.save(function (e, savedTarget) {
-													playerSort[0].save(function (e6, savedP0) {
-														playerSort[1].save(function (e7, savedP1) {
+											game.save(function(er, savedGame) {
+												target.save(function(e, savedTarget) {
+													playerSort[0].save(function(e6, savedP0) {
+														playerSort[1].save(function(e7, savedP1) {
 															console.log("\nsavedP0: ");
 															console.log(savedP0);
 															console.log("\n\nsavedP1: ");
@@ -1562,7 +1568,7 @@ module.exports = {
 											});
 										}
 
-									} 
+									}
 									res.send({
 										jack: true,
 										yourTurn: yourTurn,
