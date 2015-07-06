@@ -44,7 +44,10 @@
                         </div>
                         <div class = 'jacks'>
                                 Opponent's Jacks:
-                                <img ng-repeat="card in game.opJacks" class='card' id='{{card.id}}' ng-click="game.selectRune(card)" ng-src='{{card.img}}' alt='{{card.alt}}'></img>
+                                <div ng-repeat="card in game.opJacks">
+                                    <img class='card' id='{{card.id}}' ng-click="game.selectRune(card)" ng-src='{{card.img}}' alt='{{card.alt}}'></img>
+                                    {{card.targetAlt}}
+                                </div>
                         </div>
                         <div class='points'>
                             Opponent's Points:
@@ -84,8 +87,11 @@
                             <img ng-repeat="card in game.players[game.pNum].runes" class='card' id="{{card.id}}" ng-src="{{card.img}}" alt="{{card.alt}}"></img>
                         </div>
                         <div class='jacks'>
-                            Your Jacks
-                            <img ng-repeat="card in game.yourJacks" class='card' id='{{card.id}}' ng-click="game.selectRune(card)" ng-src='{{card.img}}' alt='{{card.alt}}'></img>
+                            Jacks
+                            <div ng-repeat="card in game.yourJacks">
+                                <img class='card' id='{{card.id}}' ng-click="game.selectRune(card)" ng-src='{{card.img}}' alt='{{card.alt}}'></img>
+                                {{card.targetAlt}}
+                            </div>
                         </div>
                         <div class='points' ng-click='game.points()'>
                             Points:

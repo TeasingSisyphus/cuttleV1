@@ -2,12 +2,24 @@
 
 This is a multiplayer card game leveraging sails.js and angularjs.
 
+DONE:
+	-Jacks now properly remove from the other side when the same card is jacked multiple times
+	-Jacks now display the alt text of the stolen card next to the img of the jack
 
 TODO:
--Game log for playing a two to counter
 -Jacks
-	-Add enchantments to card model
+	-Properly move jacks to scrap pile in SCUTTLE
+	-Properly move jacks to scrap pile in ACE
+	-Properly move jacks to scrap pile in SIX
+		-Return points to original owner using modular arithmetic
+	-Enable targeting a jack with a TWO
+		-Switch control of the point card when the jack is destroyed
+	-Enable targeting a jack with a NINE
+		-Switch control of the point card when the jack is bounced and frozen
 -Queens
+	-Jacks must check runes for any queens and abort if one if found
+	-9's must count the number of queens, abort if 2 or more are found, and abort if 1 is found and the target isn't the queen
+	-2's must count the number of queens, abort if 2 or more are found, and abort if 1 is found and the target isn't the queen
 
 
 REFACTORING

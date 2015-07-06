@@ -900,25 +900,46 @@
 							switch (obj.data.thief === $scope.game.pNum) {
 								case true:
 									console.log("Your jack");
-									obj.data.targetCard.attachments.forEach(function(jack, index, attachments) {
-										console.log(jack);
-										console.log($scope.game.yourJacks.indexOf(jack));
+									console.log("Displaying opJacks:");
+									console.log($scope.game.opJacks);
+									obj.data.targetCard.attachments.forEach(function (jack, index, attachments) {
+										//Add the attached jacks to your jacks
 										if ($scope.game.yourJacks.indexOf(jack) < 0) {
 											console.log("pushing jack");
-
+											jack.targetAlt = obj.data.targetCard.alt;
 											$scope.game.yourJacks.push(jack);
 										}
+										console.log(jack);
+										console.log($scope.game.opJacks.indexOf(jack));
+										//Remove the attached jacks from opponent's jacks
+										$scope.game.opJacks.forEach(function (opJack, opJacksIndex, opJacks) {
+											if (jack.suit === opJack.suit && jack.rank === 11 && opJack.rank === 11) {
+												$scope.game.opJacks.splice(opJacksIndex, 1);
+											}
+										});
+
 									});
 									break;
 								case false:
-									console.log("His jack");
+									console.log("Their jack");
+									console.log("Displaying yourJacks:");
+									console.log($scope.game.yourJacks);
 									obj.data.targetCard.attachments.forEach(function(jack, index, attachments) {
-										console.log(jack);
-										console.log($scope.game.opJacks.indexOf(jack));
+										//Add the attached jacks to opponent's jacks
 										if ($scope.game.opJacks.indexOf(jack) < 0) {
 											console.log("pushing jack");
+											jack.targetAlt = obj.data.targetCard.alt;											
 											$scope.game.opJacks.push(jack);
 										}
+
+										console.log(jack);
+										console.log($scope.game.yourJacks.indexOf(jack));
+										//Remove the attached jacks from your jacks
+										$scope.game.yourJacks.forEach(function (yourJack, yourJacksIndex, yourJacks) {
+											if (jack.suit === yourJack.suit && jack.rank === 11 && yourJack.rank === 11) {
+												$scope.game.yourJacks.splice(yourJacksIndex, 1);
+											}
+										});
 									});
 									break;
 							}
