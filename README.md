@@ -8,7 +8,9 @@ DONE:
 
 TODO:
 -Jacks
+	-HUGE BUG: If Player0 uses a jack, the target is not properly added to his points!!!!!!!
 	-Properly move jacks to scrap pile in SCUTTLE
+	-Properly move jacks to scrap pile in SEVEN SCUTTLE
 	-Properly move jacks to scrap pile in ACE
 	-Properly move jacks to scrap pile in SIX
 		-Return points to original owner using modular arithmetic
@@ -16,6 +18,9 @@ TODO:
 		-Switch control of the point card when the jack is destroyed
 	-Enable targeting a jack with a NINE
 		-Switch control of the point card when the jack is bounced and frozen
+	-Change their display
+		-Maybe jacks only stack vertically if they steal the same card?
+	-Add sevenJacks
 -Queens
 	-Jacks must check runes for any queens and abort if one if found
 	-9's must count the number of queens, abort if 2 or more are found, and abort if 1 is found and the target isn't the queen

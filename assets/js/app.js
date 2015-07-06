@@ -779,6 +779,23 @@
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.deck = obj.data.game.deck;
 							$scope.game.turn = obj.data.game.turn;
+
+							if (obj.data.jacksOnTarget > 0) {
+								var youWereTarget = obj.data.player.pNum === $scope.game.pNum;
+								if (youWereTarget) {
+									$scope.game.yourJacks.forEach(function (jack, index, yourJacks) {
+										if (jack.targetAlt === obj.data.target.alt) {
+											$scope.game.yourJacks.splice(index, 1);
+										}
+									});
+								} else {
+									$scope.game.opJacks.forEach(function (jack, index, opJacks) {
+										if (jack.targetAlt === obj.data.target.alt) {
+											$scope.game.opJacks.splice(index, 1);
+										}
+									});
+								}
+							}
 							break;
 						case 'sevenOneOff':
 							$scope.game.stacking = true;
@@ -900,8 +917,6 @@
 							switch (obj.data.thief === $scope.game.pNum) {
 								case true:
 									console.log("Your jack");
-									console.log("Displaying opJacks:");
-									console.log($scope.game.opJacks);
 									obj.data.targetCard.attachments.forEach(function (jack, index, attachments) {
 										//Add the attached jacks to your jacks
 										if ($scope.game.yourJacks.indexOf(jack) < 0) {
@@ -922,8 +937,6 @@
 									break;
 								case false:
 									console.log("Their jack");
-									console.log("Displaying yourJacks:");
-									console.log($scope.game.yourJacks);
 									obj.data.targetCard.attachments.forEach(function(jack, index, attachments) {
 										//Add the attached jacks to opponent's jacks
 										if ($scope.game.opJacks.indexOf(jack) < 0) {
