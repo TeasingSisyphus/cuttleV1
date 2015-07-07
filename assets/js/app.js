@@ -829,6 +829,8 @@
 							$scope.game.stacking = false;
 							$scope.game.turn = obj.data.game.turn;
 							$scope.game.topTwoPick = false;
+							$scope.game.opJacks = [];
+							$scope.game.yourJacks = [];
 							break;
 
 						case 'resolvedTwo':
@@ -889,6 +891,8 @@
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.players = obj.data.players;
+							$scope.game.yourJacks = [];
+							$scope.game.opJacks = [];
 							$scope.game.turn = obj.data.game.turn;
 							break;
 						case 'resolvedNine':

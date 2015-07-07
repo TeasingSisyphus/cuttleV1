@@ -681,14 +681,41 @@ module.exports = {
 													players[0].frozenId = null;
 													players[1].frozenId = null;
 													game.turn++;
-													game.save(function(er, savedGame) {
-														players[0].save(function(e, savedP0) {
-															players[1].save(function(e6, savedP1) {
-																var playerSort = sortPlayers([savedP0, savedP1]);
-																Game.publishUpdate(game.id, {
-																	change: 'resolvedAce',
-																	game: savedGame,
-																	players: playerSort
+
+													var pointIds = [];
+													players[0].points.forEach(function (point, index, points) {
+														pointIds.push(point.id);
+													});
+
+													players[1].points.forEach(function (point, index, points) {
+														pointIds.push(point.id);
+													});
+
+													Card.find(pointIds).populate('attachments').exec(function (e7, points) {
+														var toSave = [];
+														points.forEach(function (point, index, points) {
+															if (point.attachments.length > 0) {
+																toSave.push(point);
+																point.attachments.forEach(function (attachment, aIndex, attachments) {
+																	game.scrap.add(attachment.id);
+																	point.attachments.remove(attachment.id);
+																});
+															}
+														});
+
+														toSave.forEach(function (saveYa, index, saveList) {
+															saveYa.save();
+														});
+
+														game.save(function(er, savedGame) {
+															players[0].save(function(e, savedP0) {
+																players[1].save(function(e6, savedP1) {
+																	var playerSort = sortPlayers([savedP0, savedP1]);
+																	Game.publishUpdate(game.id, {
+																		change: 'resolvedAce',
+																		game: savedGame,
+																		players: playerSort
+																	});
 																});
 															});
 														});
@@ -894,19 +921,78 @@ module.exports = {
 													players[0].frozenId = null;
 													players[1].frozenId = null;
 													game.turn++;
-													game.save(function(er, savedGame) {
-														console.log("It is now turn: " + savedGame.turn);
-														players[0].save(function(e, savedP0) {
-															players[1].save(function(e6, savedP1) {
-																var playerSort = sortPlayers([savedP0, savedP1]);
-																Game.publishUpdate(game.id, {
-																	change: 'resolvedSix',
-																	game: savedGame,
-																	players: playerSort
+
+
+
+													var p0PointIds = [];
+													players[0].points.forEach(function (point, index, points) {
+															p0PointIds.push(point.id);
+													});
+
+													var p1PointIds = [];
+													players[1].points.forEach(function (point, index, points) {
+															p1PointIds.push(point.id);
+													});		
+
+													Card.find(p0PointIds).populate('attachments').exec(function (e7, p0Points) {
+														Card.find(p1PointIds).populate('attachments').exec(function (e8, p1Points) {
+															var toSave = [];
+															p0Points.forEach(function  (point, index, p0Puntos) {
+																if (point.attachments.length > 0) {
+																	var numberAttached = 0;
+																	toSave.push(point);
+																	point.attachments.forEach(function (attachment, aIndex, attachments) {
+																		numberAttached++;
+																		point.attachments.remove(attachment.id);
+																		game.scrap.add(attachment.id);
+																	});
+
+																	if (numberAttached % 2 === 1) {
+																		players[0].points.remove(point.id);
+																		players[1].points.add(point.id);
+																	}
+																	
+																}
+
+															});
+
+															p1Points.forEach(function (point, index, p1Puntos) {
+																if (point.attachments.length > 0) {												
+																	var numberAttached = 0;
+																	toSave.push(point);
+																	point.attachments.forEach(function (attachment, aIndex, attachments) {
+																		numberAttached++;
+																		point.attachments.remove(attachment.id);
+																		game.scrap.add(attachment.id);
+																	});
+
+																	if (numberAttached % 2 === 1) {
+																		players[1].points.remove(point.id);
+																		players[0].points.add(point.id);
+																	}
+																}
+															});
+
+															toSave.forEach(function (saveYa, index, saveList) {
+																saveYa.save();
+															});	
+															game.save(function(er, savedGame) {
+																console.log("It is now turn: " + savedGame.turn);
+																players[0].save(function(e, savedP0) {
+																	players[1].save(function(e6, savedP1) {
+																		var playerSort = sortPlayers([savedP0, savedP1]);
+																		Game.publishUpdate(game.id, {
+																			change: 'resolvedSix',
+																			game: savedGame,
+																			players: playerSort
+																		});
+																	});
 																});
 															});
-														});
-													});
+
+														});	
+													});	
+																							
 												}
 											});
 											break;

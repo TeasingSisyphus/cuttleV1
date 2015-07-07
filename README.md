@@ -3,16 +3,17 @@
 This is a multiplayer card game leveraging sails.js and angularjs.
 
 DONE:
+	-Properly move jacks to scrap pile in SIX
+	-Properly move jacks to scrap pile in SEVEN SCUTTLE
 	-Jacks now properly remove from the other side when the same card is jacked multiple times
 	-Jacks now display the alt text of the stolen card next to the img of the jack
 
 TODO:
 -Jacks
 	-HUGE BUG: If Player0 uses a jack, the target is not properly added to his points!!!!!!!
+		-6's also remove the exchanged card from points!!!!!!
 	-Properly move jacks to scrap pile in SCUTTLE
-	-Properly move jacks to scrap pile in SEVEN SCUTTLE
 	-Properly move jacks to scrap pile in ACE
-	-Properly move jacks to scrap pile in SIX
 		-Return points to original owner using modular arithmetic
 	-Enable targeting a jack with a TWO
 		-Switch control of the point card when the jack is destroyed
@@ -21,6 +22,9 @@ TODO:
 	-Change their display
 		-Maybe jacks only stack vertically if they steal the same card?
 	-Add sevenJacks
+	-Sixes and Aces
+		-Remove attachments from jacked cards by saving the actual cards
+
 -Queens
 	-Jacks must check runes for any queens and abort if one if found
 	-9's must count the number of queens, abort if 2 or more are found, and abort if 1 is found and the target isn't the queen
