@@ -33,6 +33,10 @@ module.exports = {
       type: 'integer',
       defaultsTo: null
     },
+    tempString: {
+      type: 'string',
+      defaultsTo: ''
+    },
   }
 };
 

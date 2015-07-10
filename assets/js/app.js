@@ -514,6 +514,18 @@
 							$scope.game.selCard = null
 							$scope.$apply();
 						});
+					} else if ($scope.game.selCard.rank === 11) {
+						console.log("Requesting jackBug");
+						io.socket.get('/game/jackBug', {
+							gameId: $scope.game.gameId,
+							thiefId: $scope.game.players[$scope.game.pNum].id,
+							victimId: $scope.game.players[($scope.game.pNum + 1) % 2].id,
+							jackId: $scope.game.selId,
+							targetId: card.id,
+							pNum: $scope.game.pNum
+						}, function (res) {
+							console.log(res);
+						});
 					}
 
 				}

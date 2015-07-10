@@ -1656,20 +1656,39 @@ module.exports = {
 
 											playerSort[req.body.pNum].frozenId = null;
 											game.turn++;
-											game.save(function(er, savedGame) {
-												target.save(function(e, savedTarget) {
-													playerSort[0].save(function(e6, savedP0) {
-															console.log("\nsavedP0: ");
-															console.log(savedP0);
-														playerSort[1].save(function(e7, savedP1) {
+											game.save(function (er, savedGame) {
+												target.save(function (e, savedTarget) {
+													playerSort[0].save(function (e6, savedP0) {
+														playerSort[1].save(function (e7, savedP1) {
 															console.log("\nsavedP1: ");
 															console.log(savedP1);
-															Game.publishUpdate(game.id, {
-																change: 'jack',
-																game: savedGame,
-																players: [savedP0, savedP1],
-																thief: req.body.pNum,
-																targetCard: savedTarget
+
+															savedP0.save(function (e8, reSavedP0) {
+																console.log("\nsavedP0: ");
+																console.log(savedP0);
+																console.log("\nreSavedP0:");
+																console.log(reSavedP0);
+
+																Player.findOne(savedP0.id).populateAll().exec(function (e9, reFoundP0) {
+																	console.log("\nreFoundP0: ");
+																	console.log(reFoundP0);
+
+																	reFoundP0.points = savedP0.points;
+																	reFoundP0.tempString = 'changed';
+																	console.log("\nAfter points assignment:");
+																	console.log(reFoundP0);
+																	reFoundP0.save(function (e10, thirdSavedP0) {
+																		console.log("\nthirdSavedP0:");
+																		console.log(thirdSavedP0);
+																	});
+																});
+																Game.publishUpdate(game.id, {
+																	change: 'jack',
+																	game: savedGame,
+																	players: [savedP0, savedP1],
+																	thief: req.body.pNum,
+																	targetCard: savedTarget
+																});
 															});
 
 														});
@@ -1691,6 +1710,37 @@ module.exports = {
 				}
 			});
 		}
+	},
+
+	jackBug: function (req, res) {
+		console.log("\njackBug requested");
+			Player.find([req.body.thiefId, req.body.victimId]).populateAll().exec(function (erro, players) {
+				Card.findOne(req.body.targetId).populate('attachments').exec(function (err, targetCard) {
+					var playerSort = sortPlayers(players);
+
+					//Remove the jack from the theif player's hand and add the target card to the thief player's points
+					playerSort[req.body.pNum].runes.add(targetCard.id);
+					playerSort[req.body.pNum].hand.remove(req.body.jackId);
+
+					//Remove the target card from the victim player's points
+					playerSort[(req.body.pNum + 1) % 2].runes.remove(targetCard.id);
+
+					//Add the jack card to the target card's attachments
+					targetCard.attachments.add(req.body.jackId);
+
+
+						playerSort[0].save(function (e, savedP0) {
+							playerSort[1].save(function (e6, savedP1) {
+								targetCard.save(function(e7, savedTarget) {
+									console.log("\nsavedP0:");
+									console.log(savedP0);
+									console.log("\n\nsavedP1");
+									console.log(savedP1);
+								});
+							});
+						});
+				});
+		});
 	},
 
 };
