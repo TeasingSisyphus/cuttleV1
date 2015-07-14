@@ -39,6 +39,7 @@ REFACTORING
 -Change conditionals to use temp variables
 	-Do this for turn checking
 -Flesh out readyView to display the number of players in the game and who is ready
+-Re-order our error arguments to make sense
 
 
 ONE-OFF RESOLVES FRONT-END:

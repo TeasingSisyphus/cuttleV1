@@ -347,8 +347,8 @@
 						io.socket.get('/game/sevenScuttle', {
 							gameId: $scope.game.gameId,
 							scuttledPlayerId: $scope.game.players[($scope.game.pNum + 1) % 2].id,
-							card: $scope.game.selCard,
-							target: target,
+							scuttlerId: $scope.game.selCard.id,
+							targetId: target.id,
 							whichCard: $scope.game.whichCard,
 						}, function(res) {
 							console.log(res);
@@ -370,8 +370,8 @@
 					io.socket.get('/game/scuttle', {
 						id: $scope.game.gameId,
 						pNum: $scope.game.pNum,
-						scuttler: $scope.game.selCard,
-						target: target
+						scuttlerId: $scope.game.selCard.id,
+						targetId: target.id
 					}, function(res) {
 						console.log(res);
 						//If the request was denied, deselect the requested card

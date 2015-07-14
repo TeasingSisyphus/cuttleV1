@@ -445,61 +445,87 @@ module.exports = {
 							console.log("Player " + req.body.playerId + " not found for scuttling");
 							res.send(404);
 						} else if (game.turn % 2 === req.body.pNum) {
-							if (req.body.scuttler.rank <= 10 && (req.body.scuttler.rank > req.body.target.rank || (req.body.scuttler.rank === req.body.target.rank && req.body.scuttler.suit > req.body.target.suit))) {
-								var playerSort = sortPlayers(players);
-								var cardIsFrozen = playerSort[req.body.pNum].frozenId === req.body.scuttler.id;
-								if (!cardIsFrozen) {
-									playerSort[req.body.pNum].hand.remove(req.body.scuttler.id);
-									playerSort[(req.body.pNum + 1) % 2].points.remove(req.body.target.id);
-									game.scrap.add(req.body.target.id);
-									game.scrap.add(req.body.scuttler.id);
-									game.scrapTop = req.body.scuttler;
-									game.scrapTop.class = 'card';
-									playerSort[req.body.pNum].frozenId = null;
-									game.turn++;
+							Card.find([req.body.scuttlerId, req.body.targetId]).populate('attachments').exec(function (e6, cards) {
+								if (e6 || !cards[0] || !cards[1]) {
+									console.log("Card(s) not found for scuttle in game " + game.id);
+									res.send(404);
+								} else {
 
-									var log = "Player " + req.body.pNum + " has scuttled Player " + (req.body.pNum + 1) % 2 + "'s " + req.body.target.alt + " with the " + req.body.scuttler.alt;
-									game.log.push(log);
-
-									game.save(function(err, savedGame) {
-										playerSort[0].save(function(er, savedP0) {
-											playerSort[1].save(function(e, savedP1) {
-												res.send({
-													scuttled: true,
-													highRank: req.body.scuttler.rank > req.body.target.rank,
-													sameRank: req.body.scuttler.rank === req.body.target.rank,
-													highSuit: req.body.scuttler.suit > req.body.target.suit,
-													frozen: cardIsFrozen
+									if (cards[0].id === req.body.scuttlerId) {
+										var scuttler = cards[0];
+										var target = cards[1];
+									} else {
+										var scuttler = cards[1];
+										var target = cards[0];
+									}
+									if (scuttler.rank <= 10 && (scuttler.rank > target.rank || (scuttler.rank === target.rank && scuttler.suit > target.suit))) {
+										var playerSort = sortPlayers(players);
+										var cardIsFrozen = playerSort[req.body.pNum].frozenId === scuttler.id;
+										if (!cardIsFrozen) {
+											var attachLen = target.attachments.length;
+											if (attachLen > 0) {
+												target.attachments.forEach(function (jack, index, attachments) {
+													game.scrap.add(jack.id);
+													target.attachments.remove(jack.id);
 												});
-												Game.publishUpdate(game.id, {
-													game: savedGame,
-													players: [savedP0, savedP1],
-													change: 'scuttle'
+												target.save(function (e9, savedTarget) {
+
+												});
+											}
+
+											playerSort[req.body.pNum].hand.remove(scuttler.id);
+											playerSort[(req.body.pNum + 1) % 2].points.remove(target.id);
+											game.scrap.add(target.id);
+											game.scrap.add(scuttler.id);
+											game.scrapTop = scuttler;
+											game.scrapTop.class = 'card';
+											playerSort[req.body.pNum].frozenId = null;
+											game.turn++;
+
+											var log = "Player " + req.body.pNum + " has scuttled Player " + (req.body.pNum + 1) % 2 + "'s " + target.alt + " with the " + scuttler.alt;
+											game.log.push(log);
+
+											game.save(function(err, savedGame) {
+												playerSort[0].save(function(er, savedP0) {
+													playerSort[1].save(function(e, savedP1) {
+														res.send({
+															scuttled: true,
+															highRank: scuttler.rank > target.rank,
+															sameRank: scuttler.rank === target.rank,
+															highSuit: scuttler.suit > target.suit,
+															frozen: cardIsFrozen
+														});
+														Game.publishUpdate(game.id, {
+															game: savedGame,
+															players: [savedP0, savedP1],
+															change: 'scuttle'
+														});
+													});
 												});
 											});
+										} else {
+											console.log("Card was frozen. Doing nothing");
+											res.send({
+												scuttled: false,
+												potentialScuttler: scuttler.rank <= 10,
+												highRank: scuttler.rank > target.rank,
+												sameRank: scuttler.rank === target.rank,
+												highSuit: scuttler.suit > target.suit,
+												frozen: cardIsFrozen
+											});
+										}
+									} else {
+										res.send({
+											scuttled: false,
+											potentialScuttler: scuttler.rank <= 10,
+											highRank: scuttler.rank > target.rank,
+											sameRank: scuttler.rank === target.rank,
+											highSuit: scuttler.suit > target.suit,
+											frozen: cardIsFrozen
 										});
-									});
-								} else {
-									console.log("Card was frozen. Doing nothing");
-									res.send({
-										scuttled: false,
-										potentialScuttler: req.body.scuttler.rank <= 10,
-										highRank: req.body.scuttler.rank > req.body.target.rank,
-										sameRank: req.body.scuttler.rank === req.body.target.rank,
-										highSuit: req.body.scuttler.suit > req.body.target.suit,
-										frozen: cardIsFrozen
-									});
+									}
 								}
-							} else {
-								res.send({
-									scuttled: false,
-									potentialScuttler: req.body.scuttler.rank <= 10,
-									highRank: req.body.scuttler.rank > req.body.target.rank,
-									sameRank: req.body.scuttler.rank === req.body.target.rank,
-									highSuit: req.body.scuttler.suit > req.body.target.suit,
-									frozen: cardIsFrozen
-								});
-							}
+							});
 						}
 					});
 				}
@@ -1389,7 +1415,7 @@ module.exports = {
 
 	sevenScuttle: function(req, res) {
 		console.log("\nScuttling from seven");
-		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('scuttledPlayerId') && req.body.hasOwnProperty('card') && req.body.hasOwnProperty('whichCard') && req.body.hasOwnProperty('target')) {
+		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('scuttledPlayerId') && req.body.hasOwnProperty('scuttlerId') && req.body.hasOwnProperty('whichCard') && req.body.hasOwnProperty('targetId')) {
 			console.log("req.body has right properties");
 			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function(error, game) {
 				if (error || !game) {
@@ -1401,16 +1427,26 @@ module.exports = {
 							console.log("Player not found for sevenScuttle");
 							res.send(404);
 						} else {
-							var highRank = req.body.card.rank > req.body.target.rank;
-							var highSuit = req.body.card.rank === req.body.target.rank && req.body.card.suit > req.body.target.suit;
-							var validRank = req.body.card.rank <= 10;
-							var attachLen = 0;
-							if ((game.turn + 1) % 2 === player.pNum && validRank && (highRank || highSuit)) {
-								Card.findOne(req.body.target.id).populate('attachments').exec(function (e8, target) {
-									if (e8 || !target) {
-										console.log("Target not found for scuttle");
-										res.send(404);
+							Card.find([req.body.scuttlerId, req.body.targetId]).populate('attachments').exec(function (e10, cards) {
+								if (e10 || !cards[0] || !cards[1]) {
+									console.log("Card(s) not found for sevenScuttle in game " + game.id);
+									res.send(404);
+								} else {
+									if (cards[0].id === req.body.scuttlerId) {
+										var scuttler = cards[0];
+										var target = cards[1];
 									} else {
+										var scuttler = cards[1];
+										var target = cards[0];
+									}					
+									var highRank = scuttler.rank > target.rank;
+									var highSuit = scuttler.rank === target.rank && scuttler.suit > target.suit;
+									var validRank = scuttler.rank <= 10;
+									var attachLen = 0;
+
+									if ((game.turn + 1) % 2 === player.pNum && validRank && (highRank || highSuit)) {
+										console.log("scuttle is valid");
+
 										attachLen = target.attachments.length;
 										console.log(attachLen);
 										if (attachLen > 0) {
@@ -1418,9 +1454,7 @@ module.exports = {
 												game.scrap.add(jack.id);
 												target.attachments.remove(jack.id);
 											});
-											target.save(function (e9, savedTarget) {
-
-											});
+											target.save();
 										}
 										switch (req.body.whichCard) {
 											case 0:
@@ -1450,24 +1484,24 @@ module.exports = {
 											playerId = game.players[0].id;
 										}
 										if (playerId) {
-											Player.findOne(playerId).populate('hand').populate('points').populate('runes').exec(function(e7, scuttler) {
-												if (e7 || !scuttler) {
+											Player.findOne(playerId).populate('hand').populate('points').populate('runes').exec(function(e7, scuttlingPlayer) {
+												if (e7 || !scuttlingPlayer) {
 													console.log("Couldn't find player to unfreeze for sevenScuttle");
 													res.send(404);
 												} else {
-													scuttler.frozenId = null;
-													scuttler.save();
+													scuttlingPlayer.frozenId = null;
+													scuttlingPlayer.save();
 												}
 											});
 										}
 
 
-										game.scrap.add(req.body.card.id);
-										game.scrapTop = req.body.card;
-										player.points.remove(req.body.target.id);
-										game.scrap.add(req.body.target.id);
+										game.scrap.add(scuttler.id);
+										game.scrapTop = scuttler;
+										player.points.remove(target.id);
+										game.scrap.add(target.id);
 
-										var log = "Player " + (player.pNum + 1) % 2 + " has scuttled the " + req.body.target.alt + " with the " + req.body.card.alt + " after playing a seven";
+										var log = "Player " + (player.pNum + 1) % 2 + " has scuttled the " + target.alt + " with the " + scuttler.alt + " after playing a seven";
 										game.log.push(log);
 
 										player.save(function(e, savedPlayer) {
@@ -1486,7 +1520,7 @@ module.exports = {
 													game: savedGame,
 													player: savedPlayer,
 													jacksOnTarget: attachLen,
-													target: req.body.target
+													target: target
 												});
 												res.send({
 													scuttled: true,
@@ -1498,18 +1532,18 @@ module.exports = {
 												});
 											});
 										});
+									} else {
+										console.log("Scuttle is illigitimate");
+										res.send({
+											scuttled: false,
+											turn: (game.turn + 1) % 2 === player.pNum,
+											validRank: validRank,
+											highRank: highRank,
+											highSuit: highSuit
+										});
 									}
-								});
-							} else {
-								console.log("Scuttle is illigitimate");
-								res.send({
-									scuttled: false,
-									turn: (game.turn + 1) % 2 === player.pNum,
-									validRank: validRank,
-									highRank: highRank,
-									highSuit: highSuit
-								});
-							}
+								}
+							});
 
 						}
 					});
