@@ -37,7 +37,7 @@
 			console.log("\nRequesting to join game: " + id);
 
 			io.socket.get('/game/joinGame', {
-				id: id
+				gameId: id
 			}, function(res) {
 				console.log("Recieved response to game: ");
 				console.log(res);
@@ -123,7 +123,7 @@
 			}
 
 			io.socket.get('/game/ready', {
-				id: $scope.game.gameId,
+				gameId: $scope.game.gameId,
 				pNum: $scope.game.pNum
 			}, function(res) {
 				console.log(res);
@@ -328,7 +328,7 @@
 				// io.socket.get
 			} else {
 				io.socket.get('/game/draw', {
-					id: $scope.game.gameId,
+					gameId: $scope.game.gameId,
 					playerId: $scope.game.players[$scope.game.pNum].id,
 				}, function(res) {
 					console.log(res);
@@ -368,7 +368,7 @@
 				if (this.selId !== null) {
 					console.log('\n\nRequesting to scuttle');
 					io.socket.get('/game/scuttle', {
-						id: $scope.game.gameId,
+						gameId: $scope.game.gameId,
 						pNum: $scope.game.pNum,
 						scuttlerId: $scope.game.selCard.id,
 						targetId: target.id

@@ -120,7 +120,7 @@ module.exports = {
 	joinGame: function(req, res) {
 		if (req.isSocket) {
 			console.log("\nReceived request to join game from socket: " + req.socket.id);
-			Game.findOne(req.body.id).populateAll().exec(function(err, game) {
+			Game.findOne(req.body.gameId).populateAll().exec(function(err, game) {
 				if (err || !game) {
 					console.log("Game " + req.body + " not found for joinGame");
 					res.send(404);
@@ -228,13 +228,13 @@ module.exports = {
 	},
 
 	ready: function(req, res) {
-		if (req.isSocket && req.body.hasOwnProperty('id')) {
+		if (req.isSocket && req.body.hasOwnProperty('gameId')) {
 			console.log("\nPlayer w/ socket: " + req.socket.id + " is ready to play.");
 			var deal = false;
 
-			Game.findOne(req.body.id).populateAll().exec(function(err, game) {
+			Game.findOne(req.body.gameId).populateAll().exec(function(err, game) {
 				if (err || !game) {
-					console.log("Game " + req.body.id + " not found for ready");
+					console.log("Game " + req.body.gameId + " not found for ready");
 					res.send(404);
 				} else {
 					console.log("P0 is ready: " + game.p0Ready);
@@ -357,9 +357,9 @@ module.exports = {
 	draw: function(req, res) {
 		//Find the game id
 		//Had something funky happen with populate
-		Game.findOne(req.body.id).populate('deck').populate('players').populate('scrap').exec(function(err, game) {
+		Game.findOne(req.body.gameId).populate('deck').populate('players').populate('scrap').exec(function(err, game) {
 			if (err || !game) {
-				console.log("Game " + req.body.id + " not found for scuttling");
+				console.log("Game " + req.body.gameId + " not found for scuttling");
 				res.send(404);
 			} else {
 				//if (req.socket.id === game.players[0].socketId || req.socket.id === game.players[1].socketId);
@@ -435,7 +435,7 @@ module.exports = {
 	scuttle: function(req, res) {
 		if (req.isSocket) {
 			console.log('\nSocket ' + req.socket.id + ' is requesting to scuttle');
-			Game.findOne(req.body.id).populate('players').populate('deck').populate('scrap').exec(function(error, game) {
+			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function(error, game) {
 				if (error || !game) {
 					console.log("Game " + player.currentGame.id + " not found for scuttling");
 					res.send(404);
