@@ -1,0 +1,28 @@
+install node
+    sudo apt-get install nodejs
+    nodejs --version to check to make sure it's installed correctly
+
+install npm
+    sudo apt-get install npm
+    npm --version to check to make sure it's installed correctly
+
+update npm using npm
+    sudo npm install npm -g
+
+Create a symlink to fix a naming error
+    node vs nodejs
+    sudo ln -s /usr/bin/nodejs /usr/bin/node
+
+install required dependencies
+    sudo npm install
+    should install Sails.js
+
+sudo npm install sails -g
+    sails --version to check
+
+sails lift
+    If this doesn't work, (Cannot find module underscore),
+    remove the entire npm_modules folder
+    (sudo rm -rf npm_modules) and run sudo npm install again.
+     
+    Should see an ASCII sailboat
