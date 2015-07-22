@@ -1,9 +1,8 @@
 (function() {
 	var app = angular.module('homepage', []);
-	console.log('We made an app.js');
 
-
-
+    
+        //Homepage controller
 	app.controller('homepageController', function($scope, $rootScope) {
 		this.formTitle = 'Type a name and submit to create a new game!';
 		this.gameName = '';
@@ -11,6 +10,9 @@
 		this.readyView = false;
 		this.gameView = false;
 
+	        //Socket to maintain a list of active games
+	        //Fires immediately on start-up
+                //Allows all users to see all active games
 		io.socket.get('/game/subscribe', function(res) {
 			res.forEach(function(game, index, list) {
 				$scope.homepage.gameList.push(game);
@@ -21,9 +23,12 @@
 		////////////////////////
 		// Controller Methods //
 		////////////////////////
+
+
+                //Function to request game creation
+                //Fires whenever a new game form is submitted
 		this.makeGame = function() {
-			console.log("You remembered how to make a form!");
-			console.log($scope.homepage.gameName);
+		        console.log($scope.homepage.gameName);
 			io.socket.get('/game/create', {
 				name: $scope.homepage.gameName
 			}, function(res) {
@@ -33,6 +38,9 @@
 			$scope.homepage.gameName = '';
 		};
 
+                //Function to join a game
+                //Fires whenever a game is selected from the games list
+                //It subscribes you to that game and makes a ready page
 		this.joinGame = function(id) {
 			console.log("\nRequesting to join game: " + id);
 
@@ -55,18 +63,9 @@
 		// Socket Event Handlers //
 		///////////////////////////
 
-		// io.socket.on('connect', function() {
-		// 	io.socket.get('/game/subscribe', function(res) {
 
-		// 		res.forEach(function(game, index, list) {
-		// 			$scope.homepage.gameList.push(game);
-		// 		});
-
-		// 		$scope.$apply();
-
-		// 	});
-		// });
-
+                //Handles the case where a new game is created
+                //Adds game to list of games
 		io.socket.on('game', function(obj) {
 			console.log("\nGame event fired. Logging verb: ");
 			console.log(obj.verb);
@@ -82,37 +81,41 @@
 
 	});
 
+        //Controller for ready and gameview modes
 	app.controller('gameController', function($scope, $rootScope) {
-		this.gameId = null;
-		this.gameName = '';
-		this.players = [];
-		this.deck = [];
-		this.topCard = null;
-		this.secondCard = null;
-		this.topTwo = [];
-		this.scrap = [];
-		this.opJacks = [];
-		this.yourJacks = [];
-		this.scrapTopImg = '/images/emptyScrap.png';
-		this.turn = null;
-		this.pNum = null;
-		this.glasses = false;
-		this.p0Ready = false;
-		this.p1Ready = false;
-		this.gameView = false;
-		this.selCard = null;
-		this.selId = null;
-		this.selIndex = null;
-		this.stacking = false;
-		this.scrapPick = false;
-		this.topTwoPick = false;
-		//Represents which of the top two cards is being chosen during a seven's one off
-		this.whichCard = null;
-		this.selectTwo = false;
-		this.putOnTop = false;
-		this.showDeck = false;
+		this.gameId = null;        //ID of current game
+		this.gameName = '';        //Name of current game
+		this.players = [];         //Array to hold player objects involved in current game
+		this.deck = [];            //Array of card objects that make up deck, DOES NOT include top 2 cards
+		this.topCard = null;       //Top card of deck
+		this.secondCard = null;    //Card under top card of deck
+		this.topTwo = [];          //Array to render top 2 cards for 7 handling
+		this.scrap = [];           //Array of card objects that make up discard pile
+		this.opJacks = [];         //Array of all Jack cards that your opponent controls
+		this.yourJacks = [];       //Array of all Jack cards that you control
+		this.scrapTopImg = '/images/emptyScrap.png'; //Image file for the top card of the scrap pile. Intially set to card back
+		this.turn = null;          //Total number of turns taken
+		this.pNum = null;          //Index used to identify which player is the user 
+		this.glasses = false;      //Boolean to check if you have an active 8 rune card
+		this.p0Ready = false;      //Boolean to check if player 0 is ready
+		this.p1Ready = false;      //Boolean to check if player 1 is ready
+		this.gameView = false;     //Boolean to check if gameView is active
+		this.selCard = null;       //Holds card object that is currently being selected by the user form his or her hand
+		this.selId = null;         //ID of card selected from hand by user
+		this.selIndex = null;      //Index of card selected from hand by user 
+		this.stacking = false;     //Boolean to check if a one-off effect is being played
+		this.scrapPick = false;    //Boolean to check if a three one-off effect is resolving
+		this.topTwoPick = false;   //Boolean to check if a seven one-off effect is resolving
+		this.whichCard = null;     //Represents which of the top two cards is being chosen during a seven's one off
+		this.selectTwo = false;    //Boolean to check if a four one-off effect is resolving
+	        //DEBUG BOOLEANS
+		this.putOnTop = false;     //Boolean to check if a card is being moved to the top of the deck 
+		this.showDeck = false;     //Boolean to toggle displaying the deck
 
 
+	        //Notifies server when user is ready
+                //Fires when a user clicks the ready button
+	        //Once BOTH players are ready, BOTH players are brought to the game simultaneously
 		this.ready = function() {
 			console.log("Player " + $scope.game.pNum + " is ready to play");
 			if ($scope.game.pNum === 0) {
@@ -134,11 +137,11 @@
 		//If a card is already selected, use the previous index to find it and revert its class to normal
 		//If the requested card was already selected, deselect it
 		this.select = function(card, index) {
+                        //Handles four one-off effect
 			if ($scope.game.selectTwo) {
 				console.log('Selecting two cards for four discard');
 				if (($scope.game.turn + 1) % 2 === $scope.game.pNum) {
-					console.log('proper turn');
-					if ($scope.game.selCard) {
+				         if ($scope.game.selCard) {
 						if ($scope.game.selCard != card) {
 							console.log('\n\nLogging selCard');
 							console.log($scope.game.selCard);
@@ -166,6 +169,7 @@
 					}
 				}
 			}
+                        //Handles seven one-off effect
 			if ($scope.game.topTwoPick) {
 				console.log("Choosing card for 7");
 				if ($scope.game.turn % 2 === $scope.game.pNum) {
@@ -194,6 +198,7 @@
 					};
 
 				}
+                        //Handle all other card selection
 			} else {
 				if (card.class === 'card') {
 					if ($scope.game.selId !== null) {
@@ -214,6 +219,7 @@
 
 		//If a card is selected, request to play that card for points
 		this.points = function() {
+                        //Handles a seven one-off effect playing a card for points
 			if ($scope.game.topTwoPick) {
 				console.log("Playing points from topTwoPick");
 				if ($scope.game.selId !== null) {
@@ -238,6 +244,7 @@
 						});
 					}
 				}
+                        //Handles all other instances of playing a card for points
 			} else {
 
 				if ($scope.game.selId !== null) {
@@ -261,6 +268,7 @@
 
 		//If a card is selected, request to play that card as a rune
 		this.runes = function() {
+                        //Handles a seven one-off effect playing a card as a rune
 			if ($scope.game.topTwoPick) {
 				console.log("\nPlaying rune from topTwoPick");
 				if ($scope.game.selId !== null) {
@@ -291,6 +299,7 @@
 						});
 					}
 				}
+                        //Handles all other instances of playing a card as a rune
 			} else {
 				if ($scope.game.selId !== null) {
 					console.log("\nRequesting to play " + $scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].alt + ' as a rune');
@@ -337,8 +346,8 @@
 		};
 
 		//Scuttle from your hand to the opponents field
-		//MUST BE UPDATED FOR THE SEVEN CASE
 		this.scuttle = function(target) {
+		        //Handles a seven one-off effect being played as a scuttle
 			if ($scope.game.topTwoPick) {
 				console.log("\nScuttling from topTwoPick");
 				if ($scope.game.selId !== null) {
@@ -364,6 +373,7 @@
 						});
 					}
 				}
+                        //Handles all other instances of cards being played to scuttle
 			} else {
 				if (this.selId !== null) {
 					console.log('\n\nRequesting to scuttle');
@@ -386,8 +396,11 @@
 			}
 		};
 
+	        //Handles all instances where the user plays an effect that targets the other player's point cards
+                //Calls the scuttling function if necessary
 		this.selectPoint = function(card) {
 			if ($scope.game.selCard != null) {
+                                //Differentiates nine card usage
 				if ($scope.game.selCard.rank === 9) {
 					if (card.rank === 10) {
 						$scope.game.requestNine(card);
@@ -399,8 +412,10 @@
 							$scope.game.requestNine(card);
 						}
 					}
+                                //Check for Jack and call handler if necessary
 				} else if ($scope.game.selCard.rank === 11) {
 					$scope.game.jack(card);
+                                //Otherwise, call scuttling handler
 				} else {
 					$scope.game.scuttle(card);
 				}
@@ -408,6 +423,7 @@
 			}
 		};
 
+                //Handles Jack card rune effect
 		this.jack = function(card) {
 			console.log("Requesting to jack " + card.alt);
 			io.socket.get('/game/jack', {
@@ -422,6 +438,8 @@
 			});
 		};
 
+                //Handles playing a 9 as a one-off effect on other point cards
+                //Fires when called by selectPoint
 		this.requestNine = function(card) {
 			console.log("Requesting to play nine on a point card");
 			io.socket.get('/game/oneOff', {
@@ -443,7 +461,7 @@
 			});
 		};
 
-
+                //Handles a three one-off effect
 		this.chooseScrap = function(card) {
 			console.log(card);
 			io.socket.get('/game/resolveThree', {
@@ -455,6 +473,8 @@
 			});
 		};
 
+                //DEBUG METHOD
+                //Handles moving a card to the top of the deck
 		this.placeTopCard = function(card) {
 			console.log(card);
 			io.socket.get('/game/placeTopCard', {
@@ -473,10 +493,10 @@
 			console.log("stacking: " + $scope.game.stacking);
 			if ($scope.game.selId && !$scope.game.stacking) {
 				console.log("got id and not stacking");
+                                //Handles the seven one-off effect
 				if ($scope.game.topTwoPick) {
 					console.log("from a seven");
 					if ($scope.game.selCard.rank === 2 || $scope.game.selCard.rank === 9) {
-						console.log("making request");
 						io.socket.get('/game/sevenOneOff', {
 							gameId: $scope.game.gameId,
 							pNum: $scope.game.pNum,
@@ -494,8 +514,8 @@
 							$scope.$apply();
 						});
 					}
+                                //Handles all other instances of a rune being targeted
 				} else {
-					console.log("targeting");
 					if ($scope.game.selCard.rank === 2 || $scope.game.selCard.rank === 9) {
 						io.socket.get('/game/oneOff', {
 							gameId: $scope.game.gameId,
@@ -514,6 +534,8 @@
 							$scope.game.selCard = null
 							$scope.$apply();
 						});
+                                        //Handles the issue of trying to target a non-point card with a jack
+                                        //Still needs works on sevrer side controller
 					} else if ($scope.game.selCard.rank === 11) {
 						console.log("Requesting jackBug");
 						io.socket.get('/game/jackBug', {
@@ -532,10 +554,11 @@
 			}
 		};
 
-
+                //Handles a card being played for its one-off effect
 		this.oneOff = function() {
 
 			if ($scope.game.selId !== null) {
+                                //Handles card being played off seven one-off effect
 				if ($scope.game.topTwoPick) {
 					//Seven One Offs
 					console.log("Playing " + $scope.game.selCard.alt + " for oneOff after seven");
@@ -552,9 +575,6 @@
 						$scope.game.topCard = res.game.topCard;
 						$scope.game.secondCard = res.game.secondCard;
 						$scope.game.topTwo = [$scope.game.topCard, $scope.game.secondCard];
-						///////////////////////////////////////////////////
-						//Doesn't this need to update the scrap, as well?//
-						///////////////////////////////////////////////////
 						if (!res.sevenOneOff) {
 							//Then deselect the chosen card from the top two cards
 							//$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
@@ -567,9 +587,11 @@
 						$scope.game.selCard = null;
 					});
 
-
+				//Handles all other one-off effect plays
 				} else {
+                                        //Handles if a two one-off effect is being used to coutner another one-off effect
 					if ($scope.game.stacking) {
+                                                //Check for two one-off effect
 						if ($scope.game.selCard.rank === 2) {
 							console.log("Requesting to play " + $scope.game.selCard.alt + " as counter to One Off");
 							$scope.game.stacking = false;
@@ -589,6 +611,7 @@
 								$scope.game.selCard = null;
 								$scope.$apply();
 							});
+                                                //Handles all attempts by the user to counter a one-off effect with a non-two card
 						} else {
 							var conf = confirm("You can only play a two as a reaction to a One Off! Would you like to counter with a two?");
 							if (!conf) {
@@ -663,6 +686,8 @@
 
 		};
 
+                //Requests one-off effect resolution by the server
+                //Fires when a user declines to counter a one-off effect
 		this.resolve = function() {
 			console.log('Resolving');
 			io.socket.get('/game/resolve', {
@@ -688,7 +713,7 @@
 			});
 		};
 
-
+                //Switches from homepageView to readyView
 		$rootScope.$on('readyView', function(event, game) {
 			console.log('\nChanging to readyView');
 			$scope.game.gameId = game.id;
@@ -702,6 +727,10 @@
 		///////////////////////////
 		// Socket Event Handlers //
 		///////////////////////////
+
+
+                //Handles updates to the user's game
+                //Makes changes to the DOM that is displayed to the user
 		io.socket.on('game', function(obj) {
 			switch (obj.verb) {
 				case 'updated':
@@ -982,7 +1011,7 @@
 					}
 					break;
 
-					//Using this case to trigger gameView	
+				//Using this case to trigger gameView	
 				case 'messaged':
 					console.log("\nGame messaged.");
 					console.log(obj.data);
@@ -1011,7 +1040,7 @@
 			$scope.$apply();
 		});
 
-		//Player Events are used to make changes only involving players' hands, points and runes
+		//Handles events that only affect one player
 		io.socket.on('player', function(obj) {
 			console.log("\nPlayer event fired");
 			console.log(obj.data);

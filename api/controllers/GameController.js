@@ -84,7 +84,9 @@ var winner = function(player) {
 	}
 };
 
+//When URLs are requested, the actions are handled here
 module.exports = {
+        //Initial subscription function. Sends user a list of current games and signs them up to notified of future games
 	subscribe: function(req, res) {
 		if (req.isSocket) {
 			console.log("\nRecieved request to subscribe socket " + req.socket.id + " to game class room");
@@ -97,6 +99,7 @@ module.exports = {
 
 	},
 
+        //Creates a new game upon request
 	create: function(req, res) {
 		if (req.isSocket) {
 			console.log("\nReceived request to create game from socket " + req.socket.id);
@@ -117,6 +120,7 @@ module.exports = {
 		}
 	},
 
+        //Subscribe user to a specific game an sends them to the readyView
 	joinGame: function(req, res) {
 		if (req.isSocket) {
 			console.log("\nReceived request to join game from socket: " + req.socket.id);
@@ -125,6 +129,8 @@ module.exports = {
 					console.log("Game " + req.body + " not found for joinGame");
 					res.send(404);
 				} else {
+                                        //Check number of players already in game
+                                        //Once full, initialze deck construction 
 					switch (game.players.length) {
 						case 0:
 							console.log("0 players in game");
@@ -149,7 +155,7 @@ module.exports = {
 								pNum: game.players.length
 							}).exec(function(er, newPlayer) {
 								game.players.add(newPlayer.id);
-
+							        //Deck Construction
 								for (suit = 0; suit <= 3; suit++) {
 									for (rank = 1; rank <= 13; rank++) {
 										var path = 'images/cards/card_' + suit + '_' + rank + '.png';
@@ -200,7 +206,7 @@ module.exports = {
 									}
 								} //End of for loops	
 
-
+							        //The game must be saved in order to persist changes
 								game.save(function(e, savedGame) {
 									res.send({
 										game: savedGame
@@ -227,6 +233,8 @@ module.exports = {
 		}
 	},
 
+        //Handles a user becoming ready to play
+        //If both players are ready, game fires
 	ready: function(req, res) {
 		if (req.isSocket && req.body.hasOwnProperty('gameId')) {
 			console.log("\nPlayer w/ socket: " + req.socket.id + " is ready to play.");
@@ -354,16 +362,14 @@ module.exports = {
 		}
 	},
 
+        //Handles a player drawing a card from the deck
 	draw: function(req, res) {
-		//Find the game id
-		//Had something funky happen with populate
 		Game.findOne(req.body.gameId).populate('deck').populate('players').populate('scrap').exec(function(err, game) {
 			if (err || !game) {
 				console.log("Game " + req.body.gameId + " not found for scuttling");
 				res.send(404);
 			} else {
-				//if (req.socket.id === game.players[0].socketId || req.socket.id === game.players[1].socketId);
-				//Find the player id
+				//Find the player object of the player that is drawing a card
 				Player.findOne(req.body.playerId).populate('hand').populate('points').populate('runes').exec(function(error, foundPlayer) {
 					if (error || !foundPlayer) {
 						console.log("Player " + req.body.playerId + " not found for scuttling");
@@ -407,7 +413,8 @@ module.exports = {
 		});
 	},
 
-
+        //DEBUGGING METHOD
+        //place a card on top of the deck
 	placeTopCard: function(req, res) {
 		console.log('Logging req.body of placeTopCard');
 		console.log(req.body);
@@ -432,6 +439,7 @@ module.exports = {
 		}
 	},
 
+        //Handles cards being played for scuttled
 	scuttle: function(req, res) {
 		if (req.isSocket) {
 			console.log('\nSocket ' + req.socket.id + ' is requesting to scuttle');
@@ -533,6 +541,7 @@ module.exports = {
 		}
 	},
 
+        //Handles cards being played one-off effects
 	oneOff: function(req, res) {
 		if (req.isSocket) {
 			console.log("\nSocket " + req.socket.id + ' is requesting to play oneOff to stack');
@@ -551,6 +560,7 @@ module.exports = {
 									console.log("Card " + req.body.cardId + " not found for oneOff");
 									res.send(404);
 								} else {
+                                                                        //Checks if a one-off request has already been made
 									var firstEffect = game.firstEffect === null;
 									if (firstEffect) {
 										var validRank = card.rank <= 9 && card.rank !== 8;
@@ -620,7 +630,7 @@ module.exports = {
 
 											}
 										}
-										//Otherwise the requested card must be a two played as a counter
+									//Otherwise the requested card must be a two played as a counter
 									} else {
 										console.log("This better be a two");
 										var validRank = card.rank === 2;
@@ -661,6 +671,7 @@ module.exports = {
 		}
 	},
 
+        //Function to handle one-off effect resolution
 	resolve: function(req, res) {
 		if (req.isSocket) {
 			console.log("\nStack resolution requested from Socket " + req.socket.id);
@@ -1147,6 +1158,7 @@ module.exports = {
 		}
 	},
 
+        //Handles the three one-off effect since resolve does not because three one-off effect requires additional data to resolve
 	resolveThree: function(req, res) {
 		console.log("\n\nResolve three");
 		console.log(req.body);
@@ -1182,6 +1194,7 @@ module.exports = {
 		}
 	},
 
+        //Handles resolution of four one-off effect since resolve does not because the effect requires additional information
 	resolveFour: function(req, res) {
 		console.log('\n\nResolve four');
 		console.log(req.body);
@@ -1413,6 +1426,7 @@ module.exports = {
 		}
 	},
 
+        //Handles a scuttle being played off of a seven one-off effect
 	sevenScuttle: function(req, res) {
 		console.log("\nScuttling from seven");
 		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('scuttledPlayerId') && req.body.hasOwnProperty('scuttlerId') && req.body.hasOwnProperty('whichCard') && req.body.hasOwnProperty('targetId')) {
@@ -1552,6 +1566,7 @@ module.exports = {
 		}
 	},
 
+        //Handles a one-off effect that is played off of a seven one-off effect
 	sevenOneOff: function(req, res) {
 		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('cardId') && req.body.hasOwnProperty('whichCard')) {
 			console.log("\n\nsevenOneOff requested from socket " + req.socket.id);
@@ -1649,6 +1664,7 @@ module.exports = {
 		}
 	},
 
+        //Handles jack rune effect
 	jack: function(req, res) {
 		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('pNum') && req.body.hasOwnProperty('thiefId') && req.body.hasOwnProperty('victimId') && req.body.hasOwnProperty('jackId') && req.body.hasOwnProperty('targetId')) {
 			console.log("\n\nJack requested for game " + req.body.gameId);
