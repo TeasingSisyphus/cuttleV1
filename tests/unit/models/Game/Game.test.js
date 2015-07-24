@@ -1,0 +1,13 @@
+describe.only('GameModel', function() {
+
+  describe('#find()', function() {
+   it('should check find function', function(done) {
+     Game.find()
+       .then(function(results) {
+
+        done();
+     })
+     .catch(done);
+   });
+ });
+});
