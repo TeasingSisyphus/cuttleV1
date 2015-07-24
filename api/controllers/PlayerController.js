@@ -5,6 +5,8 @@
  * @help        :: See http://links.sailsjs.org/docs/controllers
  */
 
+//Returns a sorted array of player objects
+//Sorted by pNum
 var sortPlayers = function(players) {
 	var sorted = [];
 
@@ -84,7 +86,7 @@ var winner = function(player) {
 };
 
 
-
+//When URLs are requested, the actions are handled here
 module.exports = {
 	//Subscribes the requesting socket to the two player models in their game
 	subscribe: function(req, res) {
@@ -113,7 +115,6 @@ module.exports = {
 								res.send(404);
 							} else {
 								//Use the player's current game attribute to find the containing game to check the turn
-								//Server crashed when I tried populating the game here
 								Game.findOne(player.currentGame).exec(function(error, game) {
 									if (err || !game) {
 										console.log("Game " + player.currentGame.id + " not found for points");
@@ -122,7 +123,7 @@ module.exports = {
 										if (game.turn % 2 === player.pNum && card.rank <= 10) {
 
 											var cardIsFrozen = player.frozenId === card.id;
-
+                                                                                        //Checks for case where card was returned by nine one-off effect on previous turn
 											if (!cardIsFrozen) {
 												player.hand.remove(card.id);
 												player.points.add(card.id);
@@ -184,6 +185,8 @@ module.exports = {
 		}
 	},
 
+        //Handles cards being played as runes
+        //Moves card from hand to the rune zone
 	runes: function(req, res) {
 		if (req.isSocket) {
 			console.log("\nPlayer " + req.socket.id + " requesting to play rune");
@@ -222,6 +225,7 @@ module.exports = {
 												}
 												card.save();
 											}
+                                                                                        //Check if rune card was returned by a nine one-off effect on the previous turn
 											var cardIsFrozen = player.frozenId === card.id;
 											if (!cardIsFrozen) {
 												player.hand.remove(card.id);
