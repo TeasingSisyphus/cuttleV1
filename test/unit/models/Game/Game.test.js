@@ -1,4 +1,4 @@
-describe.only('GameModel', function() {
+describe('GameModel', function() {
 
   describe('#find()', function() {
    it('should check find function', function(done) {
@@ -10,4 +10,12 @@ describe.only('GameModel', function() {
      .catch(done);
    });
  });
+
+
+  describe('#subscribe', function() {
+  	it('should subscribe requesting socket to new game', function() {
+  		
+  	});
+  });
+
 });

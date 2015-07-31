@@ -31,6 +31,10 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 	*	9's must count the number of queens, abort if 2 or more are found, and abort if 1 is found and the target isn't the queen
 	*	2's must count the number of queens, abort if 2 or more are found, and abort if 1 is found and the target isn't the queen
 
+## TESTING
+* OBSERVATIONS/NOTES
+	* describe.only('nameOfTestCategory', function() {}) will prevent other tests from running following the given test
+
 
 ## REFACTORING
 *	Change id to gameId in get requests
