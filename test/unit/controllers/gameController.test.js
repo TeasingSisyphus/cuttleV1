@@ -54,7 +54,9 @@ describe('GameController', function() {
 				points = createdPoints;
 			});
 
-			Promise.all([promisePlayer0, promisePlayer1, promiseJack, promisePoints]).then(function (createdPlayer0, createdPlayer1, createdJack, createdPoints) {
+			Promise.all([promisePlayer0, promisePlayer1, promiseJack, promisePoints]).then(function (values) {
+				console.log("\nInside promise.all()");
+				console.log(values);
 				player0.hand.add(jack.id);
 				player1.points.add(points.id);
 
