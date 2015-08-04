@@ -35,6 +35,7 @@
   "author": "anonymous node/sails user",
   "license": "",
   "devDependencies": {
-    "grunt": "^0.4.2"
+    "grunt": "^0.4.2",
+    "supertest": "^1.0.1"
   }
 }

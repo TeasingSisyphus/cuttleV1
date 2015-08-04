@@ -5,6 +5,7 @@
  * @help        :: See http://links.sailsjs.org/docs/controllers
  */
 
+var Promise = require('bluebird');
 
 var sortPlayers = function(players) {
 	var sorted = [];
@@ -1764,39 +1765,133 @@ module.exports = {
 
 	jackBug: function (req, res) {
 		console.log("\njackBug requested");
-			Player.find([req.body.thiefId, req.body.victimId]).populateAll().exec(function (erro, players) {
-				Card.findOne(req.body.targetId).populate('attachments').exec(function (err, targetCard) {
-					
-					if (players[0].id === req.body.thiefId) {
-						var thiefIndex = 0;
-						var victimIndex = 1;
-					} else if (players[1].id === req.body.thiefId) {
-						var thiefIndex = 1;
-						var victimIndex = 0;
-					}
+		var thiefIndex;
+		var victimIndex;
+		var promisePlayers = new Promise(function (resolve, reject) {
+			Player.find([req.body.thiefId, req.body.victimId]).populateAll().exec(function (error, players) {
+				if (players[0].id === req.body.thiefId) {
+					thiefIndex = 0;
+					victimIndex = 1;
+				} else if (players[1].id === req.body.thiefId) {
+					thiefIndex = 1;
+					victimIndex = 0;
+				}
+				var sortedPlayers = [ players[thiefIndex], players[victimIndex] ];
+				resolve(sortedPlayers);
+			});
+		});
 
-					//Remove the jack from the theif player's hand and add the target card to the thief player's points
-					players[thiefIndex].runes.add(targetCard.id);
-					players[thiefIndex].hand.remove(req.body.jackId);
+		var promisePoints= new Promise(function (resolve, reject) {
+			Card.findOne(req.body.targetId).populate('attachments').exec(function (error, rune) {
+				resolve(rune);
+			});
+		});
 
-					//Remove the target card from the victim player's runes
-					players[victimIndex].runes.remove(targetCard.id);
+		Promise.all([promisePlayers, promisePoints]).then(function (values) {
+			console.log("\nInside Promise.all");
 
-					//Add the jack card to the target card's attachments
-					targetCard.attachments.add(req.body.jackId);
+			var players = values[0];
+			var thief = players[0];
+			var victim = players[1];
+			var rune = values[1];
 
 
-						players[0].save(function (e, savedP0) {
-							players[1].save(function (e6, savedP1) {
-								targetCard.save(function(e7, savedTarget) {
-									console.log("\nsavedP0:");
-									console.log(savedP0);
-									console.log("\n\nsavedP1");
-									console.log(savedP1);
-								});
-							});
-						});
+			thief.runes.add(rune.id);
+			thief.hand.remove(req.body.jackId);
+
+			victim.runes.remove(rune.id);
+
+			rune.attachments.add(req.body.jackId);
+
+
+			thief.save(function (error, savedThief) {
+				victim.save(function (erro, savedVictim) {
+					rune.save(function (err, savedRune) {
+						console.log("\nInside final save()");
+						console.log("Logging victim");
+						console.log(savedVictim);
+						console.log("\nLogging Thief");
+						console.log(savedThief);
+						console.log("\nLogging rune");
+						console.log(savedRune);
+						if (thiefIndex === 0) {
+							var players = [thief, victim];
+						} else {
+							var players = [victim, thief];
+						}
+						res.send({players: players, rune: rune});
+					});
 				});
+			});
+
+			//Try to sequence the save() calls using promises
+			//Local data is then wrong in a way that matches the server
+
+		// 	var promiseSavedThief = new Promise(function (resolve, reject) {
+		// 		thief.save(function (error, savedThief) {
+		// 			console.log("\nLogging thief after save inside promise");
+		// 			console.log(savedThief);
+		// 			resolve(savedThief);
+		// 		});
+		// 	});
+
+		// 	var promiseSavedVictim = new Promise(function (resolve, reject) {
+		// 		victim.save(function (error, savedVictim) {
+		// 			console.log("\nLogging victim after save inside promise");
+		// 			console.log(savedVictim);
+		// 			resolve(savedVictim);
+		// 		});
+		// 	});
+
+		// 	var promiseSavedRune = new Promise(function (resolve, reject) {
+		// 		rune.save(function (error, savedRune) {
+		// 			resolve(savedRune);
+		// 		});
+		// 	});
+
+		// 	Promise.all([promiseSavedThief, promiseSavedVictim, promiseSavedRune]).then(function (values) {
+		// 		console.log("Inside second Promise.all");
+		// 		console.log("Players:");
+		// 		console.log(values[0]);
+		// 		console.log(values[1]);
+		// 		console.log("Rune:");
+		// 		console.log(values[2]);
+		// 	});
+		// });
+
+		// 	Player.find([req.body.thiefId, req.body.victimId]).populateAll().exec(function (erro, players) {
+		// 		Card.findOne(req.body.targetId).populate('attachments').exec(function (err, targetCard) {
+					
+		// 			if (players[0].id === req.body.thiefId) {
+		// 				var thiefIndex = 0;
+		// 				var victimIndex = 1;
+		// 			} else if (players[1].id === req.body.thiefId) {
+		// 				var thiefIndex = 1;
+		// 				var victimIndex = 0;
+		// 			}
+
+		// 			//Remove the jack from the theif player's hand and add the target card to the thief player's points
+		// 			players[thiefIndex].runes.add(targetCard.id);
+		// 			players[thiefIndex].hand.remove(req.body.jackId);
+
+		// 			//Remove the target card from the victim player's runes
+		// 			players[victimIndex].runes.remove(targetCard.id);
+
+		// 			//Add the jack card to the target card's attachments
+		// 			targetCard.attachments.add(req.body.jackId);
+
+
+		// 				players[0].save(function (e, savedP0) {
+		// 					players[1].save(function (e6, savedP1) {
+		// 						targetCard.save(function(e7, savedTarget) {
+		// 							console.log("\nsavedP0:");
+		// 							console.log(savedP0);
+		// 							console.log("\n\nsavedP1");
+		// 							console.log(savedP1);
+		// 						});
+		// 					});
+		// 				});
+		// 		});
 		});
 	},
 

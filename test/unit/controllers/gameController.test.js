@@ -1,5 +1,8 @@
 // require("../../bootstrap.test.js");
 var Promise = require('bluebird');
+var request = require('supertest');
+
+
 describe('GameController', function() {
 	describe('Emulation', function() {
 
@@ -55,8 +58,7 @@ describe('GameController', function() {
 			});
 
 			Promise.all([promisePlayer0, promisePlayer1, promiseJack, promisePoints]).then(function (values) {
-				console.log("\nInside promise.all()");
-				console.log(values);
+
 				player0.hand.add(jack.id);
 				player1.points.add(points.id);
 
@@ -73,12 +75,8 @@ describe('GameController', function() {
 		});
 
 		it('should jack points', function() {
-			console.log("Inside should jack points test. Logging players:");
-			console.log(player0);
-			console.log(player1);
-			console.log("\nLogging cards");
-			console.log(jack);
-			console.log(points);
+			console.log(sails);
+			request(sails.hooks.http.app).get('/game/jackBug').set('Accept', 'application/json');
 		});
 
 	});
