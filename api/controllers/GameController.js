@@ -1765,10 +1765,14 @@ module.exports = {
 
 	jackBug: function (req, res) {
 		console.log("\njackBug requested");
+		console.log(req.body);
+
 		var thiefIndex;
 		var victimIndex;
 		var promisePlayers = new Promise(function (resolve, reject) {
-			Player.find([req.body.thiefId, req.body.victimId]).populateAll().exec(function (error, players) {
+			Player.find({}).populateAll().exec(function (error, players) {
+				console.log("\nLogging players in find");
+				console.log(players);
 				if (players[0].id === req.body.thiefId) {
 					thiefIndex = 0;
 					victimIndex = 1;
@@ -1788,13 +1792,14 @@ module.exports = {
 		});
 
 		Promise.all([promisePlayers, promisePoints]).then(function (values) {
-			console.log("\nInside Promise.all");
 
 			var players = values[0];
 			var thief = players[0];
 			var victim = players[1];
 			var rune = values[1];
 
+			console.log("\nLogging players in promiseAll");
+			console.log(players);
 
 			thief.runes.add(rune.id);
 			thief.hand.remove(req.body.jackId);
@@ -1815,9 +1820,9 @@ module.exports = {
 						console.log("\nLogging rune");
 						console.log(savedRune);
 						if (thiefIndex === 0) {
-							var players = [thief, victim];
+							players = [thief, victim];
 						} else {
-							var players = [victim, thief];
+							players = [victim, thief];
 						}
 						res.send({players: players, rune: rune});
 					});
@@ -1827,37 +1832,37 @@ module.exports = {
 			//Try to sequence the save() calls using promises
 			//Local data is then wrong in a way that matches the server
 
-		// 	var promiseSavedThief = new Promise(function (resolve, reject) {
-		// 		thief.save(function (error, savedThief) {
-		// 			console.log("\nLogging thief after save inside promise");
-		// 			console.log(savedThief);
-		// 			resolve(savedThief);
-		// 		});
-		// 	});
+			// var promiseSavedThief = new Promise(function (resolve, reject) {
+			// 	thief.save(function (error, savedThief) {
+			// 		console.log("\nLogging thief after save inside promise");
+			// 		console.log(savedThief);
+			// 		resolve(savedThief);
+			// 	});
+			// });
 
-		// 	var promiseSavedVictim = new Promise(function (resolve, reject) {
-		// 		victim.save(function (error, savedVictim) {
-		// 			console.log("\nLogging victim after save inside promise");
-		// 			console.log(savedVictim);
-		// 			resolve(savedVictim);
-		// 		});
-		// 	});
+			// var promiseSavedVictim = new Promise(function (resolve, reject) {
+			// 	victim.save(function (error, savedVictim) {
+			// 		console.log("\nLogging victim after save inside promise");
+			// 		console.log(savedVictim);
+			// 		resolve(savedVictim);
+			// 	});
+			// });
 
-		// 	var promiseSavedRune = new Promise(function (resolve, reject) {
-		// 		rune.save(function (error, savedRune) {
-		// 			resolve(savedRune);
-		// 		});
-		// 	});
+			// var promiseSavedRune = new Promise(function (resolve, reject) {
+			// 	rune.save(function (error, savedRune) {
+			// 		resolve(savedRune);
+			// 	});
+			// });
 
-		// 	Promise.all([promiseSavedThief, promiseSavedVictim, promiseSavedRune]).then(function (values) {
-		// 		console.log("Inside second Promise.all");
-		// 		console.log("Players:");
-		// 		console.log(values[0]);
-		// 		console.log(values[1]);
-		// 		console.log("Rune:");
-		// 		console.log(values[2]);
-		// 	});
-		// });
+			// Promise.all([promiseSavedThief, promiseSavedVictim, promiseSavedRune]).then(function (values) {
+			// 	console.log("Inside second Promise.all");
+			// 	console.log("Players:");
+			// 	console.log(values[0]);
+			// 	console.log(values[1]);
+			// 	console.log("Rune:");
+			// 	console.log(values[2]);
+			// });
+		});
 
 		// 	Player.find([req.body.thiefId, req.body.victimId]).populateAll().exec(function (erro, players) {
 		// 		Card.findOne(req.body.targetId).populate('attachments').exec(function (err, targetCard) {
@@ -1892,7 +1897,12 @@ module.exports = {
 		// 					});
 		// 				});
 		// 		});
-		});
+		// });
 	},
 
+
+	test: function (req, res) {
+		console.log("\nTesting!");
+		res.send({foob: "JASON"});
+	},
 };

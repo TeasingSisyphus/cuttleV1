@@ -2,6 +2,7 @@
 var Promise = require('bluebird');
 var request = require('supertest');
 
+var agent = request.agent('localhost:1337');
 
 describe('GameController', function() {
 	describe('Emulation', function() {
@@ -9,7 +10,7 @@ describe('GameController', function() {
 		var player0;
 		var player1;
 		var jack;
-		var point;
+		var rune;
 
 		before(function instantiateRecords(done) {
 			var promisePlayer0 = new Promise(function(resolve, reject) {
@@ -47,20 +48,20 @@ describe('GameController', function() {
 				jack = createdJack;
 			});
 
-			var promisePoints = new Promise(function (resolve, reject) {
-				Card.create({suit: 3, rank: 10}, function (error, createdPoints) {
-					resolve(createdPoints);
+			var promiseRune = new Promise(function (resolve, reject) {
+				Card.create({suit: 3, rank: 10}, function (error, createdRune) {
+					resolve(createdRune);
 				});
 			});
 
-			promisePoints.then(function (createdPoints) {
-				points = createdPoints;
+			promiseRune.then(function (createdRune) {
+				rune = createdRune;
 			});
 
-			Promise.all([promisePlayer0, promisePlayer1, promiseJack, promisePoints]).then(function (values) {
+			Promise.all([promisePlayer0, promisePlayer1, promiseJack, promiseRune]).then(function (values) {
 
 				player0.hand.add(jack.id);
-				player1.points.add(points.id);
+				player1.runes.add(rune.id);
 
 				player0.save(function (error, savedPlayer0) {
 					player1.save(function (erro, savedPlayer1) {
@@ -74,9 +75,12 @@ describe('GameController', function() {
 
 		});
 
-		it('should jack points', function() {
-			console.log(sails);
-			request(sails.hooks.http.app).get('/game/jackBug').set('Accept', 'application/json');
+		it('should jack a rune', function(done) {
+
+			agent.post('/game/jackBug').send({thiefId: player0.id, victimId: player1.id, targetId: rune.id}).end(function (error, res) {
+				console.log(res.body);
+				done();
+			});
 		});
 
 	});

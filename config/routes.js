@@ -68,4 +68,7 @@ module.exports.routes = {
 '/player/subscribe'      :          'PlayerController.subscribe',
 '/player/points'         :          'PlayerController.points',
 '/player/runes'          :          'PlayerController.runes',
+
+
+'/test'                  :          'GameController.test',
 };
