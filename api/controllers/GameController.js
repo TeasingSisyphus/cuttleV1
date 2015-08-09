@@ -1769,68 +1769,121 @@ module.exports = {
 
 		var thiefIndex;
 		var victimIndex;
-		var promisePlayers = new Promise(function (resolve, reject) {
-			Player.find({}).populateAll().exec(function (error, players) {
-				console.log("\nLogging players in find");
-				console.log(players);
-				if (players[0].id === req.body.thiefId) {
-					thiefIndex = 0;
-					victimIndex = 1;
-				} else if (players[1].id === req.body.thiefId) {
-					thiefIndex = 1;
-					victimIndex = 0;
-				}
-				var sortedPlayers = [ players[thiefIndex], players[victimIndex] ];
-				resolve(sortedPlayers);
-			});
+		var promiseFind = new Promise(function (resolve, reject){
+			resolve(true);
 		});
-
-		var promisePoints= new Promise(function (resolve, reject) {
-			Card.findOne(req.body.targetId).populate('attachments').exec(function (error, rune) {
-				resolve(rune);
-			});
-		});
-
-		Promise.all([promisePlayers, promisePoints]).then(function (values) {
-
-			var players = values[0];
-			var thief = players[0];
-			var victim = players[1];
-			var rune = values[1];
-
-			console.log("\nLogging players in promiseAll");
-			console.log(players);
-
-			thief.runes.add(rune.id);
-			thief.hand.remove(req.body.jackId);
-
-			victim.runes.remove(rune.id);
+		promiseFind.then(function() {
+			return [Player.findOne(req.body.thiefId).populateAll(), Player.findOne(req.body.victimId).populateAll(), Card.findOne(req.body.targetId).populate('attachments')];
+		}).spread(function (thief, victim, rune){
+			runes.add(rune.id);
 
 			rune.attachments.add(req.body.jackId);
 
+			victim.runes.remove(rune.id);
 
-			thief.save(function (error, savedThief) {
-				victim.save(function (erro, savedVictim) {
-					rune.save(function (err, savedRune) {
-						console.log("\nInside final save()");
-						console.log("Logging victim");
-						console.log(savedVictim);
-						console.log("\nLogging Thief");
-						console.log(savedThief);
-						console.log("\nLogging rune");
-						console.log(savedRune);
-						if (thiefIndex === 0) {
-							players = [thief, victim];
-						} else {
-							players = [victim, thief];
-						}
-						res.send({players: players, rune: rune});
-					});
+			thief.hand.remove(req.body.jackId);
+
+			var promiseSave = new Promise(function (resolve, reject){
+				resolve(true);
+			});
+			promiseSave.then(function() {
+				console.log('Inside .then for save');
+				return [thief.save(), victim.save(), rune.save()];
+			}).spread(function (thief_saved, victim_saved, rune_saved){
+				console.log('Logging thief, victim, and rune');
+				console.log(thief_saved);
+				console.log(victim_saved);
+				console.log(rune_saved);
+				res.send({thief: thief_saved, victim: victim_saved, rune: rune_saved});
+			}).catch(function (err){
+				res.badRequest({
+					error: err.message
 				});
 			});
+		}).catch(function (err){
+			res.badRequest({
+				error: err.message
+			});
+		});
 
-			//Try to sequence the save() calls using promises
-			//Local data is then wrong in a way that matches the server
+
+		//Best way to use promises, Ryan is crazy
+		// var promisePlayers = new Promise(function (resolve, reject) {
+		// 	Player.find({}).populateAll().exec(function (error, players) {
+		// 		console.log("\nLogging players in find");
+		// 		console.log(players);
+		// 		if (players[0].id === req.body.thiefId) {
+		// 			thiefIndex = 0;
+		// 			victimIndex = 1;
+		// 		} else if (players[1].id === req.body.thiefId) {
+		// 			thiefIndex = 1;
+		// 			victimIndex = 0;
+		// 		}
+		// 		var sortedPlayers = [ players[thiefIndex], players[victimIndex] ];
+		// 		resolve(sortedPlayers);
+		// 	});
+		// });
+
+		// var promisePoints= new Promise(function (resolve, reject) {
+		// 	Card.findOne(req.body.targetId).populate('attachments').exec(function (error, rune) {
+		// 		resolve(rune);
+		// 	});
+		// });
+
+		// Promise.all([promisePlayers, promisePoints]).then(function (values) {
+
+		// 	var players = values[0];
+		// 	var thief = players[0];
+		// 	var victim = players[1];
+		// 	var rune = values[1];
+
+		// 	console.log("\nLogging players in promiseAll");
+		// 	console.log(players);
+
+		// 	thief.runes.add(rune.id);
+
+		// 	rune.attachments.add(req.body.jackId);
+
+		// 	victim.runes.remove(rune.id);
+
+		// 	thief.hand.remove(req.body.jackId);
+
+		// 	return [thief.save(), victim.save(), rune.save()];
+		// }).spread(function (thief_saved, victim_saved, rune_saved){
+		// 	console.log('Logging thief, victim, and rune');
+		// 	console.log(thief_saved);
+		// 	console.log(victim_saved);
+		// 	console.log(rune_saved);
+		// 	res.send({thief: thief_saved, victim: victim_saved, rune: rune_saved});
+		// }).catch(function (err){
+		// 	res.badRequest({
+		// 		error: err.message
+		// 	});
+		// });
+
+
+			// thief.save(function (error, savedThief) {
+			// 	victim.save(function (erro, savedVictim) {
+			// 		rune.save(function (err, savedRune) {
+			// 			console.log("\nInside final save()");
+			// 			console.log("Logging victim");
+			// 			console.log(savedVictim);
+			// 			console.log("\nLogging Thief");
+			// 			console.log(savedThief);
+			// 			console.log("\nLogging rune");
+			// 			console.log(savedRune);
+			// 			if (thiefIndex === 0) {
+			// 				players = [thief, victim];
+			// 			} else {
+			// 				players = [victim, thief];
+			// 			}
+			// 			res.send({players: players, rune: rune});
+			// 		});
+			// 	});
+			// });
+
+			// Try to sequence the save() calls using promises
+			// Local data is then wrong in a way that matches the server
 
 			// var promiseSavedThief = new Promise(function (resolve, reject) {
 			// 	thief.save(function (error, savedThief) {
@@ -1862,7 +1915,6 @@ module.exports = {
 			// 	console.log("Rune:");
 			// 	console.log(values[2]);
 			// });
-		});
 
 		// 	Player.find([req.body.thiefId, req.body.victimId]).populateAll().exec(function (erro, players) {
 		// 		Card.findOne(req.body.targetId).populate('attachments').exec(function (err, targetCard) {
