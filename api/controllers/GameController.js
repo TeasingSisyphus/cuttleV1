@@ -1699,7 +1699,7 @@ module.exports = {
 											//////////////////////////
 											//  Check for validRank //
 											//////////////////////////									
-											playerSort[(req.body.pNum + 1) % 2].points.remove(target.id);
+											//playerSort[(req.body.pNum + 1) % 2].points.remove(target.id); //THIS FUCKING LINE IS THE ULTIMATE CULPRIT!!!!!!!!
 											playerSort[req.body.pNum].points.add(target.id);
 											playerSort[req.body.pNum].hand.remove(req.body.jackId);
 
@@ -1769,42 +1769,47 @@ module.exports = {
 
 		var thiefIndex;
 		var victimIndex;
-		var promiseFind = new Promise(function (resolve, reject){
-			resolve(true);
+		var promiseThief = new Promise(function (resolve, reject){
+			Player.findOne(req.body.thiefId).populateAll().exec(function(error, thief){
+				 return resolve(thief);
+			});
 		});
-		promiseFind.then(function() {
-			return [Player.findOne(req.body.thiefId).populateAll(), Player.findOne(req.body.victimId).populateAll(), Card.findOne(req.body.targetId).populate('attachments')];
-		}).spread(function (thief, victim, rune){
-			runes.add(rune.id);
-
-			rune.attachments.add(req.body.jackId);
-
-			victim.runes.remove(rune.id);
-
+		
+		var promiseVictim = new Promise(function (resolve, reject) {
+			Player.findOne(req.body.victimId).populateAll().exec(function(error, victim){
+				return resolve(victim);
+			});
+		});
+		
+		var promiseRune = new Promise(function (resolve, reject) {
+			Card.findOne(req.body.targetId).populate('attachments').exec(function(error, target){
+				return resolve(target);
+			});
+		});
+		
+		Promise.all([promiseThief, promiseVictim, promiseRune]).then(function (arr){
+			console.log("\nInside Promise.all(). Logging res array.");
+			console.log(arr);
+			
+			var thief = arr[0];
+			var victim = arr[1];
+			var rune = arr[2];
+			
 			thief.hand.remove(req.body.jackId);
-
-			var promiseSave = new Promise(function (resolve, reject){
-				resolve(true);
-			});
-			promiseSave.then(function() {
-				console.log('Inside .then for save');
-				return [thief.save(), victim.save(), rune.save()];
-			}).spread(function (thief_saved, victim_saved, rune_saved){
-				console.log('Logging thief, victim, and rune');
-				console.log(thief_saved);
-				console.log(victim_saved);
-				console.log(rune_saved);
-				res.send({thief: thief_saved, victim: victim_saved, rune: rune_saved});
-			}).catch(function (err){
-				res.badRequest({
-					error: err.message
-				});
-			});
-		}).catch(function (err){
-			res.badRequest({
-				error: err.message
-			});
+			thief.runes.add(rune.id);
+			//victim.runes.remove(rune.id); //THIS REMOVE WAS THE PROBLEM
+			rune.attachments.add(req.body.jackId);
+			
+			return [thief.save(), victim.save(), rune.save()];
+		}).spread(function (savedThief, savedVictim, savedRune) {
+			console.log("\nInside spread(). Logging savedThief.");
+			console.log(savedThief);
+			console.log("\nLogging savedVictim");
+			console.log(savedVictim);
+			console.log("\nLogging savedRune");
+			console.log(savedRune);
 		});
+		
 
 
 		//Best way to use promises, Ryan is crazy
