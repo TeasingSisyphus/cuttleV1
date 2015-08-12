@@ -3,6 +3,7 @@
 This is a multiplayer card game leveraging sails.js and angularjs.
 
 ## DONE
+*   Jacks now can properly be played for their effects
 *	Properly move jacks to scrap pile in SIX
 *	Properly move jacks to scrap pile in SEVEN SCUTTLE
 *	Jacks now properly remove from the other side when the same card is jacked multiple times
@@ -10,9 +11,11 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 
 ## TODO
 *	Jacks
-	*	HUGE BUG: If Player0 uses a jack, the target is not properly added to his points!!!!!!!
-		*	6's also remove the exchanged card from points!!!!!!
+	*	MOSTLY FIXED: UGE BUG: If Player0 uses a jack, the target is not properly added to his points!!!!!!!
+		*	Playing all 4 jacks on one point card has triggered the selection bug
+		*	Cards become unselectable until next turn (ie player must choose to draw to continue game)
 	*	Properly move jacks to scrap pile in SCUTTLE
+		*	Jack is moved to scrap pile on server, not in DOM
 	*	Properly move jacks to scrap pile in ACE
 	*	Return points to original owner using modular arithmetic
 	*	Enable targeting a jack with a TWO
@@ -58,6 +61,7 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 	*	This fucks up selecting a card until the next turn
 
 ## FIXED BUGS
+*   FIXED: Jacks now behave properly and allow stacking of multiple jacks on a single point card
 *	FIXED: Sockets don't always connect properly/subscribe you to the game class room upon page load
 *	FIXED: Server crashes if a player clicks 'ready' before opponent joins the game
 *	FIXED: $scope.game.players[$scope.game.pNum] is sometimes undefined in app.js and this fucks up selection

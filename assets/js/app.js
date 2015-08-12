@@ -959,7 +959,7 @@
 							$scope.game.topTwoPick = false;
 							$scope.game.players = obj.data.players;
 							$scope.game.turn = obj.data.turn;
-							switch (obj.data.thief === $scope.game.pNum) {
+							switch (obj.data.thief.pNum === $scope.game.pNum) {
 								case true:
 									console.log("Your jack");
 									obj.data.targetCard.attachments.forEach(function (jack, index, attachments) {
@@ -969,8 +969,7 @@
 											jack.targetAlt = obj.data.targetCard.alt;
 											$scope.game.yourJacks.push(jack);
 										}
-										console.log(jack);
-										console.log($scope.game.opJacks.indexOf(jack));
+
 										//Remove the attached jacks from opponent's jacks
 										$scope.game.opJacks.forEach(function (opJack, opJacksIndex, opJacks) {
 											if (jack.suit === opJack.suit && jack.rank === 11 && opJack.rank === 11) {
@@ -990,8 +989,6 @@
 											$scope.game.opJacks.push(jack);
 										}
 
-										console.log(jack);
-										console.log($scope.game.yourJacks.indexOf(jack));
 										//Remove the attached jacks from your jacks
 										$scope.game.yourJacks.forEach(function (yourJack, yourJacksIndex, yourJacks) {
 											if (jack.suit === yourJack.suit && jack.rank === 11 && yourJack.rank === 11) {
@@ -1001,6 +998,7 @@
 									});
 									break;
 							}
+							break;
 
 						case 'topCardChange':
 							$scope.game.stacking = false;
@@ -1062,6 +1060,9 @@
 							$scope.game.players[obj.data.player.pNum] = obj.data.player;
 							$scope.game.topTwoPick = false;
 							$scope.game.turn = obj.data.turn;
+							break;
+						case 'jackBug':
+							$scope.game.players = obj.data.players;
 					}
 					break;
 			}

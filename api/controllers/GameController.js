@@ -1665,100 +1665,70 @@ module.exports = {
 		}
 	},
 
-        //Handles jack rune effect
-	jack: function(req, res) {
-		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('pNum') && req.body.hasOwnProperty('thiefId') && req.body.hasOwnProperty('victimId') && req.body.hasOwnProperty('jackId') && req.body.hasOwnProperty('targetId')) {
-			console.log("\n\nJack requested for game " + req.body.gameId);
+	//Handles the jack rune effect
+	jack: function (req, res) {
+		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('pNum') && req.body.hasOwnProperty('thiefId') && req.body.hasOwnProperty('jackId') && req.body.hasOwnProperty('targetId')) {
+			console.log("\nJack requested for game " + req.body.gameId);
 			console.log(req.body);
-
-			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function(error, game) {
-				if (error || !game) {
-					console.log("Game " + req.body.gameId + " not found for jack");
-					res.send(404);
-				} else {
-					Player.find([req.body.thiefId, req.body.victimId]).populate('hand').populate('points').populate('runes').exec(function(erro, players) {
-						if (erro || !players[0] || !players[1]) {
-							console.log("Can't find players for jack");
-							res.send(404);
-						} else {
-							var playerSort = sortPlayers(players);
-
-							Card.findOne(req.body.targetId).populate('attachments').exec(function(err, target) {
-								if (err || !target) {
-									console.log("Card " + req.body.targetId + " not found for jack");
-									res.send(404);
-								} else {
-									var yourTurn = req.body.pNum === game.turn % 2;
-									if (yourTurn) {
-										var cardIsFrozen = playerSort[req.body.pNum].frozenId === req.body.jackId;
-
-										if (!cardIsFrozen) {
-											console.log("Jack isn't frozen. Logging target");
-
-											console.log(target);
-											//////////////////////////
-											//  Check for validRank //
-											//////////////////////////									
-											//playerSort[(req.body.pNum + 1) % 2].points.remove(target.id); //THIS FUCKING LINE IS THE ULTIMATE CULPRIT!!!!!!!!
-											playerSort[req.body.pNum].points.add(target.id);
-											playerSort[req.body.pNum].hand.remove(req.body.jackId);
-
-											target.attachments.add(req.body.jackId);
-
-											playerSort[req.body.pNum].frozenId = null;
-											game.turn++;
-											game.save(function (er, savedGame) {
-												target.save(function (e, savedTarget) {
-													playerSort[0].save(function (e6, savedP0) {
-														playerSort[1].save(function (e7, savedP1) {
-															console.log("\nsavedP1: ");
-															console.log(savedP1);
-
-															savedP0.save(function (e8, reSavedP0) {
-																console.log("\nsavedP0: ");
-																console.log(savedP0);
-																console.log("\nreSavedP0:");
-																console.log(reSavedP0);
-
-																Player.findOne(savedP0.id).populateAll().exec(function (e9, reFoundP0) {
-																	console.log("\nreFoundP0: ");
-																	console.log(reFoundP0);
-
-																	reFoundP0.points = savedP0.points;
-																	reFoundP0.tempString = 'changed';
-																	console.log("\nAfter points assignment:");
-																	console.log(reFoundP0);
-																	reFoundP0.save(function (e10, thirdSavedP0) {
-																		console.log("\nthirdSavedP0:");
-																		console.log(thirdSavedP0);
-																	});
-																});
-																Game.publishUpdate(game.id, {
-																	change: 'jack',
-																	game: savedGame,
-																	players: [savedP0, savedP1],
-																	thief: req.body.pNum,
-																	targetCard: savedTarget
-																});
-															});
-
-														});
-													});
-												});
-											});
-										}
-
-									}
-									res.send({
-										jack: true,
-										yourTurn: yourTurn,
-										frozen: cardIsFrozen
-									});
-								}
-							});
+			
+			var promiseGame = new Promise(function (resolve, reject) {
+				Game.findOne(req.body.gameId).exec(function (error, game) {
+					return resolve(game);
+				});
+			}); //Then catch error
+			
+			var promiseThief = new Promise(function (resolve, reject) {
+				Player.findOne(req.body.thiefId).populateAll().exec(function (error, thief) {
+					return resolve(thief);
+				});
+			}); //Then catch error
+			
+			var promiseVictim = new Promise(function (resolve, reject) {
+				Player.findOne(req.body.victimId).populateAll().exec(function (error, victim) {
+					return resolve(victim);
+				});
+			}); //Then catch error
+			
+			var promisePoints = new Promise(function (resolve, reject) {
+				Card.findOne(req.body.targetId).populate('attachments').exec(function (error, points) {
+					return resolve(points);
+				});
+			}); //Then catch error
+			
+			Promise.all([promiseGame, promiseThief, promiseVictim, promisePoints]).then(function (values) {
+				var game = values[0];
+				var thief = values[1];
+				var victim = values[2];
+				var points = values[3];
+				
+				var yourTurn = thief.pNum === game.turn % 2;
+				if (yourTurn) {
+					console.log("Turn is valid");
+					var cardIsFrozen = thief.frozenId === req.body.jackId;
+					if (!cardIsFrozen) {
+						console.log("Jack isn't frozen.");
+						
+						var validRank = points.rank <= 10;
+						if (validRank) {
+							console.log("rank is valid");
+							thief.points.add(points.id);
+							thief.hand.remove(req.body.jackId);
+							points.attachments.add(req.body.jackId);
+							game.turn++;
+							
+							return [game.save(), thief.save(), victim.save(), points.save()];
 						}
-					});
+					}
 				}
+			}).spread(function(savedGame, savedThief, savedVictim, savedPoints){ //handle errors
+				var playerSort = sortPlayers([savedThief, savedVictim]);
+				Game.publishUpdate(savedGame.id, {
+					change: 'jack',
+					players: playerSort,
+					thief: savedThief,
+					victim: savedVictim,
+					targetCard: savedPoints
+				});
 			});
 		}
 	},
@@ -1808,6 +1778,14 @@ module.exports = {
 			console.log(savedVictim);
 			console.log("\nLogging savedRune");
 			console.log(savedRune);
+			var playerSort = sortPlayers([savedThief, savedVictim]);
+			Player.publishUpdate(savedThief.id, {
+				change: 'jackBug',
+				thief: savedThief,
+				victim: savedVictim,
+				rune: savedRune,
+				players: playerSort
+			});
 		});
 		
 
