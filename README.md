@@ -11,11 +11,11 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 
 ## TODO
 *	Jacks
-	*	MOSTLY FIXED: UGE BUG: If Player0 uses a jack, the target is not properly added to his points!!!!!!!
+	*	MOSTLY FIXED: HUGE BUG: If Player0 uses a jack, the target is not properly added to his points!!!!!!!
 		*	Playing all 4 jacks on one point card has triggered the selection bug
 		*	Cards become unselectable until next turn (ie player must choose to draw to continue game)
 	*	Properly move jacks to scrap pile in SCUTTLE
-		*	Jack is moved to scrap pile on server, not in DOM
+		*	Jack is currently moved to scrap pile on server, not in DOM
 	*	Properly move jacks to scrap pile in ACE
 	*	Return points to original owner using modular arithmetic
 	*	Enable targeting a jack with a TWO
