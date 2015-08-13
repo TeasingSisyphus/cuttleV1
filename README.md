@@ -3,6 +3,7 @@
 This is a multiplayer card game leveraging sails.js and angularjs.
 
 ## DONE
+*	Jacks are now properly moved to the scrap pile when scuttled
 *   Jacks now can properly be played for their effects
 *	Properly move jacks to scrap pile in SIX
 *	Properly move jacks to scrap pile in SEVEN SCUTTLE
@@ -11,23 +12,19 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 
 ## TODO
 *	Jacks
-	*	MOSTLY FIXED: HUGE BUG: If Player0 uses a jack, the target is not properly added to his points!!!!!!!
-		*	Playing all 4 jacks on one point card has triggered the selection bug
+	*	Handle errors for queries and saves using catch() and reject()
+	*	Playing all 4 jacks on one point card has triggered the selection bug
 		*	Cards become unselectable until next turn (ie player must choose to draw to continue game)
-	*	Properly move jacks to scrap pile in SCUTTLE
-		*	Jack is currently moved to scrap pile on server, not in DOM
+	
 	*	Properly move jacks to scrap pile in ACE
-	*	Return points to original owner using modular arithmetic
+	*	Return points to original owner using modular arithmetic during SIX
 	*	Enable targeting a jack with a TWO
 			*Switch control of the point card when the jack is destroyed
 	*	Enable targeting a jack with a NINE
 		*	Switch control of the point card when the jack is bounced and frozen
 	*	Change their display
 		*	Maybe Jacks only stack vertically if they steal the same card?
-	*	Add sevenJacks
-		* The one-off effect of the 7 is to look at the top two cards and pick one to play.  If one of those is a Jack, the interaction must work correctly
-	*	Sixes and Aces
-		*	Remove attachments from jacked cards by saving the actual cards
+	*	Enable playing a jack from a SEVEN one-off effect
 
 *	Queens
 	*	Jacks must check runes for any queens and abort if one if found
@@ -40,6 +37,7 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 
 
 ## REFACTORING
+*	Leverage Promises for handling queries and saves
 *	Change id to gameId in get requests
 *	Change scuttling to find cards on server side, rather than passing them (the full card) from client
 	*	Must be done for regular and sevenScuttle

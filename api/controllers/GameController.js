@@ -472,10 +472,12 @@ module.exports = {
 										var cardIsFrozen = playerSort[req.body.pNum].frozenId === scuttler.id;
 										if (!cardIsFrozen) {
 											var attachLen = target.attachments.length;
+											var attached = [];
 											if (attachLen > 0) {
 												target.attachments.forEach(function (jack, index, attachments) {
 													game.scrap.add(jack.id);
 													target.attachments.remove(jack.id);
+													attached.push(jack);
 												});
 												target.save(function (e9, savedTarget) {
 
@@ -507,7 +509,10 @@ module.exports = {
 														Game.publishUpdate(game.id, {
 															game: savedGame,
 															players: [savedP0, savedP1],
-															change: 'scuttle'
+															change: 'scuttle',
+															attachedLen: attachLen,
+															attached: attached,
+															victimPnum: (req.body.pNum + 1) % 2
 														});
 													});
 												});

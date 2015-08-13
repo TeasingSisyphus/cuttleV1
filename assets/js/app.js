@@ -770,6 +770,45 @@
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.turn = obj.data.game.turn;
 							$scope.game.topTwoPick = false;
+							if (obj.data.attachedLen > 0) {
+								console.log("There were attachments");
+								var indices = [];
+								var offset = 0; //Used to adjust indices for elements removed from yourJacks, or opJacks								
+								switch (obj.data.victimPnum === $scope.game.pNum) {
+									case true:
+										for (i=0; i < obj.data.attached.length; i++){
+											var j=0;
+											var offset = 0;
+											while (j - offset< $scope.game.yourJacks.length){
+												if (obj.data.attached[i].id === $scope.game.yourJacks[j-offset].id) {
+													$scope.game.yourJacks.splice(j-offset, 1);
+													offset++;
+												}
+												j++;
+											}
+										}
+										break;
+									case false:
+										console.log("It was his jack. Logging opJacks before removal");
+										console.log($scope.game.opJacks);
+										
+										for (var i=0; i < obj.data.attached.length; i++){
+											var j=0;
+											offset=0;
+											while (j - offset < $scope.game.opJacks.length){
+												console.log("i="+i+" j="+j +" offset="+offset + " opJack for comparison:");
+												console.log($scope.game.opJacks[j - offset]);
+												if (obj.data.attached[i].id === $scope.game.opJacks[j-offset].id) {
+													$scope.game.opJacks.splice(j-offset, 1);
+													offset++;
+												}
+												j++;
+											}
+											
+										}											
+										break;
+								}
+							}
 							break;
 
 						case 'oneOff':
