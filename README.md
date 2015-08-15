@@ -3,6 +3,8 @@
 This is a multiplayer card game leveraging sails.js and angularjs.
 
 ## DONE
+*	Jack action now has proper test in test/unit/controllers/gameController.test.js
+*	Began handling errors using .catch() and reject() in jack action
 *	Jacks are now properly moved to the scrap pile when scuttled
 *   Jacks now can properly be played for their effects
 *	Properly move jacks to scrap pile in SIX
@@ -13,6 +15,7 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 ## TODO
 *	Jacks
 	*	Handle errors for queries and saves using catch() and reject()
+		*	Started this process. It generally looks good, but we should be careful to ensure that it's thorough
 	*	Playing all 4 jacks on one point card has triggered the selection bug
 		*	Cards become unselectable until next turn (ie player must choose to draw to continue game)
 	

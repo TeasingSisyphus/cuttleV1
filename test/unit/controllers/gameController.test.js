@@ -1,18 +1,30 @@
 // require("../../bootstrap.test.js");
 var Promise = require('bluebird');
 var request = require('supertest');
+var assert = require("assert");
+var should = require("should");
 
 var agent = request.agent('localhost:1337');
 
 describe('GameController', function() {
 	describe('Emulation', function() {
-
+		var game;
 		var player0;
 		var player1;
 		var jack;
-		var rune;
+		var points;
 
 		before(function instantiateRecords(done) {
+			var promiseGame = new Promise(function(resolve, reject){
+				Game.create({name: 'temp', turn:0}, function(error, createdGame){
+					return resolve(createdGame);
+				});
+			});
+			
+			promiseGame.then(function(createdGame){
+				game = createdGame;
+			});
+			
 			var promisePlayer0 = new Promise(function(resolve, reject) {
 				Player.create({pNum: 0}, function(error, createdPlayer0) {
 					resolve(createdPlayer0);
@@ -20,8 +32,6 @@ describe('GameController', function() {
 			});
 
 			promisePlayer0.then(function (createdPlayer0) {
-				// console.log("\ncreatedPlayer0:");
-				// console.log(createdPlayer0);
 				player0 = createdPlayer0;
 			});
 
@@ -33,8 +43,6 @@ describe('GameController', function() {
 			});
 
 			promisePlayer1.then(function (createdPlayer1) {
-				// console.log("\ncreatedPlayer1:");
-				// console.log(createdPlayer1);
 				player1 = createdPlayer1;
 			});
 
@@ -48,20 +56,20 @@ describe('GameController', function() {
 				jack = createdJack;
 			});
 
-			var promiseRune = new Promise(function (resolve, reject) {
-				Card.create({suit: 3, rank: 10}, function (error, createdRune) {
-					resolve(createdRune);
+			var promisePoints = new Promise(function (resolve, reject) {
+				Card.create({suit: 3, rank: 10}, function (error, createdPoints) {
+					resolve(createdPoints);
 				});
 			});
 
-			promiseRune.then(function (createdRune) {
-				rune = createdRune;
+			promisePoints.then(function (createdPoints) {
+				points = createdPoints;
 			});
 
-			Promise.all([promisePlayer0, promisePlayer1, promiseJack, promiseRune]).then(function (values) {
+			Promise.all([promiseGame, promisePlayer0, promisePlayer1, promiseJack, promisePoints]).then(function (values) {
 
 				player0.hand.add(jack.id);
-				player1.runes.add(rune.id);
+				player1.points.add(points.id);
 
 				player0.save(function (error, savedPlayer0) {
 					player1.save(function (erro, savedPlayer1) {
@@ -75,10 +83,16 @@ describe('GameController', function() {
 
 		});
 
-		it('should jack a rune', function(done) {
+		it('should jack some points', function(done) {
 
-			agent.post('/game/jackBug').send({thiefId: player0.id, victimId: player1.id, targetId: rune.id}).end(function (error, res) {
-				console.log(res.body);
+			agent.post('/game/jack').send({gameId: game.id, pNum: 0, thiefId: player0.id, victimId: player1.id, targetId: points.id, jackId: jack.id}).end(function (error, res) {
+				res.body.jack.should.equal(true);
+				res.body.thief.points.length.should.equal(1); //Thief should have exactly one point card
+				res.body.thief.points[0].id.should.equal(points.id); //Thief's point card should be the same as points
+				res.body.thief.hand.length.should.equal(0); //Thief should no longer have any cards in hand
+				res.body.victim.points.length.should.equal(0); //Victim should no longer have points
+				res.body.points.attachments.length.should.equal(1); //Points should now have one attachment
+				res.body.points.attachments[0].id.should.equal(jack.id); //That attachment should be the jack
 				done();
 			});
 		});

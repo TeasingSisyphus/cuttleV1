@@ -1672,59 +1672,96 @@ module.exports = {
 
 	//Handles the jack rune effect
 	jack: function (req, res) {
-		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('pNum') && req.body.hasOwnProperty('thiefId') && req.body.hasOwnProperty('jackId') && req.body.hasOwnProperty('targetId')) {
+		if (req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('pNum') && req.body.hasOwnProperty('thiefId') && req.body.hasOwnProperty('jackId') && req.body.hasOwnProperty('targetId')) {
 			console.log("\nJack requested for game " + req.body.gameId);
-			console.log(req.body);
 			
 			var promiseGame = new Promise(function (resolve, reject) {
 				Game.findOne(req.body.gameId).exec(function (error, game) {
-					return resolve(game);
+					if (error || !game) {
+						return reject(error); 
+					} else{
+						return resolve(game);				
+					}
 				});
-			}); //Then catch error
+			}).catch(function(e){
+				console.log("Error finding game: " + req.body.gameId + " for jack");
+				console.log(e);
+				res.send(e);
+			}); 
 			
 			var promiseThief = new Promise(function (resolve, reject) {
 				Player.findOne(req.body.thiefId).populateAll().exec(function (error, thief) {
-					return resolve(thief);
+					if (error || !thief) {
+						return reject(error);
+					} else{
+						return resolve(thief);
+					}
 				});
-			}); //Then catch error
+			}).catch(function(e){
+				console.log("Error finding thief: " + req.body.thiefId + " for jack");
+				console.log(e);
+				res.send(e);
+			}); 
 			
 			var promiseVictim = new Promise(function (resolve, reject) {
 				Player.findOne(req.body.victimId).populateAll().exec(function (error, victim) {
-					return resolve(victim);
+					if (error || !victim) {
+						return reject(error);
+					} else{
+						return resolve(victim);
+					}
 				});
-			}); //Then catch error
+			}).catch(function(e){
+				console.log("Error finding victim: " + req.body.victimId + " for jack");
+				console.log(e);
+				res.send(e);
+			}); 
 			
 			var promisePoints = new Promise(function (resolve, reject) {
 				Card.findOne(req.body.targetId).populate('attachments').exec(function (error, points) {
-					return resolve(points);
+					if (error || !points) {
+						return reject(error);
+					} else{
+						return resolve(points);
+					}
 				});
-			}); //Then catch error
+			}).catch(function(e){
+				console.log("Error finding points: " + req.body.targetId + " for jack");
+				console.log(e);
+				res.send(e);
+			}); 
 			
 			Promise.all([promiseGame, promiseThief, promiseVictim, promisePoints]).then(function (values) {
 				var game = values[0];
 				var thief = values[1];
 				var victim = values[2];
-				var points = values[3];
-				
-				var yourTurn = thief.pNum === game.turn % 2;
-				if (yourTurn) {
-					console.log("Turn is valid");
-					var cardIsFrozen = thief.frozenId === req.body.jackId;
-					if (!cardIsFrozen) {
-						console.log("Jack isn't frozen.");
+				var points = values[3];				
+				if (game && thief && victim && points){
+					console.log("All records found and defined");
+					var yourTurn = thief.pNum === game.turn % 2;
+					if (yourTurn) {
+						console.log("Turn is valid");
+						var cardIsFrozen = thief.frozenId === req.body.jackId;
+						if (!cardIsFrozen) {
+							console.log("Jack isn't frozen.");
 						
-						var validRank = points.rank <= 10;
-						if (validRank) {
-							console.log("rank is valid");
-							thief.points.add(points.id);
-							thief.hand.remove(req.body.jackId);
-							points.attachments.add(req.body.jackId);
-							game.turn++;
+							var validRank = points.rank <= 10;
+							if (validRank) {
+								console.log("Rank is valid");
+								thief.points.add(points.id);
+								thief.hand.remove(req.body.jackId);
+								points.attachments.add(req.body.jackId);
+								game.turn++;
 							
-							return [game.save(), thief.save(), victim.save(), points.save()];
+								return [game.save(), thief.save(), victim.save(), points.save()];
+							}
 						}
-					}
+					}				
 				}
+
+			}).catch(function(reason){
+				console.log("error thrown");
+				console.log(reason);
 			}).spread(function(savedGame, savedThief, savedVictim, savedPoints){ //handle errors
 				var playerSort = sortPlayers([savedThief, savedVictim]);
 				Game.publishUpdate(savedGame.id, {
@@ -1734,6 +1771,11 @@ module.exports = {
 					victim: savedVictim,
 					targetCard: savedPoints
 				});
+				res.send({jack: true, thief: savedThief, victim: savedVictim, points: savedPoints});
+				
+			}).catch(function(reason){
+				console.log("Error in spread()");
+				console.log(reason);
 			});
 		}
 	},
