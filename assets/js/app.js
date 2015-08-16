@@ -779,7 +779,7 @@
 										for (i=0; i < obj.data.attached.length; i++){ //This loop is new and used to remove jacks. Check it out!
 											var j=0;
 											var offset = 0;
-											while (j - offset< $scope.game.yourJacks.length){
+											while (j - offset < $scope.game.yourJacks.length){
 												if (obj.data.attached[i].id === $scope.game.yourJacks[j-offset].id) {
 													$scope.game.yourJacks.splice(j-offset, 1); //Remove the jack if was in the attachments of the scuttled card
 													offset++;

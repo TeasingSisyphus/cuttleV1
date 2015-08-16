@@ -36,7 +36,11 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 
 ## TESTING
 * OBSERVATIONS/NOTES
-	* describe.only('nameOfTestCategory', function() {}) will prevent other tests from running following the given test
+	* Describe.only('nameOfTestCategory', function() {}) will prevent other tests from running following the given test
+* LATENCY
+	* Tests take longer than wanted, not an immediate issue, but something to look towards
+* DATA CHECKED
+	* Turn increments should be tested, along with other cogs of the game
 
 
 ## REFACTORING
@@ -49,6 +53,7 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 	*	Do this for turn checking
 *	Flesh out readyView to display the number of players in the game and who is ready
 *	Re-order our error arguments to make sense
+*   Make categories for actions with giant comment blocks for easy navigation
 
 
 ## ONE-OFF RESOLVES FRONT-END
