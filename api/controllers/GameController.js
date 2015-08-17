@@ -1737,30 +1737,40 @@ module.exports = {
 				var victim = values[2];
 				var points = values[3];				
 				if (game && thief && victim && points){
-					console.log("All records found and defined");
 					var yourTurn = thief.pNum === game.turn % 2;
 					if (yourTurn) {
-						console.log("Turn is valid");
 						var cardIsFrozen = thief.frozenId === req.body.jackId;
 						if (!cardIsFrozen) {
-							console.log("Jack isn't frozen.");
 						
 							var validRank = points.rank <= 10;
 							if (validRank) {
-								console.log("Rank is valid");
 								thief.points.add(points.id);
 								thief.hand.remove(req.body.jackId);
 								points.attachments.add(req.body.jackId);
 								game.turn++;
 							
 								return [game.save(), thief.save(), victim.save(), points.save()];
-							}
-						}
-					}				
+							} else {return [Promise.reject("Invalid Rank")];}
+						} else {return [Promise.reject("Jack was frozen")];}
+					} else {return [Promise.reject("Not this player's turn")];}				
+				} else {
+					console.log("Missing record");
+					var reason;
+					if (!game) {
+						reason = "Game " + req.body.gameId + " not found";
+					} else if(!thief) {
+						reason = "Thief " + req.body.thiefId + " not found";
+					} else if (!victim) {
+						reason = "Victim " + req.body.victimId + " not found";
+					} else if (!points) {
+						reason = "Points " + req.body.targetId + " not found";
+					}
+					console.log(reason);
+					return[Promise.reject(reason)];
 				}
 
 			}).catch(function(reason){
-				console.log("error thrown");
+				console.log("Error in Promise.all()");
 				console.log(reason);
 			}).spread(function(savedGame, savedThief, savedVictim, savedPoints){ //handle errors
 				var playerSort = sortPlayers([savedThief, savedVictim]);
@@ -1773,6 +1783,9 @@ module.exports = {
 				});
 				res.send({jack: true, thief: savedThief, victim: savedVictim, points: savedPoints});
 				
+			}, function(reason){
+				console.log("Spread was passed a rejected promise");
+				console.log(reason);
 			}).catch(function(reason){
 				console.log("Error in spread()");
 				console.log(reason);

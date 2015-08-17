@@ -3,6 +3,7 @@
 This is a multiplayer card game leveraging sails.js and angularjs.
 
 ## DONE
+*	Handling error cases in jack action, without sending json responses
 *	Jack action now has proper test in test/unit/controllers/gameController.test.js
 *	Began handling errors using .catch() and reject() in jack action
 *	Jacks are now properly moved to the scrap pile when scuttled
@@ -13,6 +14,14 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 *	Jacks now display the alt text of the stolen card next to the img of the jack
 
 ## TODO
+*	DAVID
+	*	Enable Playing a jack from a seven
+		*	Create a new action: sevenJacks
+		*	Update app.js with a case for sevenJacks inside the io.socket.on('game' ) callback
+*	SAM
+	*	Enable destroying a jack with a two
+*	RYAN
+	*	Enable Returning a jack to your opponent's hand with a nine
 *	Jacks
 	*	Handle errors for queries and saves using catch() and reject()
 		*	Started this process. It generally looks good, but we should be careful to ensure that it's thorough
