@@ -1085,7 +1085,9 @@ module.exports = {
 													game.firstEffect = null;
 													game.turn++;
 
-													Card.findOne(card.targetId).exec(function(e7, targetCard) {
+													Card.findOne(card.targetId).populate('attachments').exec(function(e7, targetCard) {
+														console.log("Logging target with " + targetCard.attachments.length + " attachments");
+														console.log(targetCard);
 														if (targetCard.rank === 8) {
 															var path = 'images/cards/card_' + targetCard.suit + '_' + targetCard.rank + '.png';
 															targetCard.img = path;
@@ -1098,12 +1100,199 @@ module.exports = {
 																			Game.publishUpdate(game.id, {
 																				change: 'resolvedNine',
 																				game: savedGame,
-																				players: [savedP0, savedP1]
+																				players: [savedP0, savedP1],
+																				target: targetCard,
+																				stolenPoints: null,
+																				victimPNum: req.body.pNum,
+																				targetHadAttachments: false
 																			});
 																		});
 																	});
 																});
 															});
+														} else if (targetCard.rank === 11) {
+															Card.findOne(targetCard.attached).populate('attachments').exec(function (e8, stolenPoints){
+																if (e8 || !stolenPoints) {
+																	console.log("Can't find stolen point card with id: " + targetCard.attached + " for nine effect");
+																	res.send(404);
+																} else {
+																	stolenPoints.attachments.remove(targetCard.id);
+																	// playerSort[req.body.pNum].points.remove(stolenPoints.id);
+																	playerSort[(req.body.pNum + 1) % 2].points.add(stolenPoints.id);
+
+																	var promiseSavedGame = new Promise(function (resolve, reject){
+																		game.save(function (er, savedGame) {
+																			if (er || !savedGame) {
+																				return reject(er);
+																			} else {
+																				return resolve(savedGame);
+																			}
+																		});
+																	});
+
+																	var promiseSavedP0 = new Promise(function (resolve, reject) {
+																		playerSort[0].save(function (er, savedP0) {
+																			if (er || !savedP0) {
+																				return reject(er)
+																			} else {
+																				return resolve(savedP0);
+																			}
+																		});
+																	});
+
+																	var promiseSavedP1 = new Promise(function (resolve, reject) {
+																		playerSort[1].save(function (er, savedP1) {
+																			if (er || !savedP1) {
+																				return reject(er);
+																			} else {
+																				return resolve(savedP1);
+																			}
+																		});
+																	});
+
+																	var promiseSavedTargetCard = new Promise(function (resolve, reject) {
+																		targetCard.save(function (er, savedTargetCard) {
+																			if (er || !savedTargetCard) {
+																				return reject (er)
+																			} else {
+																				return resolve(savedTargetCard);
+																			}
+																		});
+																	});
+																	var promiseSavedStolenPoints = new Promise(function (resolve, reject) {
+																		stolenPoints.save(function (er, savedStolenPoints) {
+																			if (er || !savedStolenPoints) {
+																				return reject(er);
+																			} else {
+																				return resolve(savedStolenPoints);
+																			}
+																		});
+																	});
+																	Promise.all([promiseSavedGame, promiseSavedP0, promiseSavedP1, promiseSavedTargetCard, promiseSavedStolenPoints]).then(
+																		function (values) {
+																			console.log("\nInside promise.all. Logging values");
+																			console.log(values);
+																			Game.publishUpdate(game.id, {
+																				change: 'resolvedNine',
+																				game: values[0],
+																				players: [values[1], values[2]],
+																				target: values[3],
+																				stolenPoints: values[4],
+																				victimPNum: req.body.pNum,
+																				targetHadAttachments: false
+																			});
+																		}, function (reason) {
+																			console.log("Saving promise was rejected for reason:");
+																			console.log(reason);
+																			res.send(reason);
+																		});
+																	// game.save(function (er, savedGame) {
+																	// 	targetCard.save(function (e9, savedTargetCard) {
+																	// 		playerSort[0].save(function (e10, savedP0) {
+																	// 			playerSort[1].save(function (e11, savedP1) {
+																	// 				console.log("Logging p0:");
+																	// 				console.log(savedP0);
+																	// 				console.log("\nLogging p1");
+																	// 				console.log(savedP1);
+																	// 				Game.publishUpdate(game.id, {
+																	// 					change: 'resolvedNine',
+																	// 					game: savedGame,
+																	// 					players: [savedP0, savedP1],
+																	// 					target: targetCard,
+																	// 					stolenPoints: stolenPoints,
+																	// 					victimPNum: req.body.pNum,
+																	// 					targetHadAttachments: false
+																	// 				});
+																	// 			});
+																	// 		});
+																	// 	});
+																	// });
+																}
+															});
+														} else if (targetCard.attachments.length > 0) {
+															console.log("Bounced card had attachments");
+															for (i=0; i < targetCard.attachments.length; i++) {
+																console.log("Moving attached jack with id " + targetCard.attachments[i].id + " to scrap:");
+																targetCard.attachments.remove(targetCard.attachments[i].id);
+																game.scrap.add(targetCard.attachments[i].id);
+															}
+																	var promiseSavedGame = new Promise(function (resolve, reject){
+																		game.save(function (er, savedGame) {
+																			if (er || !savedGame) {
+																				return reject(er);
+																			} else {
+																				return resolve(savedGame);
+																			}
+																		});
+																	});
+
+																	var promiseSavedP0 = new Promise(function (resolve, reject) {
+																		playerSort[0].save(function (er, savedP0) {
+																			if (er || !savedP0) {
+																				return reject(er)
+																			} else {
+																				return resolve(savedP0);
+																			}
+																		});
+																	});
+
+																	var promiseSavedP1 = new Promise(function (resolve, reject) {
+																		playerSort[1].save(function (er, savedP1) {
+																			if (er || !savedP1) {
+																				return reject(er);
+																			} else {
+																				return resolve(savedP1);
+																			}
+																		});
+																	});
+
+																	var promiseSavedTargetCard = new Promise(function (resolve, reject) {
+																		targetCard.save(function (er, savedTargetCard) {
+																			if (er || !savedTargetCard) {
+																				return reject (er)
+																			} else {
+																				return resolve(savedTargetCard);
+																			}
+																		});
+																	});
+
+
+																	Promise.all([promiseSavedGame, promiseSavedP0, promiseSavedP1, promiseSavedTargetCard]).then(
+																		function (values) {
+																			console.log("\nInside promise.all. Logging values");
+																			console.log(values);
+																			Game.publishUpdate(game.id, {
+																				change: 'resolvedNine',
+																				game: values[0],
+																				players: [values[1], values[2]],
+																				target: values[3],
+																				stolenPoints: null,
+																				victimPNum: req.body.pNum,
+																				targetHadAttachments: true
+																			});
+																		}, function (reason) {
+																			console.log("Saving promise was rejected for reason:");
+																			console.log(reason);
+																			res.send(reason);
+																		});															
+															// game.save(function(er, savedGame) {
+															// 		playerSort[0].save(function(e, savedP0) {
+															// 			playerSort[1].save(function(e6, savedP1) {
+															// 				targetCard.save(function (e7, savedTargetCard) {
+
+															// 					Game.publishUpdate(game.id, {
+															// 						change: 'resolvedNine',
+															// 						game: savedGame,
+															// 						players: [savedP0, savedP1],
+															// 						target: savedTargetCard,
+															// 						stolenPoints: null,
+															// 						victimPNum: req.body.pNum,
+															// 						targetHadAttachments: true
+															// 					});
+															// 				});
+															// 			});
+															// 		})
+															// 	});																												
 														} else {
 															game.save(function(er, savedGame) {
 																playerSort[0].save(function(e, savedP0) {
@@ -1111,7 +1300,11 @@ module.exports = {
 																		Game.publishUpdate(game.id, {
 																			change: 'resolvedNine',
 																			game: savedGame,
-																			players: [savedP0, savedP1]
+																			players: [savedP0, savedP1],
+																			target: targetCard,
+																			stolenPoints: null,
+																			victimPNum: req.body.pNum,
+																			targetHadAttachments: false
 																		});
 																	});
 																})

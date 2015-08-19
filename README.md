@@ -3,6 +3,7 @@
 This is a multiplayer card game leveraging sails.js and angularjs.
 
 ## DONE
+*	NINES may now be played upon JACK's, and upon POINT cards that have attached JACKS
 *	Handling error cases in jack action, without sending json responses
 *	Jack action now has proper test in test/unit/controllers/gameController.test.js
 *	Began handling errors using .catch() and reject() in jack action

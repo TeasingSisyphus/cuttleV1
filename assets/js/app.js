@@ -990,6 +990,62 @@
 							$scope.game.glasses = glasses;
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
+
+							if (obj.data.target.rank === 11) {
+								var offset = 0;
+								var i = 0;
+								if (obj.data.victimPNum === $scope.game.pNum) { //If the jack was yours, remove it from yourJacks
+									while (i-offset < $scope.game.yourJacks.length) {
+										if ($scope.game.yourJacks[i-offset].attached === obj.data.stolenPoints.id) {
+											var removed = $scope.game.yourJacks.splice(i-offset, 1)[0];
+											offset++;
+											if (removed.id != obj.data.target.id) {
+												$scope.game.opJacks.push(removed);
+											}
+										}
+										i++;
+									}
+								} else { //If the jack was your opponent's, remove it from opJacks
+									while (i-offset < $scope.game.opJacks.length) {
+										if ($scope.game.opJacks[i-offset].attached === obj.data.stolenPoints.id) {
+											var removed = $scope.game.opJacks.splice(i-offset, 1)[0];
+											offset++;
+											if (removed.id != obj.data.target.id) {
+												$scope.game.yourJacks.push(removed);
+											}
+										}
+										i++;
+									}
+								}
+							} else if (obj.data.targetHadAttachments) {
+								console.log("Bounced point card had attachments");
+								var offset = 0;
+								var i = 0;
+								if (obj.data.victimPNum === $scope.game.pNum) { //If the target point card was yours, destroy attached yourJacks
+									console.log("the points were yours");
+									while (i - offset < $scope.game.yourJacks.length) {
+										console.log($scope.game.yourJacks[i-offset]);
+										if ($scope.game.yourJacks[i-offset].attached === obj.data.target.id) {
+											console.log("match");
+											$scope.game.yourJacks.splice(i-offset, 1);
+											offset++;
+										}
+										i++;
+									}
+								} else { //If the target point card was opponent's, destroy attached opJacks
+									console.log("the points were opponent's");
+									while (i-offset < $scope.game.opJacks.length) {
+										console.log("considering jack:");
+										console.log($scope.game.opJacks[i-offset]);
+										if ($scope.game.opJacks[i-offset].attached === obj.data.target.id) {
+											console.log("match");
+											$scope.game.opJacks.splice(i-offset, 1);
+											offset++;
+										}
+										i++;
+									}
+								}
+							}
 							$scope.game.turn = obj.data.game.turn;
 							break;
 
