@@ -766,7 +766,7 @@ module.exports = {
 												}
 											});
 											break;
-											//Two played to destroy target rune
+										//Two played to destroy target rune
 										case 2:
 											console.log('The first effect is a two');
 											Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function(err, players) {
@@ -778,6 +778,101 @@ module.exports = {
 													var playerSort = sortPlayers(players);
 													playerSort[req.body.pNum].runes.remove(card.targetId);
 													game.scrap.add(card.targetId);
+
+													Card.findOne(card.targetId).populate('attachments').exec(function (e7, targetCard) {
+														console.log("Logging target with " + targetCard.attachments.length + " attachments");
+														console.log(targetCard);
+														if (targetCard.rank === 11) {
+															Card.findOne(targetCard.attached).populate('attached').exec(function (e8, stolenPoints){
+																if (e8 || !stolenPoints) {
+																	console.log("Can't find stolen point card with id: " + targetCard.attached + " for two effect");
+																	res.send(404);
+																} else {
+																	stolenPoints.attachments.remove(targetCard.id);
+																	// playerSort[req.body.pNum].points.remove(stolenPoints.id);
+																	playerSort[(req.body.pNum + 1) % 2].points.add(stolenPoints.id);
+
+																	var promiseSavedGame = new Promise(function (resolve, reject){
+																		game.save(function (e9, savedGame) {
+																			if (e9 || !savedGame) {
+																				return reject(e9);
+																			} else {
+																				return resolve(savedGame);
+																			}
+																		});
+																	});
+
+																	var promiseSavedP0 = new Promise(function (resolve, reject) {
+																		playerSort[0].save(function (e9, savedP0) {
+																			if (e9 || !savedP0) {
+																				return reject(e9);
+																			} else {
+																				return resolve(savedP0);
+																			}
+																		});
+																	});
+
+																	var promiseSavedP1 = new Promise(function (resolve, reject) {
+																		playerSort[1].save(function (e9, savedP1) {
+																			if (e9 || !savedP1) {
+																				return reject(e9);
+																			} else {
+																				return resolve(savedP1)
+																			}
+																		});
+																	});
+
+																	var promiseSavedTargetCard = new Promise(function (resolve, reject) {
+																		targetCard.save(function (e9, savedTargetCard) {
+																			if (e9 || !savedTargetCard) {
+																				return reject (e9);
+																			} else {
+																				return resolve(savedTargetCard);
+																			}
+																		});
+																	});
+
+																	var promiseSavedStolenPoints = new Promise(function (resolve, reject) {
+																		stolenPoints.save(function (e9, savedStolenPoints) {
+																			if (e9 || !savedStolenPoints) {
+																				return reject(e9);
+																			} else {
+																				return resolve(savedStolenPoints)
+																			}
+																		});
+																	});
+																	
+																	Promise.all([promiseSavedGame, promiseSavedP0, promiseSavedP1, promiseSavedTargetCard, promiseSavedStolenPoints]).then(
+																		function (values) {
+																			console.log('\nInside two resolve promise.all. Logging values');
+																			console.log(values);
+																			console.log('PromiseSavedTargetCard below')
+																			console.log(values[3]);
+																			Game.publishUpdate(game.id, {
+																				change: 'resolvedTwo',
+																				game: values[0],
+																				players: [values[1], values[2]],
+																				target: values[3],
+																				stolenPoints: values[4],
+																				victimPNum: req.body.pNum,
+																			});
+																			res.send({
+																				resolvedTwo: true,
+																				game: values[0],
+																				players: [values[1], values[2]],
+																				target: values[3],
+																				stolenPoints: values[4],
+																				victimPNum: req.body.pNum,
+																			});
+																		}, function (reason) {
+																			console.log('Saving promise in two was rejected for reason: ');
+																			console.log(reason);
+																			res.send(reason);
+																		});
+																}
+															});
+														}
+													});
 
 													//firstEffect will no longer have target now that stack resolves
 													card.targetId = null;
@@ -795,24 +890,24 @@ module.exports = {
 													players[0].frozenId = null;
 													players[1].frozenId = null;
 													game.turn++;
-													game.save(function(er, savedGame) {
-														console.log("It is now turn: " + savedGame.turn);
-														playerSort[0].save(function(e, savedP0) {
-															playerSort[1].save(function(e6, savedP1) {
-																Game.publishUpdate(game.id, {
-																	change: 'resolvedTwo',
-																	game: savedGame,
-																	players: [savedP0, savedP1]
-																});
-																res.send({
-																	resolvedTwo: true,
-																	game: savedGame,
-																	players: [savedP0, savedP1]
-																});
-																card.save();
-															});
-														});
-													});
+													// game.save(function(er, savedGame) {
+													// 	console.log("It is now turn: " + savedGame.turn);
+													// 	playerSort[0].save(function(e, savedP0) {
+													// 		playerSort[1].save(function(e6, savedP1) {
+													// 			Game.publishUpdate(game.id, {
+													// 				change: 'resolvedTwo',
+													// 				game: savedGame,
+													// 				players: [savedP0, savedP1]
+													// 			});
+													// 			res.send({
+													// 				resolvedTwo: true,
+													// 				game: savedGame,
+													// 				players: [savedP0, savedP1]
+													// 			});
+													// 			card.save();
+													// 		});
+													// 	});
+													// });
 
 												}
 											});

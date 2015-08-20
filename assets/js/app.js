@@ -919,7 +919,6 @@
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.players = obj.data.players;
-							$scope.game.turn = obj.data.game.turn;
 
 							var glasses = false;
 							$scope.game.players[$scope.game.pNum].runes.forEach(function(rune, index, runes) {
@@ -928,6 +927,37 @@
 								}
 							});
 							$scope.game.glasses = glasses;
+							console.log('Obj.data below');
+							console.log(obj.data);
+
+							if (obj.data.target.rank === 11) {
+								var offset = 0;
+								var i = 0;
+								if (obj.data.victimPNum === $scope.game.pNum) { //If the jack was yours, remove it from yourJacks
+									while (i-offset < $scope.game.yourJacks.length) {
+										if ($scope.game.yourJacks[i-offset].attached === obj.data.stolenPoints.id) {
+											var removed = $scope.game.yourJacks.splice(i-offset, 1)[0];
+											offset++;
+											if (removed.id != obj.data.target.id) {
+												$scope.game.opJacks.push(removed);
+											}
+										}
+										i++;
+									}
+								} else { //If the jack was your opponent's, remove it from opJacks
+									while (i-offset < $scope.game.opJacks.length) {
+										if ($scope.game.opJacks[i-offset].attached === obj.data.stolenPoints.id) {
+											var removed = $scope.game.opJacks.splice(i-offset, 1)[0];
+											offset++;
+											if (removed.id != obj.data.target.id) {
+												$scope.game.yourJacks.push(removed);
+											}
+										}
+										i++;
+									}
+								}
+							}
+							$scope.game.turn = obj.data.game.turn;
 							break;
 
 						case 'resolvedThree':
@@ -981,12 +1011,18 @@
 							$scope.game.players = obj.data.players;
 							var glasses = false;
 							$scope.game.players[$scope.game.pNum].runes.forEach(function(rune, index, runes) {
-								console.log(rune);
-								console.log(rune.rank === 8);
-								if (rune.rank === 8) {
-									glasses = true;
+
+							    //_______________________________  
+							 	//|console.log(rune);             |
+								//|console.log(rune.rank === 8);  |
+								//|_______________________________|
+								if (rune.rank === 8) {         	
+									glasses = true;       
 								}
 							});
+
+							//Here lies the tomb of Grobar Difius, he was a great general in the war of, i think you get the idea.
+
 							$scope.game.glasses = glasses;
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
