@@ -425,6 +425,24 @@
 
                 //Handles Jack card rune effect
 		this.jack = function(card) {
+		    if($scope.game.topTwoPick) {
+			console.log("Requesting to jack " + card.alt " off a seven");
+			io.socket.get('/game/sevenJack', {
+			        gameId: $scope.game.gameId,
+			        pNum: $scope.game.pNum,
+			        thiefId: $scope.game.players[$scope.game.pNum].id,
+			        victimId: $scope.game.players[($scope.game.pNum + 1) % 2].id,
+                                whichCard = $scope.game.whichCard,
+			        targetId: card.id,
+			        jackId = $scope.game.selId
+			}, function(res) {
+			        console.log(res);
+			        $scope.game.selId = null;
+			        $scope.game.selIndex = null;
+			        $scope.game.selCard = null;
+			        $scope.$apply();
+			});
+		    } else {
 			console.log("Requesting to jack " + card.alt);
 			io.socket.get('/game/jack', {
 				gameId: $scope.game.gameId,
@@ -435,7 +453,12 @@
 				targetId: card.id
 			}, function(res) {
 				console.log(res);
+			        $scope.game.selId = null;
+			        $scope.game.selIndex = null;
+			        $scope.game.selCard = null;
+			        $scope.$apply();
 			});
+		    }
 		};
 
                 //Handles playing a 9 as a one-off effect on other point cards
