@@ -2078,6 +2078,13 @@ module.exports = {
 				console.log("Error in spread()");
 				console.log(reason);
 			});
+		        var victor = winner(savedThief);
+		    
+		        if (victor) {
+			    game.winner = savedThief.pNum;
+			}
+
+		        Game.update({id: savedGame.id}, savedGame);
 		}
 	},
 
