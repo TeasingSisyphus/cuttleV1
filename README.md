@@ -18,6 +18,7 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 *	DAVID
 	*	Enable Playing a jack from a seven
 		*	Create a new action: sevenJacks
+		*       Handle corner case where neither card be played from a seven OneOff(2 jacks with no points on opponent's field)	 
 		*	Update app.js with a case for sevenJacks inside the io.socket.on('game' ) callback
 *	SAM
 	*	Enable destroying a jack with a two
