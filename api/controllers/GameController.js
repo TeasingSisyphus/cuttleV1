@@ -1958,6 +1958,136 @@ module.exports = {
 		}
 	},
 
+    sevenJack: function(req, res) {
+		console.log("\nPlaying Jack from seven");
+		if(req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('thiefId') && req.body.hasOwnProperty('whichCard') && req.body.hasOwnProperty('victimId') && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('pNum') && req.body.hasOwnProperty('jackId') && req.body.hasOwnProperty('targetId')) {
+	    	console.log("\nJack requested for " + req.body.gameId + " from seven one-off effect");
+
+		    var promiseGame = new Promise(function(resolve, reject) {
+				Game.findOne(req.body.gameId).exec(function (resolve, reject) {
+					if(error || !game) {
+						return reject(error);
+		    		}else{
+						return resolve(game);
+		    		}
+		    	});
+			}).catch(function(e){
+				console.log("Error finding game: " + req.body.gameId + " for jack");
+				console.log(e);
+				res.send(e);
+	    	});
+			var promiseThief = new Promise(function (resolve, reject) {
+				Player.findOne(req.body.thiefId).populateAll().exec(function (error, thief) {
+		    		if(error || !thief){
+						return reject(error);
+		    		}else{
+					return resolve(thief);
+		    		}
+				});
+	    	}).catch(function(e){
+				console.log("Error finding thief: " + req.body.thiefId + " for jack");
+				console.log(e);
+				res.send(e);
+	    	});
+	    	var promiseVictim = new Promise(function (resolve, reject) {
+				Player.findOne(req.body.victimId).populateall.exec(function (error, victim) {
+			    	if (error || !victim){
+						return reject(error);
+			    	}else{
+						return resolve(victim);
+			    	}
+				});
+	    	}).catch(function(e){
+				console.log("Error finding victim " + req.body.victimId + " for jack");
+				console.log(e);
+				res.send(e);
+	    	});
+			var promisePoints = new Promise(function (resolve, reject) {
+				Card.findOne(req.body.targetId).populate('attachments').exec(function (error, points) {
+		    		if(error || !points){
+						return reject(error);
+		    		}else{
+						return resolve(points);
+		    		}
+				});
+	    	}).catch(function(e){
+				console.log("Error finding target " + req.body.targetId + " for jack");
+				console.log(e);
+				res.send(e);
+	    	});
+	   	    Promise.all([promiseGame, promiseThief, promiseVictim, promisePoints]).then(function (values) {		
+				var game = values[0];
+				var thief = values[1];
+				var victim = values[2];
+				var points = values[3];
+
+				var max = game.deck.length - 1;
+				var min = 0;
+				var random = Math.floor((Math.random() * (max + 1)));
+			
+				if(!req.body.whichCard){
+		    		game.topCard = game.secondCard;
+				}
+			
+				game.secondCard = game.deck[random];
+				game.deck.remove(game.deck[random].id);
+
+				if(game && thief && victim && points){
+		    		var yourTurn = thief.pNum === game.turn % 2;
+		    		if (yourTurn) {
+						var validRank = points.rank <= 10;
+						if(validRank){
+				    		thief.points.add(points.id);
+				    		thief.hand.remove(req.body.jackId);
+				    		points.attachments.add(req.body.jackId);
+				    		game.turn++
+				    		return [game.save(), thief.save(), victim.save(), points.save()];
+						}else{return [Promise.reject("Invalid Rank")];}
+		    		}else{return [Promise.reject("Not this player's turn")];}
+				}else{
+		    		console.log("Missing record");
+		    		var reason;
+		    		if(!game){
+						reason = "Game " + req.body.gameId + " not found";
+		    		}else if(!thief){
+						reason = "Thief " + req.body.thiefId + " not found";
+		    		}else if(!victim){
+						reason = "Victim " + req.body.victimId + " not found";
+		    		}else if(!points){
+						reason = "Points " + req.body.targetId + " not found";
+		    		}
+		    		console.log(reason);
+		    		return [Promise.reject(reason)];
+				}
+	    	}).catch(function(reason){
+				console.log("Error in Promise.all()");
+				console.log(reason);
+	    	}).spread(function(savedGame, savedThief, savedVictim, savedPoints){
+				var victor = winner(savedThief);
+				if(victor){
+				    savedGame.winner = savedThief.pNum;
+				}
+				Game.update({id: savedGame.id}, savedGame);
+
+				var playerSort = sortPlayers([savedThief, savedVictim]);
+
+				Game.publishUpdate(savedGame.id, {
+				    change: 'sevenJack',
+		   			players: playerSort,
+		    		victor: victor,
+		    		targetCard: savedPoints,
+		    		whichCard: req.body.whichCard
+				});	
+	    	}, function(reason){
+	    		console.log("Spread was passed a rejected Promise");
+	    		console.log("reason");
+	    	}).catch(function(e){
+	    		console.log("Error in spread()");
+	    		console.log(e);
+	    	});
+	    }
+    },
+    
 	//Handles the jack rune effect
 	jack: function (req, res) {
 		if (req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('pNum') && req.body.hasOwnProperty('thiefId') && req.body.hasOwnProperty('jackId') && req.body.hasOwnProperty('targetId')) {
@@ -2072,7 +2202,7 @@ module.exports = {
 				Game.publishUpdate(savedGame.id, {
 					change: 'jack',
 					players: playerSort,
-				        victor: victor,
+				    victor: victor,
 					thief: savedThief,
 					victim: savedVictim,
 					targetCard: savedPoints
