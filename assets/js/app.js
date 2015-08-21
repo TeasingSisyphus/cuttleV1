@@ -1129,6 +1129,11 @@
 									});
 									break;
 							}
+
+					                if(obj.data.victor) {
+							    alert("Player " + obj.data.thief.pNum + " has won!");
+							}                
+
 							break;
 
 						case 'topCardChange':
@@ -1192,7 +1197,7 @@
 							$scope.game.topTwoPick = false;
 							$scope.game.turn = obj.data.turn;
 							break;
-						case 'jackBug':
+						case 'jack':
 							$scope.game.players = obj.data.players;
 					}
 					break;

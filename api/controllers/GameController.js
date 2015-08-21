@@ -2061,10 +2061,18 @@ module.exports = {
 				console.log("Error in Promise.all()");
 				console.log(reason);
 			}).spread(function(savedGame, savedThief, savedVictim, savedPoints){ //handle errors
+			        var victor = winner(savedThief);
+			    
+		                if (victor) {
+				    savedGame.winnner = savedThief.pNum;
+			        }  
+		                Game.update({id: savedGame.id}, savedGame);
+
 				var playerSort = sortPlayers([savedThief, savedVictim]);
 				Game.publishUpdate(savedGame.id, {
 					change: 'jack',
 					players: playerSort,
+				        victor: victor,
 					thief: savedThief,
 					victim: savedVictim,
 					targetCard: savedPoints
@@ -2078,13 +2086,6 @@ module.exports = {
 				console.log("Error in spread()");
 				console.log(reason);
 			});
-		        var victor = winner(savedThief);
-		    
-		        if (victor) {
-			    game.winner = savedThief.pNum;
-			}
-
-		        Game.update({id: savedGame.id}, savedGame);
 		}
 	},
 
