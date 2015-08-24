@@ -2038,7 +2038,6 @@ module.exports = {
 						var validRank = points.rank <= 10;
 						if(validRank){
 				    		thief.points.add(points.id);
-				    		thief.hand.remove(req.body.jackId);
 				    		points.attachments.add(req.body.jackId);
 				    		game.turn++
 				    		return [game.save(), thief.save(), victim.save(), points.save()];
@@ -2073,7 +2072,10 @@ module.exports = {
 
 				Game.publishUpdate(savedGame.id, {
 				    change: 'sevenJack',
+				    game: savedGame,
 		   			players: playerSort,
+		   			thief: savedThief,
+		   			victim: savedVictim,
 		    		victor: victor,
 		    		targetCard: savedPoints,
 		    		whichCard: req.body.whichCard
