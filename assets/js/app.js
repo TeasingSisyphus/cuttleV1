@@ -426,16 +426,30 @@
                 //Handles Jack card rune effect
 		this.jack = function(card) {
 			console.log("Requesting to jack " + card.alt);
-			io.socket.get('/game/jack', {
-				gameId: $scope.game.gameId,
-				pNum: $scope.game.pNum,
-				thiefId: $scope.game.players[$scope.game.pNum].id,
-				victimId: $scope.game.players[($scope.game.pNum + 1) % 2].id,
-				jackId: $scope.game.selId,
-				targetId: card.id
-			}, function(res) {
-				console.log(res);
-			});
+			if($scope.game.topTwoPick){
+				io.socket.get('/game/sevenJack', {
+					gameId: $scope.game.gameId,
+					pNum: $scope.game.pNum,
+					thiefId: $scope.game.players[$scope.game.pNum].id,
+					victimId: $scope.game.players[($scope.game.pNum + 1) % 2].id,
+					whichCard: $scope.game.whichCard,
+					jackId: $scope.game.selId,
+					targetId: card.id
+				}, function(res) {
+					console.log(res);
+				});
+			}else{
+				io.socket.get('/game/jack', {
+					gameId: $scope.game.gameId,
+					pNum: $scope.game.pNum,
+					thiefId: $scope.game.players[$scope.game.pNum].id,
+					victimId: $scope.game.players[($scope.game.pNum + 1) % 2].id,
+					jackId: $scope.game.selId,
+					targetId: card.id
+				}, function(res) {
+					console.log(res);
+				});
+			}
 		};
 
                 //Handles playing a 9 as a one-off effect on other point cards
@@ -1083,6 +1097,60 @@
 								}
 							}
 							$scope.game.turn = obj.data.game.turn;
+							break;
+
+						case 'sevenJack':
+							$scope.game.stacking = false;
+							$scope.game.topTwoPick = false;
+							$scope.game.players = obj.data.players;
+							$scope.game.turn = obj.data.turn;
+							$scope.game.deck = obj.data.game.deck;
+							$scope.game.topCard = obj.data.game.topCard;
+							$scope.game.secondCard = obj.data.game.secondCard;
+							$scope.game.topTwo = [$scope.game.topCard, $scope.game.secondCard];
+							switch (obj.data.thief.pNum === $scope.game.pNum) {
+								case true:
+									console.log("Your jack");
+									obj.data.targetCard.attachments.forEach(function (jack, index, attachments) {
+										//Add the attached jacks to your jacks
+										if ($scope.game.yourJacks.indexOf(jack) < 0) {
+											console.log("pushing jack");
+											jack.targetAlt = obj.data.targetCard.alt;
+											$scope.game.yourJacks.push(jack);
+										}
+
+										//Remove the attached jacks from opponent's jacks
+										$scope.game.opJacks.forEach(function (opJack, opJacksIndex, opJacks) {
+											if (jack.suit === opJack.suit && jack.rank === 11 && opJack.rank === 11) {
+												$scope.game.opJacks.splice(opJacksIndex, 1);
+											}
+										});
+
+									});
+									break;
+								case false:
+									console.log("Their jack");
+									obj.data.targetCard.attachments.forEach(function(jack, index, attachments) {
+										//Add the attached jacks to opponent's jacks
+										if ($scope.game.opJacks.indexOf(jack) < 0) {
+											console.log("pushing jack");
+											jack.targetAlt = obj.data.targetCard.alt;											
+											$scope.game.opJacks.push(jack);
+										}
+
+										//Remove the attached jacks from your jacks
+										$scope.game.yourJacks.forEach(function (yourJack, yourJacksIndex, yourJacks) {
+											if (jack.suit === yourJack.suit && jack.rank === 11 && yourJack.rank === 11) {
+												$scope.game.yourJacks.splice(yourJacksIndex, 1);
+											}
+										});
+									});
+									break;
+							}
+
+					        if(obj.data.victor) {
+							    alert("Player " + obj.data.thief.pNum + " has won!");
+							}
 							break;
 
 						case 'jack':
