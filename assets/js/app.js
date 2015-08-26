@@ -448,6 +448,10 @@
 					targetId: card.id
 				}, function(res) {
 					console.log(res);
+					$scope.game.selId = null;
+					$scope.game.selIndex = null;
+					$scope.game.selCard = null
+					$scope.$apply();					
 				});
 			}
 		};
@@ -538,30 +542,25 @@
 							targetId: card.id
 						}, function(res) {
 							console.log(res);
-							if (res.change.resolvedTwo) {
-								$scope.game.players = res.players;
+							if (res.resolvedTwo) {
+								// $scope.game.players = res.players;
 							} else {
-								$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card'
+								$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
 							}
 							$scope.game.selId = null;
 							$scope.game.selIndex = null;
 							$scope.game.selCard = null
 							$scope.$apply();
 						});
-                                        //Handles the issue of trying to target a non-point card with a jack
-                                        //Still needs works on sevrer side controller
+
+                    //Handles the issue of trying to target a non-point card with a jack
 					} else if ($scope.game.selCard.rank === 11) {
-						console.log("Requesting jackBug");
-						io.socket.get('/game/jackBug', {
-							gameId: $scope.game.gameId,
-							thiefId: $scope.game.players[$scope.game.pNum].id,
-							victimId: $scope.game.players[($scope.game.pNum + 1) % 2].id,
-							jackId: $scope.game.selId,
-							targetId: card.id,
-							pNum: $scope.game.pNum
-						}, function (res) {
-							console.log(res);
-						});
+						console.log("You Can't Jack a Rune");
+						$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+						$scope.game.selId = null;
+						$scope.game.selIndex = null;
+						$scope.game.selCard = null
+						$scope.$apply();
 					}
 
 				}
@@ -727,15 +726,13 @@
 			});
 		};
 
-                //Switches from homepageView to readyView
+        //Switches from homepageView to readyView
 		$rootScope.$on('readyView', function(event, game) {
 			console.log('\nChanging to readyView');
 			$scope.game.gameId = game.id;
 			$scope.game.gameName = game.name;
 			$scope.game.pNum = game.players.length - 1;
 			$scope.game.deck = game.deck;
-
-
 		});
 
 		///////////////////////////
@@ -941,8 +938,7 @@
 								}
 							});
 							$scope.game.glasses = glasses;
-							console.log('Obj.data below');
-							console.log(obj.data);
+
 
 							if (obj.data.target.rank === 11) {
 								var offset = 0;
@@ -1024,12 +1020,8 @@
 							$scope.game.topTwoPick = false;
 							$scope.game.players = obj.data.players;
 							var glasses = false;
-							$scope.game.players[$scope.game.pNum].runes.forEach(function(rune, index, runes) {
 
-							    //_______________________________  
-							 	//|console.log(rune);             |
-								//|console.log(rune.rank === 8);  |
-								//|_______________________________|
+							$scope.game.players[$scope.game.pNum].runes.forEach(function(rune, index, runes) {
 								if (rune.rank === 8) {         	
 									glasses = true;       
 								}

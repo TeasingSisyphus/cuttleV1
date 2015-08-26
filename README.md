@@ -3,6 +3,12 @@
 This is a multiplayer card game leveraging sails.js and angularjs.
 
 ## DONE
+*	The selection bug should no longer fire from playing any number of JACKS
+*	JACKS may now be played from a SEVEN
+	*	They may not be played on one's own points
+*	Properly move jacks to scrap pile in ACE
+*	Return points to original owner using modular arithmetic during SIX
+*	Enable targeting a jack with a TWO	
 *	NINES may now be played upon JACK's, and upon POINT cards that have attached JACKS
 *	Handling error cases in jack action, without sending json responses
 *	Jack action now has proper test in test/unit/controllers/gameController.test.js
@@ -15,33 +21,14 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 *	Jacks now display the alt text of the stolen card next to the img of the jack
 
 ## TODO
-*	DAVID
-	*	Enable Playing a jack from a seven
-		*	Create a new action: sevenJacks
-		*       Handle corner case where neither card be played from a seven OneOff(2 jacks with no points on opponent's field)	 
-		*	Update app.js with a case for sevenJacks inside the io.socket.on('game' ) callback
-*	SAM
-	*	Enable destroying a jack with a two
-*	RYAN
-	*	Enable Returning a jack to your opponent's hand with a nine
 *	Jacks
-	*	Handle errors for queries and saves using catch() and reject()
-		*	Started this process. It generally looks good, but we should be careful to ensure that it's thorough
-	*	Playing all 4 jacks on one point card has triggered the selection bug
-		*	Cards become unselectable until next turn (ie player must choose to draw to continue game)
-	
-	*	Properly move jacks to scrap pile in ACE
-	*	Return points to original owner using modular arithmetic during SIX
-	*	Enable targeting a jack with a TWO
-			*Switch control of the point card when the jack is destroyed
-	*	Enable targeting a jack with a NINE
-		*	Switch control of the point card when the jack is bounced and frozen
 	*	Change their display
 		*	Maybe Jacks only stack vertically if they steal the same card?
 	*	Enable playing a jack from a SEVEN one-off effect
 
 *	Queens
 	*	Jacks must check runes for any queens and abort if one if found
+	*	Seven into Jack must behave the same way
 	*	9's must count the number of queens, abort if 2 or more are found, and abort if 1 is found and the target isn't the queen
 	*	2's must count the number of queens, abort if 2 or more are found, and abort if 1 is found and the target isn't the queen
 
@@ -55,6 +42,7 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 
 
 ## REFACTORING
+*	Write find (and possibly save) functions that create and return new promises
 *	Leverage Promises for handling queries and saves
 *	Change id to gameId in get requests
 *	Change scuttling to find cards on server side, rather than passing them (the full card) from client
@@ -67,9 +55,6 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 *   Make categories for actions with giant comment blocks for easy navigation
 
 
-## ONE-OFF RESOLVES FRONT-END
-*	Nine
-	*	Needs game, needs player of target, needs target card
 
 ## ANGULAR BUGS
 *	Angular some times fails to load a card's picture, or loads it painfully slowly
