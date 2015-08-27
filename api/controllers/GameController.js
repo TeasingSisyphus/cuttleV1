@@ -566,7 +566,7 @@ module.exports = {
 									console.log("Card " + req.body.cardId + " not found for oneOff");
 									res.send(404);
 								} else {
-                                                                        //Checks if a one-off request has already been made
+                                   //Checks if a one-off request has already been made
 									var firstEffect = game.firstEffect === null;
 									if (firstEffect) {
 										var validRank = card.rank <= 9 && card.rank !== 8;
@@ -575,52 +575,169 @@ module.exports = {
 											if (yourTurn) {
 												var cardIsFrozen = player.frozenId === card.id;
 												if (!cardIsFrozen) {
-													game.firstEffect = card;
-													player.hand.remove(card.id);
 
-													var log = "Player " + player.pNum + " has played the " + card.alt + " for its one off effect.";
-													game.log.push(log);
-													//Switch to determine targeting requirements of the oneOff
-													switch (card.rank) {
-														case 2:
-														case 9:
-															console.log("Request made to play two or 9");
-															if (req.body.hasOwnProperty('targetId')) {
-																card.targetId = req.body.targetId;
-																card.save();
-															} else {
-																console.log("No target provided for oneOff requiring it");
-																return res.send({
-																	oneOff: false,
-																	firstEffect: true,
-																	validRank: validRank,
-																	yourTurn: yourTurn,
-																	game: savedGame,
-																	player: savedPlayer,
-																	card: card,
-																	hadTarget: false
-																});
-															}
-															break;
+
+
+													var sortUnpopulatedPlayers = sortPlayers(game.players);
+													var queenCount = 0;
+													if (sortUnpopulatedPlayers[0].id === player.id) {
+														var victimId = sortUnpopulatedPlayers[1].id;
+													} else {
+														var victimId = sortUnpopulatedPlayers[0].id;
 													}
-													game.save(function(er, savedGame) {
-														player.save(function(e, savedPlayer) {
-															Game.publishUpdate(game.id, {
-																change: 'oneOff',
-																game: savedGame,
-																player: savedPlayer,
-																card: card
-															}, req);
-															res.send({
-																oneOff: true,
-																firstEffect: true,
-																validRank: validRank,
-																yourTurn: yourTurn,
-																game: savedGame,
-																player: savedPlayer,
-																card: card
+													Player.findOne(victimId).populateAll().exec(function (errorz, victim) {
+														if (errorz || !victim) {
+															console.log("victim not found for playing one_off");
+															res.send(404);
+														} else {
+															victim.runes.forEach(function (rune, index, runes) {
+																if (rune.rank === 12) {
+																	queenCount++;
+																}
 															});
-														});
+															//Switch to determine targeting requirements of the oneOff
+															switch (card.rank) {
+																case 1:
+																case 3:
+																case 4:
+																case 5:
+																case 6:
+																case 7:
+																	var log = "Player " + player.pNum + " has played the " + card.alt + " for its one off effect.";
+																	game.log.push(log);
+																	game.firstEffect = card;
+																	player.hand.remove(card.id);																			
+																	card.save();
+																	game.save(function(er, savedGame) {
+																		player.save(function(e, savedPlayer) {
+																			Game.publishUpdate(game.id, {
+																				change: 'oneOff',
+																				game: savedGame,
+																				player: savedPlayer,
+																				card: card
+																			}, req);
+																			res.send({
+																				oneOff: true,
+																				firstEffect: true,
+																				validRank: validRank,
+																				yourTurn: yourTurn,
+																				game: savedGame,
+																				player: savedPlayer,
+																				card: card,
+																				hadTarget: null
+																			});
+																		});
+																	});																	
+																	break;
+																case 2:
+																case 9:
+																	console.log("Request made to play two or 9");	
+																	switch (queenCount) {
+																		case 0:
+																			if (req.body.hasOwnProperty('targetId')) {
+																				var log = "Player " + player.pNum + " has played the " + card.alt + " for its one off effect.";
+																				game.log.push(log);
+																				game.firstEffect = card;
+																				player.hand.remove(card.id);																			
+																				card.targetId = req.body.targetId;
+																				card.save();
+																				game.save(function(er, savedGame) {
+																					player.save(function(e, savedPlayer) {
+																						Game.publishUpdate(game.id, {
+																							change: 'oneOff',
+																							game: savedGame,
+																							player: savedPlayer,
+																							card: card
+																						}, req);
+																						res.send({
+																							oneOff: true,
+																							firstEffect: true,
+																							validRank: validRank,
+																							yourTurn: yourTurn,
+																							game: savedGame,
+																							player: savedPlayer,
+																							card: card,
+																							hadTarget: true
+																						});
+																					});
+																				});																				
+																			} else {
+																				console.log("No target provided for oneOff requiring it");
+																				return res.send({
+																					oneOff: false,
+																					firstEffect: true,
+																					validRank: validRank,
+																					yourTurn: yourTurn,
+																					game: savedGame,
+																					player: savedPlayer,
+																					card: card,
+																					hadTarget: false
+																				});
+																			}
+																			break;
+																		case 1:
+																			if (req.body.hasOwnProperty('targetId')) {
+																				Card.findOne(req.body.targetId).exec(function (errories, targetCard) {
+																					if (targetCard.rank === 12) {
+																						var log = "Player " + player.pNum + " has played the " + card.alt + " for its one off effect.";
+																						game.log.push(log);
+																						game.firstEffect = card;
+																						player.hand.remove(card.id);
+																						card.targetId = req.body.targetId;
+																						card.save();
+
+																						game.save(function(er, savedGame) {
+																							player.save(function(e, savedPlayer) {
+																								Game.publishUpdate(game.id, {
+																									change: 'oneOff',
+																									game: savedGame,
+																									player: savedPlayer,
+																									card: card
+																								}, req);
+																								res.send({
+																									oneOff: true,
+																									firstEffect: true,
+																									validRank: validRank,
+																									yourTurn: yourTurn,
+																									game: savedGame,
+																									player: savedPlayer,
+																									card: card,
+																									hadTarget: true
+																								});
+																							});
+																						});			
+																																									
+																					}
+																				});
+																			} else {
+																				console.log("No target provided for oneOff requiring it");
+																				return res.send({
+																					oneOff: false,
+																					firstEffect: true,
+																					validRank: validRank,
+																					yourTurn: yourTurn,
+																					card: card,
+																					hadTarget: false
+																				});
+																			}
+																			break;
+																		case 2:
+																		case 3:
+																		case 4:
+																			res.send({
+																				oneOff: false,
+																				firstEffect: true,
+																				validRank: null,
+																				yourTurn: yourTurn,
+																				card: card,
+																				hadTarget: null
+																			});
+																			break;
+
+																	}
+																	break;
+															}
+														}
 													});
 
 												} else {
@@ -782,6 +899,24 @@ module.exports = {
 													Card.findOne(card.targetId).populate('attachments').exec(function (e7, targetCard) {
 														console.log("Logging target with " + targetCard.attachments.length + " attachments");
 														console.log(targetCard);
+
+														//firstEffect will no longer have target now that stack resolves
+														card.targetId = null;
+
+														//Move the countering two's to the scrap
+														game.twos.forEach(function(two, index, twos) {
+															game.twos.remove(two.id);
+															game.scrap.add(two.id);
+														});
+
+														//Move the firstEffect two to the scrap
+														game.scrapTop = card;
+														game.scrap.add(card.id);
+														game.firstEffect = null;
+														players[0].frozenId = null;
+														players[1].frozenId = null;
+														game.turn++;
+
 														if (targetCard.rank === 11) {
 															Card.findOne(targetCard.attached).populate('attached').exec(function (e8, stolenPoints){
 																if (e8 || !stolenPoints) {
@@ -871,43 +1006,30 @@ module.exports = {
 																		});
 																}
 															});
+														} else {
+															
+															game.save(function(er, savedGame) {
+																console.log("It is now turn: " + savedGame.turn);
+																playerSort[0].save(function(e, savedP0) {
+																	playerSort[1].save(function(e6, savedP1) {
+																		Game.publishUpdate(game.id, {
+																			change: 'resolvedTwo',
+																			game: savedGame,
+																			players: [savedP0, savedP1],
+																			target: targetCard
+																		});
+																		res.send({
+																			resolvedTwo: true,
+																			game: savedGame,
+																			players: [savedP0, savedP1]
+																		});
+																		card.save();
+																	});
+																});
+															});
 														}
 													});
 
-													//firstEffect will no longer have target now that stack resolves
-													card.targetId = null;
-
-													//Move the countering two's to the scrap
-													game.twos.forEach(function(two, index, twos) {
-														game.twos.remove(two.id);
-														game.scrap.add(two.id);
-													});
-
-													//Move the firstEffect two to the scrap
-													game.scrapTop = card;
-													game.scrap.add(card.id);
-													game.firstEffect = null;
-													players[0].frozenId = null;
-													players[1].frozenId = null;
-													game.turn++;
-													// game.save(function(er, savedGame) {
-													// 	console.log("It is now turn: " + savedGame.turn);
-													// 	playerSort[0].save(function(e, savedP0) {
-													// 		playerSort[1].save(function(e6, savedP1) {
-													// 			Game.publishUpdate(game.id, {
-													// 				change: 'resolvedTwo',
-													// 				game: savedGame,
-													// 				players: [savedP0, savedP1]
-													// 			});
-													// 			res.send({
-													// 				resolvedTwo: true,
-													// 				game: savedGame,
-													// 				players: [savedP0, savedP1]
-													// 			});
-													// 			card.save();
-													// 		});
-													// 	});
-													// });
 
 												}
 											});
