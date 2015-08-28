@@ -223,6 +223,7 @@
 			if ($scope.game.topTwoPick) {
 				console.log("Playing points from topTwoPick");
 				if ($scope.game.selId !== null) {
+					console.log("selId: " + $scope.game.selId);
 					if ([$scope.game.topCard, $scope.game.secondCard].indexOf($scope.game.selCard) >= 0) {
 						console.log("Requesting to play " + $scope.game.selCard.alt + " as points from a seven");
 						io.socket.get('/game/sevenPoints', {
@@ -459,24 +460,52 @@
                 //Handles playing a 9 as a one-off effect on other point cards
                 //Fires when called by selectPoint
 		this.requestNine = function(card) {
-			console.log("Requesting to play nine on a point card");
-			io.socket.get('/game/oneOff', {
-				gameId: $scope.game.gameId,
-				playerId: $scope.game.players[$scope.game.pNum].id,
-				cardId: $scope.game.selId,
-				targetId: card.id
-			}, function(res) {
-				console.log(res);
-				if (res.change.resolvedTwo) {
-					$scope.game.players = res.players;
-				} else {
-					$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card'
-				}
-				$scope.game.selId = null;
-				$scope.game.selIndex = null;
-				$scope.game.selCard = null
-				$scope.$apply();
-			});
+			if ($scope.game.topTwoPick) {
+				console.log("Requesting to play nine on a point card after resolving a seven");
+				io.socket.get('/game/sevenOneOff', {
+					gameId: $scope.game.gameId,
+					playerId: $scope.game.players[$scope.game.pNum].id,
+					enemyPlayerId: $scope.game.players[($scope.game.pNum + 1) % 2].id,
+					pNum: $scope.game.pNum,
+					cardId: $scope.game.selId,
+					whichCard: $scope.game.whichCard
+				}, function(res) {
+					console.log(res);
+					$scope.game.topCard = res.game.topCard;
+					$scope.game.secondCard = res.game.secondCard;
+					$scope.game.topTwo = [$scope.game.topCard, $scope.game.secondCard];
+					if (!res.sevenOneOff) {
+						//Then deselect the chosen card from the top two cards
+						//$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+					} else {
+						$scope.game.topTwoPick = false;
+						$scope.$apply();
+						$scope.game.selId = null;
+						$scope.game.selIndex = null;
+						$scope.game.selCard = null;
+					}
+				});
+			} else {
+
+				console.log("Requesting to play nine on a point card");
+				io.socket.get('/game/oneOff', {
+					gameId: $scope.game.gameId,
+					playerId: $scope.game.players[$scope.game.pNum].id,
+					cardId: $scope.game.selId,
+					targetId: card.id
+				}, function(res) {
+					console.log(res);
+					if (res.change.resolvedTwo) {
+						$scope.game.players = res.players;
+					} else {
+						$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card'
+					}
+					$scope.game.selId = null;
+					$scope.game.selIndex = null;
+					$scope.game.selCard = null
+					$scope.$apply();
+				});
+			}
 		};
 
                 //Handles a three one-off effect
@@ -520,16 +549,17 @@
 							pNum: $scope.game.pNum,
 							cardId: $scope.game.selId,
 							targetId: card.id,
-							whichCard: $scope.game.whichCard
+							whichCard: $scope.game.whichCard,
+							enemyPlayerId: $scope.game.players[($scope.game.pNum + 1) % 2].id
 						}, function(res) {
 							console.log(res);
-							if (!res.resolvedTwo) {
-								$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+							if (!res.sevenOneOff) {
+								// $scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+								$scope.game.selId = null;
+								$scope.game.selIndex = null;
+								$scope.game.selCard = null;
+								$scope.$apply();
 							}
-							$scope.game.selId = null;
-							$scope.game.selIndex = null;
-							$scope.game.selCard = null;
-							$scope.$apply();
 						});
 					}
                                 //Handles all other instances of a rune being targeted
@@ -542,15 +572,15 @@
 							targetId: card.id
 						}, function(res) {
 							console.log(res);
-							if (res.resolvedTwo) {
+							if (res.sevenOneOff) {
 								// $scope.game.players = res.players;
 							} else {
-								$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+								// $scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+								$scope.game.selId = null;
+								$scope.game.selIndex = null;
+								$scope.game.selCard = null;
+								$scope.$apply();
 							}
-							$scope.game.selId = null;
-							$scope.game.selIndex = null;
-							$scope.game.selCard = null
-							$scope.$apply();
 						});
 
                     //Handles the issue of trying to target a non-point card with a jack
@@ -580,6 +610,7 @@
 					io.socket.get('/game/sevenOneOff', {
 						gameId: $scope.game.gameId,
 						playerId: $scope.game.players[$scope.game.pNum].id,
+						enemyPlayerId: $scope.game.players[($scope.game.pNum + 1) % 2].id,
 						pNum: $scope.game.pNum,
 						cardId: $scope.game.selId,
 						whichCard: $scope.game.whichCard
@@ -593,11 +624,11 @@
 							//$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
 						} else {
 							$scope.game.topTwoPick = false;
+							$scope.$apply();
+							$scope.game.selId = null;
+							$scope.game.selIndex = null;
+							$scope.game.selCard = null;
 						}
-						$scope.$apply();
-						$scope.game.selId = null;
-						$scope.game.selIndex = null;
-						$scope.game.selCard = null;
 					});
 
 				//Handles all other one-off effect plays
@@ -617,12 +648,12 @@
 								if (res.oneOff) {
 									$scope.game.players[res.player.pNum] = res.player;
 								} else {
-									$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+									// $scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+									$scope.game.selId = null;
+									$scope.game.selIndex = null;
+									$scope.game.selCard = null;
+									$scope.$apply();
 								}
-								$scope.game.selId = null;
-								$scope.game.selIndex = null;
-								$scope.game.selCard = null;
-								$scope.$apply();
 							});
                                                 //Handles all attempts by the user to counter a one-off effect with a non-two card
 						} else {
@@ -650,11 +681,12 @@
 									$scope.game.players[res.player.pNum] = res.player;
 									$scope.$apply();
 									if (!res.oneOff) {
-										$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+										// $scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+									} else {									
+										$scope.game.selId = null;
+										$scope.game.selIndex = null;
+										$scope.game.selCard = null;
 									}
-									$scope.game.selId = null;
-									$scope.game.selIndex = null;
-									$scope.game.selCard = null;
 								});
 								break;
 							case 5:
@@ -667,11 +699,12 @@
 									$scope.game.players[res.player.pNum] = res.player;
 									$scope.$apply();
 									if (!res.onOff) {
-										$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+										// $scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+									} else {									
+										$scope.game.selId = null;
+										$scope.game.selIndex = null;
+										$scope.game.selCard = null;
 									}
-									$scope.game.selId = null;
-									$scope.game.selIndex = null;
-									$scope.game.selCard = null;
 								});
 								break;
 							case 6:
@@ -685,11 +718,12 @@
 									$scope.game.players[res.player.pNum] = res.player;
 									$scope.$apply();
 									if (!res.oneOff) {
-										$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+										// $scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+									} else {									
+										$scope.game.selId = null;
+										$scope.game.selIndex = null;
+										$scope.game.selCard = null;
 									}
-									$scope.game.selId = null;
-									$scope.game.selIndex = null;
-									$scope.game.selCard = null;
 								});
 								break;
 						}

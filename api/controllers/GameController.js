@@ -2012,60 +2012,183 @@ module.exports = {
 								console.log("Found Card for sevenOneOff: " + card.alt);
 								var validRank = card.rank <= 7 || card.rank === 9;
 								if (validRank) {
-									if (card.rank === 2 || card.rank === 9) {
-										if (req.body.hasOwnProperty('targetId')) {
+									console.log("validRank");
+									Player.findOne(req.body.enemyPlayerId).populateAll().exec(function (datError, victim) {
+										console.log("Logging enemy player:");
+										console.log(victim);
+
+										if (card.rank === 2 || card.rank === 9) {
+											console.log("played a 2, or 9");
+											var queenCount = 0;
+											victim.runes.forEach(function (rune, index, runes) {
+												console.log(rune);
+												console.log(rune.rank === 12);
+												if (rune.rank === 12) {
+													queenCount++;
+												}
+											});
+											console.log("QueenCount: " + queenCount);
+											if (req.body.hasOwnProperty('targetId')) {
+												switch (queenCount) {
+													case 0:
+														card.targetId = req.body.targetId;
+														card.save();
+														//sevenOneOff must always be the first effect on the stack
+														game.firstEffect = card;
+
+														//Remove oneOff from top two cards in deck, then replace it with a card from the deck
+														var max = game.deck.length - 1;
+														var min = 0;
+														var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+														//If topCard was played, the card that was secondCard is now topCard					
+														if (req.body.whichCard === 0) {
+															game.topCard = game.secondCard;
+														}
+														//Either way, get a new secondCard and remove it from the deck
+														game.secondCard = game.deck[random];
+														game.deck.remove(game.deck[random].id);
+
+
+														var log = "Player " + req.body.pNum + " has played the " + card.alt + " for its one off effect after playing a seven";
+														game.log.push(log);
+
+														game.save(function(err, savedGame) {
+															//Socket event sent to opponent to request counter to this oneOff
+															Game.publishUpdate(game.id, {
+																	change: 'sevenOneOff',
+																	game: savedGame,
+																	card: card,
+																	whichCard: req.body.whichCard
+																},
+																req);
+															//Response to requesting socket
+															res.send({
+																sevenOneOff: true,
+																validRank: validRank,
+																yourTurn: yourTurn,
+																game: savedGame,
+																card: card,
+																whichCard: req.body.whichCard,
+																queenCount: queenCount
+															});
+														});
+														break;
+
+													case 1:
+														Card.findOne(req.body.targetId).populateAll().exec(function (anError, targetCard) {
+															if (targetCard.rank === 12) {
+																card.targetId = req.body.targetId;
+																card.save();
+																//sevenOneOff must always be the first effect on the stack
+																game.firstEffect = card;
+
+																//Remove oneOff from top two cards in deck, then replace it with a card from the deck
+																var max = game.deck.length - 1;
+																var min = 0;
+																var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+																//If topCard was played, the card that was secondCard is now topCard					
+																if (req.body.whichCard === 0) {
+																	game.topCard = game.secondCard;
+																}
+																//Either way, get a new secondCard and remove it from the deck
+																game.secondCard = game.deck[random];
+																game.deck.remove(game.deck[random].id);
+
+
+																var log = "Player " + req.body.pNum + " has played the " + card.alt + " for its one off effect after playing a seven";
+																game.log.push(log);
+
+																game.save(function(err, savedGame) {
+																	//Socket event sent to opponent to request counter to this oneOff
+																	Game.publishUpdate(game.id, {
+																			change: 'sevenOneOff',
+																			game: savedGame,
+																			card: card,
+																			whichCard: req.body.whichCard
+																		},
+																		req);
+																	//Response to requesting socket
+																	res.send({
+																		sevenOneOff: true,
+																		validRank: validRank,
+																		yourTurn: yourTurn,
+																		game: savedGame,
+																		card: card,
+																		whichCard: req.body.whichCard,
+																		queenCount: queenCount
+																	});
+																});																
+															}
+														});
+														break;
+													case 2:
+													case 3:
+													case 4:
+													console.log
+														res.send({
+															sevenOneOff: false,
+															validRank: validRank,
+															yourTurn: yourTurn,
+															queenCount: queenCount
+														});
+														break;
+												}
+
+											} else {
+												res.send({
+													oneOff: false,
+													firstEffect: true,
+													validRank: validRank,
+													yourTurn: yourTurn,
+													hadTarget: false,
+													card: card
+												});
+											}
+										} else {
 											card.targetId = req.body.targetId;
 											card.save();
+											//sevenOneOff must always be the first effect on the stack
+											game.firstEffect = card;
 
-										} else {
-											res.send({
-												oneOff: false,
-												firstEffect: true,
-												validRank: validRank,
-												yourTurn: yourTurn,
-												hadTarget: false,
-												card: card
-											});
+											//Remove oneOff from top two cards in deck, then replace it with a card from the deck
+											var max = game.deck.length - 1;
+											var min = 0;
+											var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+											//If topCard was played, the card that was secondCard is now topCard					
+											if (req.body.whichCard === 0) {
+												game.topCard = game.secondCard;
+											}
+											//Either way, get a new secondCard and remove it from the deck
+											game.secondCard = game.deck[random];
+											game.deck.remove(game.deck[random].id);
+
+
+											var log = "Player " + req.body.pNum + " has played the " + card.alt + " for its one off effect after playing a seven";
+											game.log.push(log);
+
+											game.save(function(err, savedGame) {
+												//Socket event sent to opponent to request counter to this oneOff
+												Game.publishUpdate(game.id, {
+														change: 'sevenOneOff',
+														game: savedGame,
+														card: card,
+														whichCard: req.body.whichCard
+													},
+													req);
+												//Response to requesting socket
+												res.send({
+													sevenOneOff: true,
+													validRank: validRank,
+													yourTurn: yourTurn,
+													game: savedGame,
+													card: card,
+													whichCard: req.body.whichCard,
+													queenCount: queenCount
+												});
+											});											
 										}
-									}
-									//sevenOneOff must always be the first effect on the stack
-									game.firstEffect = card;
-
-									//Remove oneOff from top two cards in deck, then replace it with a card from the deck
-									var max = game.deck.length - 1;
-									var min = 0;
-									var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-									//If topCard was played, the card that was secondCard is now topCard					
-									if (req.body.whichCard === 0) {
-										game.topCard = game.secondCard;
-									}
-									//Either way, get a new secondCard and remove it from the deck
-									game.secondCard = game.deck[random];
-									game.deck.remove(game.deck[random].id);
 
 
-									var log = "Player " + req.body.pNum + " has played the " + card.alt + " for its one off effect after playing a seven";
-									game.log.push(log);
-
-
-									game.save(function(err, savedGame) {
-										//Socket event sent to opponent to request counter to this oneOff
-										Game.publishUpdate(game.id, {
-												change: 'sevenOneOff',
-												game: savedGame,
-												card: card,
-												whichCard: req.body.whichCard
-											},
-											req);
-										//Response to requesting socket
-										res.send({
-											sevenOneOff: true,
-											validRank: validRank,
-											yourTurn: yourTurn,
-											game: savedGame,
-											card: card,
-											whichCard: req.body.whichCard
-										});
 									});
 
 								}
@@ -2159,12 +2282,20 @@ module.exports = {
 				if (yourTurn) {
 					var validRank = points.rank <= 10;
 					if (validRank) {
-						thief.points.add(points.id);
-						thief.hand.remove(req.body.jackId);
-						points.attachments.add(req.body.jackId);
-						game.turn++;
-					
-						return [game.save(), thief.save(), victim.save(), points.save()];
+						var hasQueen = false;
+						victim.runes.forEach(function (rune, index, runes) {
+							if (rune.rank === 12) {
+								hasQueen = true;
+							}
+						});				
+						if (!hasQueen) {
+							thief.points.add(points.id);
+							thief.hand.remove(req.body.jackId);
+							points.attachments.add(req.body.jackId);
+							game.turn++;
+						
+							return [game.save(), thief.save(), victim.save(), points.save()];
+						} else {return [Promise.reject("Opponent has Queen")];}		
 					} else {return [Promise.reject("Invalid Rank")];}
 				} else {return [Promise.reject("Not this player's turn")];}				
 			} else {
@@ -2288,12 +2419,20 @@ module.exports = {
 						
 							var validRank = points.rank <= 10;
 							if (validRank) {
-								thief.points.add(points.id);
-								thief.hand.remove(req.body.jackId);
-								points.attachments.add(req.body.jackId);
-								game.turn++;
-							
-								return [game.save(), thief.save(), victim.save(), points.save()];
+								var hasQueen = false;
+								victim.runes.forEach(function (rune, index, runes) {
+									if (rune.rank === 12) {
+										hasQueen = true;
+									}
+								});
+
+								if (!hasQueen) {
+									thief.points.add(points.id);
+									thief.hand.remove(req.body.jackId);
+									points.attachments.add(req.body.jackId);
+									game.turn++;
+									return [game.save(), thief.save(), victim.save(), points.save()];
+								} else {return [Promise.reject("Opponent has Queen")];}
 							} else {return [Promise.reject("Invalid Rank")];}
 						} else {return [Promise.reject("Jack was frozen")];}
 					} else {return [Promise.reject("Not this player's turn")];}				

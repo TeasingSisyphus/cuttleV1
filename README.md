@@ -4,6 +4,7 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 
 ## DONE
 *	QUEENS
+	*	Jacks and sevenJacks are now stopped by an enemy QUEEN
 	*	2's and 9's are now properly inhibited by QUEENS
 *	The selection bug should no longer fire from playing any number of JACKS
 *	JACKS may now be played from a SEVEN
@@ -24,9 +25,10 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 
 ## TODO
 *	Queens
-	*	Jacks must check runes for any queens and abort if one if found
-	*	Seven into Jack must behave the same way
+	*	BUG: Playing a oneOff illegally after a seven messes up the selection, so you can't immediately play the card without re-clicking it
+	*	Enable the Queen-Two combo
 *	Jacks
+	*	Enable playing a jack on your own points/and or throwing one into the scrap pile
 	*	Change their display
 		*	Maybe Jacks only stack vertically if they steal the same card?
 	*	Enable playing a jack from a SEVEN one-off effect
