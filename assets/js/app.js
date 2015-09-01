@@ -457,8 +457,8 @@
 			}
 		};
 
-                //Handles playing a 9 as a one-off effect on other point cards
-                //Fires when called by selectPoint
+        //Handles playing a 9 as a one-off effect on other point cards
+        //Fires when called by selectPoint
 		this.requestNine = function(card) {
 			if ($scope.game.topTwoPick) {
 				console.log("Requesting to play nine on a point card after resolving a seven");
@@ -471,19 +471,20 @@
 					whichCard: $scope.game.whichCard
 				}, function(res) {
 					console.log(res);
-					$scope.game.topCard = res.game.topCard;
-					$scope.game.secondCard = res.game.secondCard;
-					$scope.game.topTwo = [$scope.game.topCard, $scope.game.secondCard];
+					// $scope.game.topCard = res.game.topCard;
+					// $scope.game.secondCard = res.game.secondCard;
+					// $scope.game.topTwo = [$scope.game.topCard, $scope.game.secondCard];
 					if (!res.sevenOneOff) {
-						//Then deselect the chosen card from the top two cards
-						//$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+						alert("You, my good sir(s), and/or madame(s), are a sillynany. You cannot play a Nine in that way");
+						$scope.game.topTwo[res.whichCard].class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
 					} else {
+						console.log("successful sevenOneOff");
 						$scope.game.topTwoPick = false;
-						$scope.$apply();
-						$scope.game.selId = null;
-						$scope.game.selIndex = null;
-						$scope.game.selCard = null;
 					}
+					$scope.game.selId = null;
+					$scope.game.selIndex = null;
+					$scope.game.selCard = null;
+					$scope.$apply();
 				});
 			} else {
 
@@ -495,14 +496,18 @@
 					targetId: card.id
 				}, function(res) {
 					console.log(res);
-					if (res.change.resolvedTwo) {
-						$scope.game.players = res.players;
-					} else {
-						$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card'
+					// if (res.change.resolvedTwo) {
+					// 	$scope.game.players = res.players;
+					// } else {
+					// 	$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+					// }
+					if (!res.oneOff) {
+						alert("You can't play a nine that way! (You fool)");
+						$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
 					}
 					$scope.game.selId = null;
 					$scope.game.selIndex = null;
-					$scope.game.selCard = null
+					$scope.game.selCard = null;
 					$scope.$apply();
 				});
 			}
@@ -540,7 +545,7 @@
 			console.log("stacking: " + $scope.game.stacking);
 			if ($scope.game.selId && !$scope.game.stacking) {
 				console.log("got id and not stacking");
-                                //Handles the seven one-off effect
+                //Handles the seven one-off effect
 				if ($scope.game.topTwoPick) {
 					console.log("from a seven");
 					if ($scope.game.selCard.rank === 2 || $scope.game.selCard.rank === 9) {
@@ -554,12 +559,14 @@
 						}, function(res) {
 							console.log(res);
 							if (!res.sevenOneOff) {
-								// $scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+								alert("You can't play your oneOff like that");
+								$scope.game.topTwo[res.whichCard].class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
+
+							}
 								$scope.game.selId = null;
 								$scope.game.selIndex = null;
 								$scope.game.selCard = null;
 								$scope.$apply();
-							}
 						});
 					}
                                 //Handles all other instances of a rune being targeted
@@ -575,12 +582,13 @@
 							if (res.sevenOneOff) {
 								// $scope.game.players = res.players;
 							} else {
-								// $scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
-								$scope.game.selId = null;
-								$scope.game.selIndex = null;
-								$scope.game.selCard = null;
-								$scope.$apply();
+								alert("You can't play your oneOff like that");
+								$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
 							}
+							$scope.game.selId = null;
+							$scope.game.selIndex = null;
+							$scope.game.selCard = null;
+							$scope.$apply();
 						});
 
                     //Handles the issue of trying to target a non-point card with a jack
@@ -621,7 +629,7 @@
 						$scope.game.topTwo = [$scope.game.topCard, $scope.game.secondCard];
 						if (!res.sevenOneOff) {
 							//Then deselect the chosen card from the top two cards
-							//$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+							$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
 						} else {
 							$scope.game.topTwoPick = false;
 							$scope.$apply();
@@ -876,6 +884,7 @@
 							alert('Please pick a card from the scrap pile to take to your hand');
 							break;
 
+						//Delete this???//
 						case 'topCardPickData':
 							$scope.game.topTwoPick = false;
 							$scope.game.putOnTop = true;

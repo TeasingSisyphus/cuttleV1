@@ -414,10 +414,10 @@ module.exports = {
 		});
 	},
 
-        //DEBUGGING METHOD
-        //place a card on top of the deck
+    //DEBUGGING METHOD
+    //place a card on top of the deck
 	placeTopCard: function(req, res) {
-		console.log('Logging req.body of placeTopCard');
+		console.log('\nLogging req.body of placeTopCard');
 		console.log(req.body);
 		if (req.isSocket) {
 			console.log('\nSocket ' + req.socket.id + ' is requesting to place a top card');
@@ -631,7 +631,7 @@ module.exports = {
 																	break;
 																case 2:
 																case 9:
-																	console.log("Request made to play two or 9");	
+																	console.log("Request made to play two or nine");	
 																	switch (queenCount) {
 																		case 0:
 																			if (req.body.hasOwnProperty('targetId')) {
@@ -707,6 +707,15 @@ module.exports = {
 																							});
 																						});			
 																																									
+																					} else {
+																						console.log("Attempted to Nine an invalid target");
+																						res.send({
+																							oneOff: false,
+																							firstEffect: true,
+																							validRank: false,
+																							card: card,
+																							hadTarget: true
+																						});
 																					}
 																				});
 																			} else {
@@ -2118,6 +2127,16 @@ module.exports = {
 																		queenCount: queenCount
 																	});
 																});																
+															} else {
+																	res.send({
+																		sevenOneOff: false,
+																		validRank: validRank,
+																		yourTurn: yourTurn,
+																		game: game,
+																		card: card,
+																		whichCard: req.body.whichCard,
+																		queenCount: queenCount
+																	});																
 															}
 														});
 														break;
@@ -2129,19 +2148,23 @@ module.exports = {
 															sevenOneOff: false,
 															validRank: validRank,
 															yourTurn: yourTurn,
-															queenCount: queenCount
+															whichCard: req.body.whichCard,
+															queenCount: queenCount,
+															game: game
 														});
 														break;
 												}
 
 											} else {
 												res.send({
-													oneOff: false,
+													sevenOneOff: false,
 													firstEffect: true,
 													validRank: validRank,
 													yourTurn: yourTurn,
 													hadTarget: false,
-													card: card
+													whichCard: req.body.whichCard,
+													card: card,
+													game: game
 												});
 											}
 										} else {
