@@ -2,6 +2,14 @@
 
 This is a multiplayer card game leveraging sails.js and angularjs.
 
+## TODO
+*	Queens
+	*	Prevent playing a Two on any One Off effect played by someone with a QUEEN
+*	Jacks
+	*	Make case in seven for when both top cards are jacks: put one in scrap and alert both players what happened
+	*	Change their display
+		*	Maybe Jacks only stack vertically if they steal the same card?
+
 ## DONE
 *	QUEENS
 	*	FIXED BUG: Playing a oneOff illegally after a seven messes up the selection, so you can't immediately play the card without re-clicking it	
@@ -24,14 +32,6 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 *	Jacks now properly remove from the other side when the same card is jacked multiple times
 *	Jacks now display the alt text of the stolen card next to the img of the jack
 
-## TODO
-*	Queens
-	*	Enable the Queen-Two combo
-*	Jacks
-	*	Enable playing a jack on your own points/and or throwing one into the scrap pile
-	*	Change their display
-		*	Maybe Jacks only stack vertically if they steal the same card?
-	*	Enable playing a jack from a SEVEN one-off effect
 
 
 

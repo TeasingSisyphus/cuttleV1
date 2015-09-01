@@ -764,6 +764,7 @@ module.exports = {
 										}
 									//Otherwise the requested card must be a two played as a counter
 									} else {
+										//Find opponent player, then count QUEEN's
 										console.log("This better be a two");
 										var validRank = card.rank === 2;
 										if (validRank) {
