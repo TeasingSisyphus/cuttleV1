@@ -3,8 +3,7 @@
 This is a multiplayer card game leveraging sails.js and angularjs.
 
 ## TODO
-*	Queens
-	*	Prevent playing a Two on any One Off effect played by someone with a QUEEN
+*When you 2 or 6 an 8, the picutre stays as glasses
 *	Jacks
 	*	Make case in seven for when both top cards are jacks: put one in scrap and alert both players what happened
 	*	Change their display

@@ -575,9 +575,6 @@ module.exports = {
 											if (yourTurn) {
 												var cardIsFrozen = player.frozenId === card.id;
 												if (!cardIsFrozen) {
-
-
-
 													var sortUnpopulatedPlayers = sortPlayers(game.players);
 													var queenCount = 0;
 													if (sortUnpopulatedPlayers[0].id === player.id) {
@@ -768,33 +765,65 @@ module.exports = {
 										console.log("This better be a two");
 										var validRank = card.rank === 2;
 										if (validRank) {
-											console.log("'s a two");
-											game.twos.add(card.id);
-											player.hand.remove(card.id);
-
-											var log = "Player " + player.pNum + " has played the " + card.alt + " to counter.";
-											game.log.push(log);
-
-											game.save(function(er, savedGame) {
-												player.save(function(e, savedPlayer) {
-													Game.publishUpdate(game.id, {
-														change: 'oneOff',
-														game: savedGame,
-														player: savedPlayer,
-														card: card
-													}, req);
-													res.send({
-														oneOff: true,
-														firstEffect: false,
-														validRank: validRank,
-														game: savedGame,
-														player: savedPlayer
+											var sortUnpopulatedPlayers = sortPlayers(game.players);
+											var queenCount = 0;
+											if (sortUnpopulatedPlayers[0].id === player.id) {
+												var victimId = sortUnpopulatedPlayers[1].id;
+											} else {
+												var victimId = sortUnpopulatedPlayers[0].id;
+											}
+											Player.findOne(victimId).populateAll().exec(function (er, victim) {
+												if(er || !victim) {
+													console.log("Can't find victim for 2 counter");
+													console.log(er);
+													res.send(404);
+												}else{
+													victim.runes.forEach(function (rune, index, runes) {
+														if (rune.rank === 12) {
+															queenCount++;
+														}
 													});
-												});
+
+													if(queenCount === 0) {
+														console.log("'s a two");
+														game.twos.add(card.id);
+														player.hand.remove(card.id);
+
+														var log = "Player " + player.pNum + " has played the " + card.alt + " to counter.";
+														game.log.push(log);
+
+														game.save(function(er, savedGame) {
+															player.save(function(e, savedPlayer) {
+																Game.publishUpdate(game.id, {
+																	change: 'oneOff',
+																	game: savedGame,
+																	player: savedPlayer,
+																	card: card
+																}, req);
+																res.send({
+																	oneOff: true,
+																	firstEffect: false,
+																	validRank: validRank,
+																	game: savedGame,
+																	player: savedPlayer
+																});
+															});
+														});
+													}else{
+														console.log("2 Counter failed due to queen in play");
+														res.send({
+															oneOff: false,
+															firstEffect: false,
+															validRank: validRank,
+															game: game,
+															player: player,
+															queenCount: queenCount
+														});
+													}
+												}
 											});
 										}
 									}
-
 								}
 							});
 						}

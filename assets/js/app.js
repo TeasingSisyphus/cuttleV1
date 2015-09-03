@@ -579,7 +579,7 @@
 							targetId: card.id
 						}, function(res) {
 							console.log(res);
-							if (res.sevenOneOff) {
+							if (res.oneOff) {
 								// $scope.game.players = res.players;
 							} else {
 								alert("You can't play your oneOff like that");
@@ -641,7 +641,7 @@
 
 				//Handles all other one-off effect plays
 				} else {
-                                        //Handles if a two one-off effect is being used to coutner another one-off effect
+                                        //Handles if a two one-off effect is being used to counter another one-off effect
 					if ($scope.game.stacking) {
                                                 //Check for two one-off effect
 						if ($scope.game.selCard.rank === 2) {
@@ -652,16 +652,27 @@
 								playerId: $scope.game.players[$scope.game.pNum].id,
 								cardId: $scope.game.selId,
 							}, function(res) {
+								console.log("Receiving response from server");
 								console.log(res);
 								if (res.oneOff) {
+									console.log("oneOff = true");
 									$scope.game.players[res.player.pNum] = res.player;
 								} else {
-									// $scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
-									$scope.game.selId = null;
-									$scope.game.selIndex = null;
-									$scope.game.selCard = null;
-									$scope.$apply();
+									$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
+									console.log("oneOff = false");
+									if(res.hasOwnProperty('queenCount')){
+										console.log("Response has quennCount");
+										if(res.queenCount > 0){
+											console.log("Non-zero Queen Count");
+											alert("Queen in play, stack will now resolve");
+											$scope.game.resolve();
+										}
+									}
 								}
+								$scope.game.selId = null;
+								$scope.game.selIndex = null;
+								$scope.game.selCard = null;
+								$scope.$apply();
 							});
                                                 //Handles all attempts by the user to counter a one-off effect with a non-two card
 						} else {
