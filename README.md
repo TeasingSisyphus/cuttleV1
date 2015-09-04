@@ -3,13 +3,14 @@
 This is a multiplayer card game leveraging sails.js and angularjs.
 
 ## TODO
-*When you 2 or 6 an 8, the picutre stays as glasses
+*When 6, glasses eights need to have their picture reset the picutre stays as glasses
 *	Jacks
 	*	Make case in seven for when both top cards are jacks: put one in scrap and alert both players what happened
 	*	Change their display
 		*	Maybe Jacks only stack vertically if they steal the same card?
 
 ## DONE
+*	Glasses Eights no reset their picture when destroyed by a 2
 *	QUEENS
 	*	FIXED BUG: Playing a oneOff illegally after a seven messes up the selection, so you can't immediately play the card without re-clicking it	
 	*	Jacks and sevenJacks are now stopped by an enemy QUEEN
@@ -44,6 +45,7 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 
 
 ## REFACTORING
+*	Glasses eights could use a separate picture attribute so the image doesn't need changing upon destruction
 *	Write find (and possibly save) functions that create and return new promises
 *	Leverage Promises for handling queries and saves
 *	Change id to gameId in get requests

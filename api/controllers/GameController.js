@@ -1046,7 +1046,11 @@ module.exports = {
 																}
 															});
 														} else {
-															
+															if (targetCard.rank === 8) {
+																var path = 'images/cards/card_' + targetCard.suit + '_' + targetCard.rank + '.png';
+																targetCard.img = path;
+																targetCard.save();
+															}	
 															game.save(function(er, savedGame) {
 																console.log("It is now turn: " + savedGame.turn);
 																playerSort[0].save(function(e, savedP0) {
