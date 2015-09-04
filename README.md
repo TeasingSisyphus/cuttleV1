@@ -3,14 +3,13 @@
 This is a multiplayer card game leveraging sails.js and angularjs.
 
 ## TODO
-*When 6, glasses eights need to have their picture reset the picutre stays as glasses
-*	Jacks
+*	Seven
 	*	Make case in seven for when both top cards are jacks: put one in scrap and alert both players what happened
-	*	Change their display
-		*	Maybe Jacks only stack vertically if they steal the same card?
+*	Three
+	* Handle playing a 3 with nothing in the scrap pile
 
 ## DONE
-*	Glasses Eights no reset their picture when destroyed by a 2
+*	Glasses Eights now reset their picture when destroyed by a 2, Or a 6
 *	QUEENS
 	*	FIXED BUG: Playing a oneOff illegally after a seven messes up the selection, so you can't immediately play the card without re-clicking it	
 	*	Jacks and sevenJacks are now stopped by an enemy QUEEN
@@ -45,19 +44,21 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 
 
 ## REFACTORING
-*	Glasses eights could use a separate picture attribute so the image doesn't need changing upon destruction
+*	Change Jack display
+	*	Each Jacks on a given point card should stack vertically
+	*	The rest should be horizontally aligned
+	*	This means fully populating the cards with their jacks before publishUpdate is called
+*	Glasses eights could use a separate rune-img attribute so the image doesn't need changing upon destruction
 *	Write find (and possibly save) functions that create and return new promises
-*	Leverage Promises for handling queries and saves
+*	Write a function that fully populates a game, down through its players' hands/fields and through the attachments on those cards
 *	Change id to gameId in get requests
-*	Change scuttling to find cards on server side, rather than passing them (the full card) from client
-	*	Must be done for regular and sevenScuttle
 *	Change 404's into json errors in Controllers (for finds)
+	*	Re-order our error arguments to make sense
 *	Change conditionals to use temp variables
 	*	Do this for turn checking
 *	Flesh out readyView to display the number of players in the game and who is ready
-*	Re-order our error arguments to make sense
 *   Make categories for actions with giant comment blocks for easy navigation
-
+*	Make THIS FILE called agenda.md, then make a README.md that has notes on installing and using the app
 
 
 ## ANGULAR BUGS
