@@ -8,7 +8,6 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 *	Sam
 	*	Handle 5'ing with two or few cards in deck
 *	Ryan
-	*	Handle 4 with two or fewer cards in op's hand
 	*	Handle 7 with two jacks (illegal case)
 *	Seven
 	*	Make case in seven for when both top cards are jacks: put one in scrap and alert both players what happened
@@ -16,6 +15,7 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 	* Handle playing a 3 with nothing in the scrap pile
 
 ## DONE
+*	Handled 4 with two or fewer cards in op's hand
 *	Glasses Eights now reset their picture when destroyed by a 2, Or a 6
 *	QUEENS
 	*	FIXED BUG: Playing a oneOff illegally after a seven messes up the selection, so you can't immediately play the card without re-clicking it	

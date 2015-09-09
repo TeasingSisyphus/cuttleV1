@@ -1090,18 +1090,68 @@ module.exports = {
 													console.log("Player " + req.body.otherPlayerId + " not found for 4 resolution");
 													res.send(404);
 												} else {
-													player.hand.remove(card.id);
-													game.scrap.add(card.id);
-													game.scrapTop = card;
+													//Find the victim of the effect and determine their handsize
+													Player.findOne(req.body.resolvingPlayerId).populateAll().exec(function(fourError, victim) {
+														if (fourError || !victim) {
+															console.log("Victim " + req.body.resolvingPlayerId + " not found to resolve FOUR");
+															console.log(fourError);
+															res.send(404);
+														} else {
+															if (victim.hand.length <= 2) { //If there are fewer than 3 cards in hand, discard them all
+																var log = "";
+																victim.hand.forEach(function (cardInHand, index, hand) {
+																	game.scrap.add(cardInHand.id);
+																	victim.hand.remove(cardInHand.id);
+																	log = log + "The " + cardInHand.alt + " was automatically discarded. "; 
+																});
+																player.hand.remove(card.id);
+																game.scrap.add(card.id);
+																game.scrapTop = card;
+																if (log != "") {
+																	game.log.push(log);
+																}
+																game.firstEffect = null;
+																game.turn++;
+																game.save(function (er, savedGame){
+																	victim.save(function (e, savedVictim) {
+																		player.save(function (playerError, savedPlayer){
 
-													game.save(function(er, savedGame) {
-														player.save(function(e, savedPlayer) {
-															res.send({
-																change: 'fourData',
-																game: savedGame,
-																player: savedPlayer
-															});
-														});
+																			var sortedSavedPlayers = sortPlayers([savedVictim, savedPlayer]);
+
+																			res.send({
+																				game: savedGame,
+																				player: savedPlayer,
+																				victim: savedVictim,
+																			});
+
+																			Game.publishUpdate(savedGame.id, {
+																				change: 'fourAutoDiscard',
+																				game: savedGame,
+																				players: sortedSavedPlayers,
+																				victim: savedVictim,
+																				player: savedPlayer
+																			});
+
+																		});
+																	});
+																});
+
+															} else {
+																player.hand.remove(card.id);
+																game.scrap.add(card.id);
+																game.scrapTop = card;
+
+																game.save(function(er, savedGame) {
+																	player.save(function(e, savedPlayer) {
+																		res.send({
+																			change: 'fourData',
+																			game: savedGame,
+																			player: savedPlayer
+																		});
+																	});
+																});
+															}
+														}
 													});
 												}
 											});

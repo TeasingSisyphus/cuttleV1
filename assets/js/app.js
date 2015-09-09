@@ -1045,6 +1045,17 @@
 							$scope.game.topTwoPick = false;
 							break;
 
+						case 'fourAutoDiscard':
+							console.log("Four resulted in auto discard due to handsize");
+							$scope.game.scrap = obj.data.game.scrap;
+							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
+							$scope.game.players = obj.data.players;
+							$scope.game.stacking = false;
+							$scope.game.selectTwo = false;
+							$scope.game.turn = obj.data.game.turn;
+							$scope.game.topTwoPick = false;
+							break;
+
 						case 'resolvedFive':
 							$scope.game.stacking = false;
 							$scope.game.topTwoPick = false;
