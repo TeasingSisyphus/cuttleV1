@@ -575,9 +575,6 @@ module.exports = {
 											if (yourTurn) {
 												var cardIsFrozen = player.frozenId === card.id;
 												if (!cardIsFrozen) {
-
-
-
 													var sortUnpopulatedPlayers = sortPlayers(game.players);
 													var queenCount = 0;
 													if (sortUnpopulatedPlayers[0].id === player.id) {
@@ -768,33 +765,65 @@ module.exports = {
 										console.log("This better be a two");
 										var validRank = card.rank === 2;
 										if (validRank) {
-											console.log("'s a two");
-											game.twos.add(card.id);
-											player.hand.remove(card.id);
-
-											var log = "Player " + player.pNum + " has played the " + card.alt + " to counter.";
-											game.log.push(log);
-
-											game.save(function(er, savedGame) {
-												player.save(function(e, savedPlayer) {
-													Game.publishUpdate(game.id, {
-														change: 'oneOff',
-														game: savedGame,
-														player: savedPlayer,
-														card: card
-													}, req);
-													res.send({
-														oneOff: true,
-														firstEffect: false,
-														validRank: validRank,
-														game: savedGame,
-														player: savedPlayer
+											var sortUnpopulatedPlayers = sortPlayers(game.players);
+											var queenCount = 0;
+											if (sortUnpopulatedPlayers[0].id === player.id) {
+												var victimId = sortUnpopulatedPlayers[1].id;
+											} else {
+												var victimId = sortUnpopulatedPlayers[0].id;
+											}
+											Player.findOne(victimId).populateAll().exec(function (er, victim) {
+												if(er || !victim) {
+													console.log("Can't find victim for 2 counter");
+													console.log(er);
+													res.send(404);
+												}else{
+													victim.runes.forEach(function (rune, index, runes) {
+														if (rune.rank === 12) {
+															queenCount++;
+														}
 													});
-												});
+
+													if(queenCount === 0) {
+														console.log("'s a two");
+														game.twos.add(card.id);
+														player.hand.remove(card.id);
+
+														var log = "Player " + player.pNum + " has played the " + card.alt + " to counter.";
+														game.log.push(log);
+
+														game.save(function(er, savedGame) {
+															player.save(function(e, savedPlayer) {
+																Game.publishUpdate(game.id, {
+																	change: 'oneOff',
+																	game: savedGame,
+																	player: savedPlayer,
+																	card: card
+																}, req);
+																res.send({
+																	oneOff: true,
+																	firstEffect: false,
+																	validRank: validRank,
+																	game: savedGame,
+																	player: savedPlayer
+																});
+															});
+														});
+													}else{
+														console.log("2 Counter failed due to queen in play");
+														res.send({
+															oneOff: false,
+															firstEffect: false,
+															validRank: validRank,
+															game: game,
+															player: player,
+															queenCount: queenCount
+														});
+													}
+												}
 											});
 										}
 									}
-
 								}
 							});
 						}
@@ -1017,7 +1046,11 @@ module.exports = {
 																}
 															});
 														} else {
-															
+															if (targetCard.rank === 8) {
+																var path = 'images/cards/card_' + targetCard.suit + '_' + targetCard.rank + '.png';
+																targetCard.img = path;
+																targetCard.save();
+															}	
 															game.save(function(er, savedGame) {
 																console.log("It is now turn: " + savedGame.turn);
 																playerSort[0].save(function(e, savedP0) {
@@ -1168,6 +1201,7 @@ module.exports = {
 											break;
 										case 6:
 											console.log('First effect is a six');
+											var glassesEightIDs = []; //All glasses eights will need their images reset to normal
 											Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').exec(function(err, players) {
 												if (err || !players[0] || !players[1]) {
 													console.log('Players not found in game ' + req.body.gameId + ' for RESOLVE');
@@ -1176,10 +1210,19 @@ module.exports = {
 													players[0].runes.forEach(function(card, index, runes) {
 														game.scrap.add(card.id);
 														players[0].runes.remove(card.id);
+														
+														if (card.rank === 8) {
+															glassesEightIDs.push(card.id);
+														}
+														
 													});
 													players[1].runes.forEach(function(card, index, runes) {
 														game.scrap.add(card.id);
 														players[1].runes.remove(card.id);
+														
+														if (card.rank === 8) {
+															glassesEightIDs.push(card.id);
+														}														
 													});
 													game.twos.forEach(function(two, index, twos) {
 														game.twos.remove(two.id);
@@ -1246,11 +1289,32 @@ module.exports = {
 															toSave.forEach(function (saveYa, index, saveList) {
 																saveYa.save();
 															});	
+															//This changes the images of all glasses eights that were destroyed on the SERVER
+															Card.find(glassesEightIDs).exec(function (glassesError, eights) {
+																eights.forEach(function (eight, index, eights) {
+																	var path = 'images/cards/card_' + eight.suit + '_' + eight.rank + '.png';
+																	eight.img = path;	
+																	eight.save();																
+																});
+															});
 															game.save(function(er, savedGame) {
 																console.log("It is now turn: " + savedGame.turn);
 																players[0].save(function(e, savedP0) {
 																	players[1].save(function(e6, savedP1) {
-																		var playerSort = sortPlayers([savedP0, savedP1]);
+																		//These loops change the images of glasses eights that were destroyed for the CLIENT (being sent in publishUpdate)
+																		savedP0.runes.forEach(function (rune, index, runes) {
+																			if (rune.rank === 8) {
+																				var path = 'images/cards/card_' + rune.suit + '_' + rune.rank + '.png';
+																				rune.img = path;
+																			}
+																		});
+																		savedP1.runes.forEach(function (rune, index, runes) {
+																			if (rune.rank === 8) {
+																				var path = 'images/cards/card_' + rune.suit + '_' + rune.rank + '.png';
+																				rune.img = path;
+																			}
+																		});				
+																		var playerSort = sortPlayers([savedP0, savedP1]);														
 																		Game.publishUpdate(game.id, {
 																			change: 'resolvedSix',
 																			game: savedGame,
