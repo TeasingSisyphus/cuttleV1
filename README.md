@@ -3,6 +3,13 @@
 This is a multiplayer card game leveraging sails.js and angularjs.
 
 ## TODO
+*	David
+	*	Handle 3'ing w/ no scrap
+*	Sam
+	*	Handle 5'ing with two or few cards in deck
+*	Ryan
+	*	Handle 4 with two or fewer cards in op's hand
+	*	Handle 7 with two jacks (illegal case)
 *	Seven
 	*	Make case in seven for when both top cards are jacks: put one in scrap and alert both players what happened
 *	Three
