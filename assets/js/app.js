@@ -916,6 +916,17 @@
 							$scope.game.secondCard.class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
 							break;
 
+						case 'sevenImpossible':
+							$scope.game.stacking = false;
+							$scope.game.players[obj.data.player.pNum].hand = obj.data.player.hand;
+							$scope.game.scrap = obj.data.game.scrap;
+							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
+							$scope.game.turn = obj.data.game.turn;
+							$scope.game.topCard = obj.data.game.topCard;
+							$scope.game.secondCard = obj.data.game.secondCard;
+							$scope.game.topTwo = [obj.data.game.topCard, obj.data.game.secondCard];
+							alert("It's not possible to play any of the cards from the resolving seven. The oneOff was discarded and the turn shall pass");							
+							break;
 						case 'sevenScuttled':
 							$scope.game.stacking = false;
 							$scope.game.topTwoPick = false;

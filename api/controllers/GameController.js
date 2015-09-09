@@ -379,27 +379,40 @@ module.exports = {
 						//Check if it is the current players turn.  If it is add a card to their hand and remove a card from the deck
 						//After that, make the second card of the deck the first card of the deck and find a new second card.
 						//Add back && foundPlayer.hand.length !== 8
-						if (game.turn % 2 === foundPlayer.pNum && game.deck.length !== 0 && foundPlayer.hand.length <= 7) {
+						if (game.turn % 2 === foundPlayer.pNum && foundPlayer.hand.length <= 7) {
+							if (game.deck.length != 0) {
+								foundPlayer.hand.add(game.topCard);
+								foundPlayer.frozenId = null;
+								var max = game.deck.length - 1;
+								var min = 0;
+								var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+								game.topCard = game.secondCard;
+								game.secondCard = game.deck[random];
+								game.deck.remove(game.deck[random].id);
+								game.turn++;
 
-							foundPlayer.hand.add(game.topCard);
-							foundPlayer.frozenId = null;
-							var max = game.deck.length - 1;
-							var min = 0;
-							var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-							game.topCard = game.secondCard;
-							game.secondCard = game.deck[random];
-							game.deck.remove(game.deck[random].id);
-							game.turn++;
+								var log = "Player " + foundPlayer.pNum + " has drawn a card";
+								game.log.push(log);
+							} else if (game.topCard){
+								foundPlayer.hand.add(game.topCard);
+								game.turn++;
+								if (game.secondCard) {
+									game.topCard = game.secondCard;
+									game.secondCard = null;
+								} else {
+									game.topCard = null;
+								}
 
-							var log = "Player " + foundPlayer.pNum + " has drawn a card";
-							game.log.push(log);
+							} else {
+								console.log("No cards to draw");
+							}
 						}
 						game.save(function(errrr, savedGame) {
 							foundPlayer.save(function(errrrr, savedPlayer) {
 								res.send({
 									yourTurn: game.turn % 2 === foundPlayer.pNum,
 									handSize: foundPlayer.hand.length !== 8,
-									deckSize: game.deck.length !== 0
+									gameHadTopCard: game.topCard != null
 								});
 								Game.publishUpdate(game.id, {
 									game: savedGame,
@@ -426,7 +439,8 @@ module.exports = {
 					console.log('Game ' + req.body.gameId + ' not found for placeTopCard');
 					res.send(404);
 				} else {
-					game.deck.add(game.topCard);
+					game.deck.add(game.secondCard);
+					game.secondCard = game.topCard;
 					game.topCard = req.body.cardId;
 					game.deck.remove(req.body.cardId);
 					game.save(function(erro, savedGame) {
@@ -837,7 +851,7 @@ module.exports = {
 	resolve: function(req, res) {
 		if (req.isSocket) {
 			console.log("\nStack resolution requested from Socket " + req.socket.id);
-			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').populate('twos').exec(function(error, game) {
+			Game.findOne(req.body.gameId).populateAll().exec(function(error, game) {
 				if (error || !game) {
 					console.log("Game " + req.body.gameId + " not found for RESOLVING a one off");
 					res.send(404);
@@ -846,7 +860,7 @@ module.exports = {
 					switch (game.twos.length % 2) {
 						case 0:
 							console.log('There is an even amount of twos');
-							Card.findOne(game.firstEffect).exec(function(erro, card) {
+							Card.findOne(game.firstEffect.id).exec(function(erro, card) {
 								if (erro || !card) {
 									console.log('Card is not found for RESOLVING a one off');
 									res.send(404);
@@ -1392,16 +1406,103 @@ module.exports = {
 													game.scrapTop = card;
 													game.firstEffect = null;
 
-													game.save(function(er, savedGame) {
-														console.log("It is now turn: " + savedGame.turn);
-														player.save(function(e, savedPlayer) {
-															Game.publishUpdate(game.id, {
-																change: 'sevenData',
-																game: savedGame,
-																player: savedPlayer
+													Player.findOne(req.body.resolvingPlayerId).populateAll().exec(function (resolvingPlayerError, resolvingPlayer) {
+														if (resolvingPlayerError || !resolvingPlayer) {
+															console.log("Can't find " + req.body.resolvingPlayerId + " to resolve seven");
+															console.log(resolvingPlayerError);
+															res.send(404);
+														} else {
+															var doubleJacks = game.topCard.rank === 11 && game.secondCard.rank === 11;
+															console.log(game.topCard);
+															console.log(game.secondCard);
+															console.log("doubleJacks: " + doubleJacks);
+															console.log("op Points: " + resolvingPlayer.points.length);
+															var queenCount = 0; 
+															resolvingPlayer.runes.forEach(function (rune, index, runes) {
+																if (rune.rank === 12) {
+																	queenCount++;
+																}
 															});
-														});
+															console.log("op queenCount: " + queenCount);
+															//If No cards are playable from the seven, pick a different two cards
+															if (doubleJacks && (queenCount > 0 || resolvingPlayer.points.length === 0) ) {
+																console.log("Playing either of the revealed jacks is impossible");
+																var log = 'Neither the ' + game.topCard.alt + ', nor the ' + game.secondCard.alt + ' can be played, so new cards are being selected';
+																game.log.push(log);
+																var done = false; //Used to make sure two jacks aren't picked again
+																var count = 0; //Used to ensure we don't loop on
+																while (!done) {
+																	//Assign new top and second cards
+																	var tempDeck = game.deck;
+																	tempDeck.push(game.topCard);
+																	tempDeck.push(game.secondCard);
+																	var min = 0;
+																	var max = game.deck.length - 1;
+																	var randomTop = Math.floor((Math.random() * ((max + 1) - min)) + min);
+																	var randomSecond = Math.floor((Math.random() * ((max + 1) - min)) + min);;
+
+																	while (randomSecond === randomTop) {
+																		randomSecond = Math.floor((Math.random() * ((max + 1) - min)) + min);
+																	}
+
+																	if ( !(tempDeck[randomTop].rank === 11 && tempDeck[randomSecond].rank === 11) ) {
+																		console.log("at least one new card wasn't a jack:\n");
+																		console.log(tempDeck[randomTop]);
+																		console.log(tempDeck[randomSecond]);
+																		done = true;
+																		game.topCard = tempDeck[randomTop];
+																		game.secondCard = tempDeck[randomSecond];
+																		game.save(function(er, savedGame) {
+																			console.log("It is now turn: " + savedGame.turn);
+																			player.save(function(e, savedPlayer) {
+																				Game.publishUpdate(game.id, {
+																					change: 'sevenData',
+																					game: savedGame,
+																					player: savedPlayer
+																				});
+																			});
+																		});																		
+																	} else {
+																		console.log("new topTwo were jacks again");
+																		count++;
+																		if (count > 15) { //If we can't find two cards that aren't jacks, scrap the seven and end the turn
+																			console.log("looped two many times trying to find new cards for seven; aborting.\n");
+																			done = true; 
+																			game.turn++;
+																			game.save(function(er, savedGame) {
+																				console.log("It is now turn: " + savedGame.turn);
+																				player.save(function(e, savedPlayer) {
+																					Game.publishUpdate(game.id, {
+																						change: 'sevenImpossible',
+																						game: savedGame,
+																						player: savedPlayer
+																					});
+																				});
+																			});	
+																		} 
+																	}
+																	
+																}
+																console.log("done finding new cards");
+
+
+															//Normal Seven Use Case
+															} else { 
+																game.save(function(er, savedGame) {
+																	console.log("It is now turn: " + savedGame.turn);
+																	player.save(function(e, savedPlayer) {
+																		Game.publishUpdate(game.id, {
+																			change: 'sevenData',
+																			game: savedGame,
+																			player: savedPlayer
+																		});
+																	});
+																});
+															}
+															
+														}
 													});
+
 												}
 											});
 											break;
@@ -1674,7 +1775,7 @@ module.exports = {
 								game.scrap.add(two.id);
 								game.twos.remove(two.id);
 							});
-							Card.findOne(game.firstEffect).exec(function(err, card) {
+							Card.findOne(game.firstEffect.id).exec(function(err, card) {
 								game.scrapTop = card;
 								game.scrap.add(card.id);
 								game.firstEffect = null;
