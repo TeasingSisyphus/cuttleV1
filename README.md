@@ -3,6 +3,13 @@
 This is a multiplayer card game leveraging sails.js and angularjs.
 
 ## TODO
+*	David
+	*	Prevent playing a 3 when there is no scrap pile
+*	Sam
+	*	Prevent playing a 5 with no deck and handle playing a 5 with one card in deck
+*	Ryan
+	*	Handle 7 for two jacks in ILLEgal case
+	*	Handle playing a 4 for two and fewer cards in opponent's hand
 *	Queens
 	*	Prevent playing a Two on any One Off effect played by someone with a QUEEN
 *	Jacks
