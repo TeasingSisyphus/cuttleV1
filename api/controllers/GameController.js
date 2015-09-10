@@ -612,6 +612,62 @@ module.exports = {
 																case 3:
 																case 4:
 																case 5:
+																	var lowDeck = game.deck.length <= 1;
+																	if (lowDeck) {
+																		var log = "Player " + player.pNum + " has played the " + card.alt + " for its one off effect.";
+																		game.log.push(log);
+																		game.firstEffect = card;
+																		player.hand.remove(card.id);
+																		game.save(function (er, savedGame) {
+																			player.save(function (e, savedPlayer) {
+																				Game.publishUpdate(game.id, {
+																					change: 'oneOff',
+																					game: savedGame,
+																					player: savedPlayer,
+																					card: card
+																				}, req);
+																				res.send({
+																					oneOff: true,
+																					firstEffect: true,
+																					validRank: validRank,
+																					yourTurn: yourTurn,
+																					game: savedGame,
+																					player: savedPlayer
+																					card: card,
+																					hadTarget: null,
+																					lowDeck: true
+																				});
+																			});
+																		});
+																	} else {
+																		var log = "Player " + player.pNum + " has played the " + card.alt + " for its one off effect.";
+																		game.log.push(log);
+																		game.firstEffect = card;
+																		player.hand.remove(card.id);
+																		game.save(function (er, savedGame) {
+																			player.save(function (e, savedPlayer) {
+																				Game.publishUpdate(game.id, {
+																					change: 'oneOff',
+																					game: savedGame,
+																					player: savedPlayer,
+																					card: card
+																				}, req);
+																				res.send({
+																					oneOff: true,
+																					firstEffect: true,
+																					validRank: validRank,
+																					yourTurn: yourTurn,
+																					game: savedGame,
+																					player: savedPlayer
+																					card: card,
+																					hadTarget: null,
+																					lowDeck: false
+																				});
+																			});
+																		});
+																	}
+
+																	break;
 																case 6:
 																	var log = "Player " + player.pNum + " has played the " + card.alt + " for its one off effect.";
 																	game.log.push(log);
