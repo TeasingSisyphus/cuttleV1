@@ -2727,19 +2727,6 @@ module.exports = {
 			var points = values[3];
 			var max = game.deck.length-1;
 			var random = Math.floor(Math.random() * ((max + 1)));
-			switch (req.body.whichCard) {
-				case 0:
-					console.log("Case 0");
-					game.topCard = game.secondCard;
-					game.secondCard = game.deck[random];
-					game.deck.remove(game.secondCard.id);
-					break;
-				case 1:
-					console.log("Case 1");
-					game.secondCard = game.deck[random];
-					game.deck.remove(game.secondCard.id);
-					break;
-			}			
 			if (game && thief && victim && points){
 				var yourTurn = thief.pNum === game.turn % 2;
 				if (yourTurn) {
@@ -2752,6 +2739,43 @@ module.exports = {
 							}
 						});				
 						if (!hasQueen) {
+							//Check that there is another card in the deck to replace topCard/secondCard
+							if (game.deck.length > 0) {
+								switch (req.body.whichCard) {
+									case 0:
+										console.log("Playing topCard as jack after seven");
+										game.topCard = game.secondCard;
+										game.secondCard = game.deck[random];
+										game.deck.remove(game.secondCard.id);
+										break;
+									case 1:
+										console.log("Playing secondCard as a jack after seven");
+										game.secondCard = game.deck[random];
+										game.deck.remove(game.secondCard.id);
+										break;
+								}		
+							//If not, nullify secondCard, and/or topCard	
+							} else {
+								//If there are two remaining cards the unplayed card is now topCard
+								if (game.secondCard) {
+									switch (req.body.whichCard) {
+										case 0:
+											console.log("Playing topCard as jack");
+											game.topCard = game.secondCard;
+											game.secondCard = null;
+											break;
+										case 1:
+											console.log("Playing secondCard as jack");
+											game.secondCard = null;
+											break;
+									}
+								//If there are no more cards, nullify topCard and secondCard						
+								} else {
+									console.log("Playing last card in deck as a jack");
+									game.topCard = null;
+									game.secondCard = null;
+								}
+							}
 							thief.points.add(points.id);
 							thief.hand.remove(req.body.jackId);
 							points.attachments.add(req.body.jackId);
