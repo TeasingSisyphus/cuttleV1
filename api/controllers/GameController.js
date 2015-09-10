@@ -632,7 +632,7 @@ module.exports = {
 																					validRank: validRank,
 																					yourTurn: yourTurn,
 																					game: savedGame,
-																					player: savedPlayer
+																					player: savedPlayer,
 																					card: card,
 																					hadTarget: null,
 																					lowDeck: true
@@ -658,7 +658,7 @@ module.exports = {
 																					validRank: validRank,
 																					yourTurn: yourTurn,
 																					game: savedGame,
-																					player: savedPlayer
+																					player: savedPlayer,
 																					card: card,
 																					hadTarget: null,
 																					lowDeck: false
