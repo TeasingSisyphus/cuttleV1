@@ -2308,25 +2308,6 @@ module.exports = {
 											});
 											target.save();
 										}
-										switch (req.body.whichCard) {
-											case 0:
-												console.log("Case 0");
-												var min = 0;
-												var max = game.deck.length - 1;
-												var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-												game.topCard = game.secondCard;
-												game.secondCard = game.deck[random];
-												game.deck.remove(game.secondCard.id);
-												break;
-											case 1:
-												console.log("Case 1");
-												var min = 0;
-												var max = game.deck.length - 1;
-												var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-												game.secondCard = game.deck[random];
-												game.deck.remove(game.secondCard.id);
-												break;
-										}
 
 										var playerId = null;
 										if (game.players[0].id === player.id) {
@@ -2355,6 +2336,52 @@ module.exports = {
 
 										var log = "Player " + (player.pNum + 1) % 2 + " has scuttled the " + target.alt + " with the " + scuttler.alt + " after playing a seven";
 										game.log.push(log);
+
+										//Check that there are other cards in deck to reassign topCard/secondCard
+										if (game.deck.length > 0) {
+											switch (req.body.whichCard) {
+												case 0:
+													console.log("Case 0");
+													var min = 0;
+													var max = game.deck.length - 1;
+													var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+													game.topCard = game.secondCard;
+													game.secondCard = game.deck[random];
+													game.deck.remove(game.secondCard.id);
+													break;
+												case 1:
+													console.log("Case 1");
+													var min = 0;
+													var max = game.deck.length - 1;
+													var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+													game.secondCard = game.deck[random];
+													game.deck.remove(game.secondCard.id);
+													break;
+											}
+										
+										//Handle cases with only one or two cards in deck
+										} else {
+											//If there is no secondCard, we are playing the last card
+											if (game.secondCard) {
+												switch (req.body.whichCard) {
+													case 0:
+														console.log("Scuttling with topCard");
+														game.topCard = game.secondCard;
+														game.secondCard = null;
+														break;
+													case 1:
+														console.log("Scuttling with secondCard");
+														game.secondCard = null;
+														break;
+												}
+											//Case where deck is now empty												
+											} else {
+												console.log("Scuttling with last remaining card in deck");
+												game.topCard = null;
+												game.secondCard = null;
+											}
+										}
+
 
 										player.save(function(e, savedPlayer) {
 											//Assign winner if player has won
