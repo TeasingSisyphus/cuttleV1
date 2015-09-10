@@ -379,7 +379,7 @@ module.exports = {
 						//Check if it is the current players turn.  If it is add a card to their hand and remove a card from the deck
 						//After that, make the second card of the deck the first card of the deck and find a new second card.
 						//Add back && foundPlayer.hand.length !== 8
-						if (game.turn % 2 === foundPlayer.pNum && foundPlayer.hand.length <= 7) {
+						if (game.turn % 2 === foundPlayer.pNum && foundPlayer.hand.length <= 50) {
 							if (game.deck.length != 0) {
 								foundPlayer.hand.add(game.topCard);
 								foundPlayer.frozenId = null;
@@ -613,7 +613,6 @@ module.exports = {
 																case 4:
 																case 5:
 																case 6:
-																case 7:
 																	var log = "Player " + player.pNum + " has played the " + card.alt + " for its one off effect.";
 																	game.log.push(log);
 																	game.firstEffect = card;
@@ -639,6 +638,48 @@ module.exports = {
 																			});
 																		});
 																	});																	
+																	break;
+																case 7:
+																	//Only allow playing the 7 if there is at least 1 card in the deck
+																	if (game.topCard) {
+																		var log = "Player " + player.pNum + " has played the " + card.alt + " for its one off effect.";
+																		game.log.push(log);
+																		game.firstEffect = card;
+																		player.hand.remove(card.id);																			
+																		card.save();
+																		game.save(function(er, savedGame) {
+																			player.save(function(e, savedPlayer) {
+																				Game.publishUpdate(game.id, {
+																					change: 'oneOff',
+																					game: savedGame,
+																					player: savedPlayer,
+																					card: card
+																				}, req);
+																				res.send({
+																					oneOff: true,
+																					firstEffect: true,
+																					validRank: validRank,
+																					yourTurn: yourTurn,
+																					game: savedGame,
+																					player: savedPlayer,
+																					card: card,
+																					hadTarget: null,
+																					cardsInDeck: true
+																				});
+																			});
+																		});																				
+																	} else {
+																		res.send({
+																			oneOff: false,
+																			firstEffect: true,
+																			player: player,
+																			validRank: validRank,
+																			yourTurn: yourTurn,
+																			card: card,
+																			hadTarget: null,
+																			cardsInDeck: false
+																		});
+																	}
 																	break;
 																case 2:
 																case 9:
@@ -1401,107 +1442,162 @@ module.exports = {
 													console.log("Player " + req.body.otherPlayerId + " not found for 7 resolution");
 													res.send(404);
 												} else {
-													player.hand.remove(card.id);
-													game.scrap.add(card.id);
-													game.scrapTop = card;
-													game.firstEffect = null;
+													var fewCards = !game.secondCard;
+													if (fewCards) { //Check if there is one, or no cards in deck
+														if (!game.topCard) { //Then there are no cards in deck
 
-													Player.findOne(req.body.resolvingPlayerId).populateAll().exec(function (resolvingPlayerError, resolvingPlayer) {
-														if (resolvingPlayerError || !resolvingPlayer) {
-															console.log("Can't find " + req.body.resolvingPlayerId + " to resolve seven");
-															console.log(resolvingPlayerError);
-															res.send(404);
-														} else {
-															var doubleJacks = game.topCard.rank === 11 && game.secondCard.rank === 11;
-															console.log(game.topCard);
-															console.log(game.secondCard);
-															console.log("doubleJacks: " + doubleJacks);
-															console.log("op Points: " + resolvingPlayer.points.length);
-															var queenCount = 0; 
-															resolvingPlayer.runes.forEach(function (rune, index, runes) {
-																if (rune.rank === 12) {
-																	queenCount++;
-																}
-															});
-															console.log("op queenCount: " + queenCount);
-															//If No cards are playable from the seven, pick a different two cards
-															if (doubleJacks && (queenCount > 0 || resolvingPlayer.points.length === 0) ) {
-																console.log("Playing either of the revealed jacks is impossible");
-																var log = 'Neither the ' + game.topCard.alt + ', nor the ' + game.secondCard.alt + ' can be played, so new cards are being selected';
-																game.log.push(log);
-																var done = false; //Used to make sure two jacks aren't picked again
-																var count = 0; //Used to ensure we don't loop on
-																while (!done) {
-																	//Assign new top and second cards
-																	var tempDeck = game.deck;
-																	tempDeck.push(game.topCard);
-																	tempDeck.push(game.secondCard);
-																	var min = 0;
-																	var max = game.deck.length - 1;
-																	var randomTop = Math.floor((Math.random() * ((max + 1) - min)) + min);
-																	var randomSecond = Math.floor((Math.random() * ((max + 1) - min)) + min);;
+														//Then there is one card in the deck			
+														} else { 
+															//The oneOff is played; move it to the scrap pile
+															player.hand.remove(card.id);
+															game.scrap.add(card.id);
+															game.scrapTop = card;
+															game.firstEffect = null;	
 
-																	while (randomSecond === randomTop) {
-																		randomSecond = Math.floor((Math.random() * ((max + 1) - min)) + min);
-																	}
+															Player.findOne(req.body.resolvingPlayerId).populateAll().exec(function (resolvingPlayerError, resolvingPlayer) {
+																if (resolvingPlayerError || !resolvingPlayer) {
+																	console.log("Can't find " + req.body.resolvingPlayerId + " to resolve seven");
+																	console.log(resolvingPlayerError);
+																	res.send(404);
+																} else {
+																	//Check if the last card is an unplayable jack
+																	var topCardIsJack = game.topCard.rank === 11;
+																	var queenCount = 0; 
+																	resolvingPlayer.runes.forEach(function (rune, index, runes) {
+																		if (rune.rank === 12) {
+																			queenCount++;
+																		}
+																	});
 
-																	if ( !(tempDeck[randomTop].rank === 11 && tempDeck[randomSecond].rank === 11) ) {
-																		console.log("at least one new card wasn't a jack:\n");
-																		console.log(tempDeck[randomTop]);
-																		console.log(tempDeck[randomSecond]);
-																		done = true;
-																		game.topCard = tempDeck[randomTop];
-																		game.secondCard = tempDeck[randomSecond];
+																	//Jack is unplayable if opponent has a queen, or no points	
+																	if (topCardIsJack && (queenCount > 0 || resolvingPlayer.points.length === 0) ) {
+																		
+																		game.turn++;
 																		game.save(function(er, savedGame) {
-																			console.log("It is now turn: " + savedGame.turn);
 																			player.save(function(e, savedPlayer) {
 																				Game.publishUpdate(game.id, {
-																					change: 'sevenData',
+																					change: 'sevenImpossible',
 																					game: savedGame,
 																					player: savedPlayer
 																				});
 																			});
-																		});																		
-																	} else {
-																		console.log("new topTwo were jacks again");
-																		count++;
-																		if (count > 15) { //If we can't find two cards that aren't jacks, scrap the seven and end the turn
-																			console.log("looped two many times trying to find new cards for seven; aborting.\n");
-																			done = true; 
-																			game.turn++;
+																		});	
+
+																	} else { //Otherwise, the remaining card is playable
+																		game.save(function (er, savedGame) {
+																			player.save(function (e, savedPlayer) {
+																				Game.publishUpdate(game.id, {
+																					change: 'sevenLastCard',
+																					game: savedGame,
+																					player: savedPlayer,
+																				});
+																			});
+																		});
+																	}
+																}
+
+															});
+			
+																									}
+
+													} else {
+
+														player.hand.remove(card.id);
+														game.scrap.add(card.id);
+														game.scrapTop = card;
+														game.firstEffect = null;
+
+														Player.findOne(req.body.resolvingPlayerId).populateAll().exec(function (resolvingPlayerError, resolvingPlayer) {
+															if (resolvingPlayerError || !resolvingPlayer) {
+																console.log("Can't find " + req.body.resolvingPlayerId + " to resolve seven");
+																console.log(resolvingPlayerError);
+																res.send(404);
+															} else {
+																var doubleJacks = game.topCard.rank === 11 && game.secondCard.rank === 11;
+																var queenCount = 0; 
+																resolvingPlayer.runes.forEach(function (rune, index, runes) {
+																	if (rune.rank === 12) {
+																		queenCount++;
+																	}
+																});
+																//If No cards are playable from the seven, pick a different two cards
+																if (doubleJacks && (queenCount > 0 || resolvingPlayer.points.length === 0) ) {
+																	console.log("Playing either of the revealed jacks is impossible");
+																	var log = 'Neither the ' + game.topCard.alt + ', nor the ' + game.secondCard.alt + ' can be played, so new cards are being selected';
+																	game.log.push(log);
+																	var done = false; //Used to make sure two jacks aren't picked again
+																	var count = 0; //Used to ensure we don't loop on
+																	while (!done) {
+																		//Assign new top and second cards
+																		var tempDeck = game.deck;
+																		tempDeck.push(game.topCard);
+																		tempDeck.push(game.secondCard);
+																		var min = 0;
+																		var max = game.deck.length - 1;
+																		var randomTop = Math.floor((Math.random() * ((max + 1) - min)) + min);
+																		var randomSecond = Math.floor((Math.random() * ((max + 1) - min)) + min);;
+
+																		while (randomSecond === randomTop) {
+																			randomSecond = Math.floor((Math.random() * ((max + 1) - min)) + min);
+																		}
+
+																		if ( !(tempDeck[randomTop].rank === 11 && tempDeck[randomSecond].rank === 11) ) {
+																			console.log("at least one new card wasn't a jack:\n");
+																			console.log(tempDeck[randomTop]);
+																			console.log(tempDeck[randomSecond]);
+																			done = true;
+																			game.topCard = tempDeck[randomTop];
+																			game.secondCard = tempDeck[randomSecond];
 																			game.save(function(er, savedGame) {
 																				console.log("It is now turn: " + savedGame.turn);
 																				player.save(function(e, savedPlayer) {
 																					Game.publishUpdate(game.id, {
-																						change: 'sevenImpossible',
+																						change: 'sevenData',
 																						game: savedGame,
 																						player: savedPlayer
 																					});
 																				});
-																			});	
-																		} 
+																			});																		
+																		} else {
+																			console.log("new topTwo were jacks again");
+																			count++;
+																			if (count > 15) { //If we can't find two cards that aren't jacks, scrap the seven and end the turn
+																				console.log("looped two many times trying to find new cards for seven; aborting.\n");
+																				done = true; 
+																				game.turn++;
+																				game.save(function(er, savedGame) {
+																					console.log("It is now turn: " + savedGame.turn);
+																					player.save(function(e, savedPlayer) {
+																						Game.publishUpdate(game.id, {
+																							change: 'sevenImpossible',
+																							game: savedGame,
+																							player: savedPlayer
+																						});
+																					});
+																				});	
+																			} 
+																		}
+																		
 																	}
-																	
-																}
-																console.log("done finding new cards");
 
 
-															//Normal Seven Use Case
-															} else { 
-																game.save(function(er, savedGame) {
-																	console.log("It is now turn: " + savedGame.turn);
-																	player.save(function(e, savedPlayer) {
-																		Game.publishUpdate(game.id, {
-																			change: 'sevenData',
-																			game: savedGame,
-																			player: savedPlayer
+																//Normal Seven Use Case
+																} else { 
+																	game.save(function(er, savedGame) {
+																		console.log("It is now turn: " + savedGame.turn);
+																		player.save(function(e, savedPlayer) {
+																			Game.publishUpdate(game.id, {
+																				change: 'sevenData',
+																				game: savedGame,
+																				player: savedPlayer
+																			});
 																		});
 																	});
-																});
+																}
+																
 															}
-															
-														}
-													});
+														});
+													}
 
 												}
 											});
@@ -1903,44 +1999,62 @@ module.exports = {
 									res.send(404);
 								} else {
 									if (game.turn % 2 === player.pNum && card.rank <= 10) {
-										console.log("topCard: ");
-										console.log(game.topCard);
-										console.log("\n\nsecondCard: ");
-										console.log(game.secondCard);
 
-										switch (req.body.whichCard) {
-											case 0:
-												console.log("Case 0");
-												var min = 0;
-												var max = game.deck.length - 1;
-												var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-												game.topCard = game.secondCard;
-												game.secondCard = game.deck[random];
-												game.deck.remove(game.secondCard.id);
-												break;
-											case 1:
-												console.log("Case 1");
-												var min = 0;
-												var max = game.deck.length - 1;
-												var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-												game.secondCard = game.deck[random];
-												game.deck.remove(game.secondCard.id);
-												break;
-										}
 										player.points.add(card.id);
 										player.frozenId = null;
-
 										var log = "Player " + player.pNum + " has played the " + card.alt + " for points after playing a seven.";
 										game.log.push(log);
+
+										//If there are more cards in the deck, reassign the topCard and secondCard
+										if (game.deck.length > 0) {
+											switch (req.body.whichCard) {
+												case 0:
+													console.log("Playing the topCard");
+													var min = 0;
+													var max = game.deck.length - 1;
+													var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+													game.topCard = game.secondCard;
+													game.secondCard = game.deck[random];
+													game.deck.remove(game.secondCard.id);
+													break;
+												case 1:
+													console.log("Playing the secondCard");
+													var min = 0;
+													var max = game.deck.length - 1;
+													var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+													game.secondCard = game.deck[random];
+													game.deck.remove(game.secondCard.id);
+													break;
+											}
+
+										} else {
+											//Check if there is a second card in the deck
+											if (game.secondCard) {
+												switch (req.body.whichCard) {
+													case 0:
+														console.log("Playing the topCard");
+														game.topCard = game.secondCard;
+														game.secondCard = null;
+														break;
+													case 1:
+														console.log("Playing the secondCard");
+														game.secondCard = null;
+														break;
+												}
+											//Otherwise, there is only the topCard remaining												
+											} else {
+												console.log("Playing last remaining card in deck");
+												game.topCard = null;
+												game.secondCard = null;
+											}
+										}
 
 										player.save(function(e, savedPlayer) {
 											//Assign winner if player has won
 											var victor = winner(savedPlayer);
-
 											if (victor) {
 												game.winner = savedPlayer.pNum;
 											}
-
 											game.turn++;
 											game.save(function(e6, savedGame) {
 												Player.publishUpdate(savedPlayer.id, {
@@ -1956,7 +2070,8 @@ module.exports = {
 												});
 											});
 										});
-									}
+
+									} //End of legal move check
 								}
 							});
 						}
@@ -2008,30 +2123,56 @@ module.exports = {
 											}
 											card.save();
 										}
-										switch (req.body.whichCard) {
-											case 0:
-												console.log("Case 0");
-												var min = 0;
-												var max = game.deck.length - 1;
-												var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-												game.topCard = game.secondCard;
-												game.secondCard = game.deck[random];
-												game.deck.remove(game.secondCard.id);
-												break;
-											case 1:
-												console.log("Case 1");
-												var min = 0;
-												var max = game.deck.length - 1;
-												var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-												game.secondCard = game.deck[random];
-												game.deck.remove(game.secondCard.id);
-												break;
-										}
+
 										player.runes.add(card.id);
 										player.frozenId = null;
 
+										if (game.deck.length > 0) {
 										var log = "Player " + player.pNum + " has played the " + card.alt + " as a rune after playing a seven.";
 										game.log.push(log);
+										//Check that there are other cards in deck to replace topCard/secondCard
+											switch (req.body.whichCard) {
+												case 0:
+													console.log("Playing topCard as rune");
+													var min = 0;
+													var max = game.deck.length - 1;
+													var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+													game.topCard = game.secondCard;
+													game.secondCard = game.deck[random];
+													game.deck.remove(game.secondCard.id);
+													break;
+												case 1:
+													console.log("Playing secondCard as rune");
+													var min = 0;
+													var max = game.deck.length - 1;
+													var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+													game.secondCard = game.deck[random];
+													game.deck.remove(game.secondCard.id);
+													break;
+											}
+										//If there are no cards in game.deck, check whether we are playing the last card
+										} else {
+											//If there are two remaining cards, the unplayed card becomes topCard
+											if (game.secondCard) {
+												switch (req.body.whichCard) {
+													case 0:
+														console.log("Playing topCard as rune");
+														game.topCard = game.secondCard;
+														game.secondCard = null;
+														break;
+													case 1:
+														console.log("Playing secondCard as rune");
+														game.secondCard = null;
+														break;
+												}
+											//If there is only one card in the deck remove topCard												
+											} else {
+												console.log("Playing last remaining card as rune");
+												game.topCard = null;
+												game.secondCard = null;
+											}
+										}
+											
 
 										player.save(function(e, savedPlayer) {
 											//Assign winner if player has won

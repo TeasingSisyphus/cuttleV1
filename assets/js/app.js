@@ -655,11 +655,11 @@
 								console.log("Receiving response from server");
 								console.log(res);
 								if (res.oneOff) {
-									console.log("oneOff = true");
+									console.log("OneOff was played successfullly; it has yet to resolve");
 									$scope.game.players[res.player.pNum] = res.player;
 								} else {
 									$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
-									console.log("oneOff = false");
+									console.log("OneOff was denied");
 									if(res.hasOwnProperty('queenCount')){
 										console.log("Response has quennCount");
 										if(res.queenCount > 0){
@@ -927,6 +927,19 @@
 							$scope.game.topTwo = [obj.data.game.topCard, obj.data.game.secondCard];
 							alert("It's not possible to play any of the cards from the resolving seven. The oneOff was discarded and the turn shall pass");							
 							break;
+
+						case 'sevenLastCard':
+							$scope.game.stacking = false;
+							$scope.game.topTwoPick = true;
+							$scope.game.players[obj.data.player.pNum].hand = obj.data.player.hand;
+							$scope.game.scrap = obj.data.game.scrap;
+							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
+							$scope.game.turn = obj.data.game.turn;
+							$scope.game.topCard = obj.data.game.topCard;
+							$scope.game.topTwo = [$scope.game.topCard];							
+							$scope.game.topCard.class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';							
+							break;
+
 						case 'sevenScuttled':
 							$scope.game.stacking = false;
 							$scope.game.topTwoPick = false;
