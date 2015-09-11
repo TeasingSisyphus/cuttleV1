@@ -2436,7 +2436,7 @@ module.exports = {
 		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('cardId') && req.body.hasOwnProperty('whichCard')) {
 			console.log("\n\nsevenOneOff requested from socket " + req.socket.id);
 
-			Game.findOne(req.body.gameId).populate('players').populate('deck').populate('scrap').exec(function(error, game) {
+			Game.findOne(req.body.gameId).populateAll().exec(function(error, game) {
 				if (error || !game) {
 					console.log("Game not found for sevenOneOff");
 					res.send(404);
@@ -2446,10 +2446,10 @@ module.exports = {
 					if (yourTurn) {
 						switch (req.body.whichCard) {
 							case 0:
-								var oneOffId = game.topCard;
+								var oneOffId = game.topCard.id;
 								break;
 							case 1:
-								var oneOffId = game.secondCard;
+								var oneOffId = game.secondCard.id;
 								break;
 						}
 
@@ -2461,10 +2461,7 @@ module.exports = {
 								console.log("Found Card for sevenOneOff: " + card.alt);
 								var validRank = card.rank <= 7 || card.rank === 9;
 								if (validRank) {
-									console.log("validRank");
 									Player.findOne(req.body.enemyPlayerId).populateAll().exec(function (datError, victim) {
-										console.log("Logging enemy player:");
-										console.log(victim);
 
 										if (card.rank === 2 || card.rank === 9) {
 											console.log("played a 2, or 9");
@@ -2607,23 +2604,58 @@ module.exports = {
 													game: game
 												});
 											}
-										} else {
+										} else if (card.rank === 7 && !game.secondCard) {
+											res.send({
+												sevenOneOff: false,
+												firstEffect: true,
+												validRank: validRank,
+												yourTurn: yourTurn,
+												hadTarget: null,
+												whichCard: req.body.whichCard,
+												card: card,
+												game: game,
+												reason: "Can't play 7 with no cards in deck"
+											});
+										} else{
 											card.targetId = req.body.targetId;
 											card.save();
-											//sevenOneOff must always be the first effect on the stack
 											game.firstEffect = card;
+											//Check that there is another card in deck to replace the played card
+											if (game.deck.length > 0) {
+												//Remove oneOff from top two cards in deck, then replace it with a card from the deck
+												var max = game.deck.length - 1;
+												var min = 0;
+												var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
+												//If topCard was played, the card that was secondCard is now topCard					
+												if (req.body.whichCard === 0) {
+													game.topCard = game.secondCard;
+												}
+												//Either way, get a new secondCard and remove it from the deck
+												game.secondCard = game.deck[random];
+												game.deck.remove(game.deck[random].id);
 
-											//Remove oneOff from top two cards in deck, then replace it with a card from the deck
-											var max = game.deck.length - 1;
-											var min = 0;
-											var random = Math.floor((Math.random() * ((max + 1) - min)) + min);
-											//If topCard was played, the card that was secondCard is now topCard					
-											if (req.body.whichCard === 0) {
-												game.topCard = game.secondCard;
+											//If there are no more cards to replace topCard, check if we are playing the last card in the deck
+											} else {
+												if (game.secondCard) {
+													switch (req.body.whichCard) {
+														case 0:
+															console.log("Playing the topCard as a oneOff");
+															game.topCard = game.secondCard;
+															game.secondCard = null;
+															break;
+														case 1:
+															console.log("Playing the secondCard as a oneOff");
+															game.secondCard = null;
+															break;
+													}
+												//If this was the last card in the deck, nullify topCard and secondCard
+												} else {
+													console.log("Playing the last card in the deck as a oneOff");
+													game.topCard = null;
+													game.secondCard = null;
+												}
 											}
-											//Either way, get a new secondCard and remove it from the deck
-											game.secondCard = game.deck[random];
-											game.deck.remove(game.deck[random].id);
+
 
 
 											var log = "Player " + req.body.pNum + " has played the " + card.alt + " for its one off effect after playing a seven";
