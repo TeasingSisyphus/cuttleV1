@@ -2677,7 +2677,7 @@ module.exports = {
 													game: game
 												});
 											}
-										} else if (card.rank === 7 && !game.secondCard) {
+										} else if ( (card.rank === 7 || card.rank === 5) && !game.secondCard) {
 											res.send({
 												sevenOneOff: false,
 												firstEffect: true,
@@ -2945,7 +2945,7 @@ module.exports = {
 						return resolve(game);				
 					}
 				});
-			}).catch(function(e){
+			}).catch(function (e){
 				console.log("Error finding game: " + req.body.gameId + " for jack");
 				console.log(e);
 				res.send(e);
@@ -2959,7 +2959,7 @@ module.exports = {
 						return resolve(thief);
 					}
 				});
-			}).catch(function(e){
+			}).catch(function (e){
 				console.log("Error finding thief: " + req.body.thiefId + " for jack");
 				console.log(e);
 				res.send(e);
@@ -2973,7 +2973,7 @@ module.exports = {
 						return resolve(victim);
 					}
 				});
-			}).catch(function(e){
+			}).catch(function (e){
 				console.log("Error finding victim: " + req.body.victimId + " for jack");
 				console.log(e);
 				res.send(e);
@@ -2987,18 +2987,34 @@ module.exports = {
 						return resolve(points);
 					}
 				});
-			}).catch(function(e){
+			}).catch(function (e){
 				console.log("Error finding points: " + req.body.targetId + " for jack");
 				console.log(e);
 				res.send(e);
 			}); 
+
+			var promiseJack = new Promise(function (resolve, reject) {
+				Card.findOne(req.body.jackId).exec(function (error, jack) {
+					if (error || !jack) {
+						return reject(error);
+					} else {
+						return resolve(jack);
+					}
+				});
+			}).catch(function (e) {
+					console.log("Error finding jack: " + req.body.jackId + " for jack");
+					console.log(e);
+					res.send(e);
+				});
 			
-			Promise.all([promiseGame, promiseThief, promiseVictim, promisePoints]).then(function (values) {
+			Promise.all([promiseGame, promiseThief, promiseVictim, promisePoints, promiseJack]).then(function (values) {
 				var game = values[0];
 				var thief = values[1];
 				var victim = values[2];
-				var points = values[3];				
-				if (game && thief && victim && points){
+				var points = values[3];		
+				var jack = values[4];
+
+				if (game && thief && victim && points && jack){
 					var yourTurn = thief.pNum === game.turn % 2;
 					if (yourTurn) {
 						var cardIsFrozen = thief.frozenId === req.body.jackId;
@@ -3017,6 +3033,8 @@ module.exports = {
 									thief.points.add(points.id);
 									thief.hand.remove(req.body.jackId);
 									points.attachments.add(req.body.jackId);
+									var log = "Player " + thief.pNum + " has played the " + jack.alt + " to steal the " + points.alt;
+									game.log.push(log);
 									game.turn++;
 									game.passCount = 0;
 									return [game.save(), thief.save(), victim.save(), points.save()];
