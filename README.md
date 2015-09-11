@@ -3,16 +3,11 @@
 This is a multiplayer card game leveraging sails.js and angularjs.
 
 ## TODO
-*	David
-	*	Handle 3'ing w/ no scrap
-*	Sam
-	*	Handle 5'ing with two or few cards in deck
-*	Ryan
-*	Seven
-	*	Handle playing a seven with 1, or no cards in the deck
-*	Three
-	* Handle playing a 3 with nothing in the scrap pile
-	* Attempting to 3 an empty scrap does not deselect after it fails
+*	Change the deck length counter in homepage.ejs to be accurate at 1 and no cards in deck
+*	Reset Game upon win or stalemate
+*	Make oneOff deselect upon casting illegal 3
+*	Make a nice ready screen
+
 
 ## DONE
 *	Allow drawing the last two cards of the deck
