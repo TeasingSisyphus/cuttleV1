@@ -612,61 +612,29 @@ module.exports = {
 																case 3:
 																case 4:
 																case 5:
-																	var lowDeck = game.deck.length <= 1;
-																	if (lowDeck) {
+																	if (!game.topCard) {
+																		console.log('It is illegal to play a 5 when there is no deck sir and/or madam');
 																		var log = "Player " + player.pNum + " has played the " + card.alt + " for its one off effect.";
-																		game.log.push(log);
-																		game.firstEffect = card;
-																		player.hand.remove(card.id);
-																		game.save(function (er, savedGame) {
-																			player.save(function (e, savedPlayer) {
+																		game.log.push(log);																		
+																		game.save(function(er, savedGame) {
+																			player.save(function(e, savedPlayer) {
 																				Game.publishUpdate(game.id, {
-																					change: 'oneOff',
+																					change: 'emptyDeckFive',
 																					game: savedGame,
 																					player: savedPlayer,
 																					card: card
 																				}, req);
 																				res.send({
-																					oneOff: true,
-																					firstEffect: true,
-																					validRank: validRank,
+																					oneOff: false,
+																					firstEffect: false,
 																					yourTurn: yourTurn,
 																					game: savedGame,
 																					player: savedPlayer,
 																					card: card,
-																					hadTarget: null,
-																					lowDeck: true
 																				});
 																			});
-																		});
-																	} else {
-																		var log = "Player " + player.pNum + " has played the " + card.alt + " for its one off effect.";
-																		game.log.push(log);
-																		game.firstEffect = card;
-																		player.hand.remove(card.id);
-																		game.save(function (er, savedGame) {
-																			player.save(function (e, savedPlayer) {
-																				Game.publishUpdate(game.id, {
-																					change: 'oneOff',
-																					game: savedGame,
-																					player: savedPlayer,
-																					card: card
-																				}, req);
-																				res.send({
-																					oneOff: true,
-																					firstEffect: true,
-																					validRank: validRank,
-																					yourTurn: yourTurn,
-																					game: savedGame,
-																					player: savedPlayer,
-																					card: card,
-																					hadTarget: null,
-																					lowDeck: false
-																				});
-																			});
-																		});
+																		});																				
 																	}
-
 																	break;
 																case 6:
 																	var log = "Player " + player.pNum + " has played the " + card.alt + " for its one off effect.";
@@ -1276,8 +1244,31 @@ module.exports = {
 												} else {
 
 													var handLength = player.hand.length;
-													if (handLength <= 6) {
+													var oneCardInDeck = game.topCard != null && game.secondCard == null;
+													var emptyDeck = game.topCard == null && game.secondCard == null;
+													if (oneCardInDeck) {
+														player.hand.add(game.topCard);
+														game.topCard = null;
+														game.secondCard = null;
+														game.scrapTop = card;
+														game.scrap.add(card.id);
+														player.frozenId = null;
+														game.turn++;
 
+														game.save(function (er, savedGame) {
+															player.save(function (e, savedPlayer) {
+																Game.publishUpdate(savedGame.id, {
+																	change: 'oneCardInDeckFive',
+																	game: savedGame,
+																	player: savedPlayer,
+																});
+																res.send({
+																	game: savedGame,
+																	player: savedPlayer
+																})
+															});
+														});
+													} else if (handLength <= 6) {
 
 														player.hand.add(game.topCard);
 														player.hand.add(game.secondCard);

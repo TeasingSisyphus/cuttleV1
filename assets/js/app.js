@@ -629,7 +629,8 @@
 						$scope.game.topTwo = [$scope.game.topCard, $scope.game.secondCard];
 						if (!res.sevenOneOff) {
 							//Then deselect the chosen card from the top two cards
-							$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
+							$scope.game.topCard.class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
+							$scope.game.secondCard.class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
 						} else {
 							$scope.game.topTwoPick = false;
 							$scope.$apply();
@@ -1083,6 +1084,34 @@
 						case 'resolvedFive':
 							$scope.game.stacking = false;
 							$scope.game.topTwoPick = false;
+							$scope.game.deck = obj.data.game.deck;
+							$scope.game.topCard = obj.data.game.topCard;
+							$scope.game.secondCard = obj.data.game.secondCard;
+							$scope.game.topTwo = [obj.data.game.topCard, obj.data.game.secondCard];
+							$scope.game.players[obj.data.player.pNum] = obj.data.player;
+							$scope.game.scrap = obj.data.game.scrap;
+							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
+							$scope.game.turn = obj.data.game.turn;
+							break;
+
+						case 'oneCardInDeckFive':
+							$scope.game.stacking = false;
+							$scope.game.topTwoPick = false;
+							$scope.game.selectTwo = false;
+							$scope.game.deck = obj.data.game.deck;
+							$scope.game.topCard = obj.data.game.topCard;
+							$scope.game.secondCard = obj.data.game.secondCard;
+							$scope.game.topTwo = [obj.data.game.topCard, obj.data.game.secondCard];
+							$scope.game.players[obj.data.player.pNum] = obj.data.player;
+							$scope.game.scrap = obj.data.game.scrap;
+							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
+							$scope.game.turn = obj.data.game.turn;
+							break;
+
+						case 'emptyDeckFive':
+							$scope.game.stacking = false;
+							$scope.game.topTwoPick = false;
+							$scope.game.selectTwo = false;
 							$scope.game.deck = obj.data.game.deck;
 							$scope.game.topCard = obj.data.game.topCard;
 							$scope.game.secondCard = obj.data.game.secondCard;
