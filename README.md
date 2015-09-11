@@ -3,15 +3,15 @@
 This is a multiplayer card game leveraging sails.js and angularjs.
 
 ## TODO
-*	Change the deck length counter in homepage.ejs to be accurate at 1 and no cards in deck
-*	Add log sevenJack
+*	Update passing action to check that the appropriate player is requesting to pass
 *	Reset Game upon win or stalemate
 *	Make oneOff deselect upon casting illegal 3, and 7 into 5/7
 *	Make a nice ready screen
 
 
 ## DONE
-*	Added log to jack action
+*	Deck length counter now adjusts to 1 and no cards in deck
+*	Added log to jack and sevenJack actions
 *	Updated sevenOneOff to handle ignoring a request to play the last card in the deck as a five
 *	Allow drawing the last two cards of the deck
 *	Handle 7 with two jacks (illegal case)

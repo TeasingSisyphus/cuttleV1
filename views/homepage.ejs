@@ -59,7 +59,12 @@
                 <div id='midWrap'>
                     <div class='container-fluid'>
                         <div class='row'>
-                            <div class='col-xs-6 col-md-6 col-lg-6 col-sm-6'>{{game.deck.length + 2}} Cards in Deck</div>
+                            <div class='col-xs-6 col-md-6 col-lg-6 col-sm-6' ng-show='game.deck.length > 0'>{{game.deck.length + 2}} Cards in Deck</div>
+                            <div class='col-xs-6 col-md-6 col-lg-6 col-sm-6' ng-show='game.deck.length === 0 && game.secondCard'>2 Cards in Deck</div>
+                            <div class='col-xs-6 col-md-6 col-lg-6 col-sm-6' ng-show='game.deck.length === 0 && !game.secondCard && game.topCard'>1 Card in Deck</div>
+                            <div class='col-xs-6 col-md-6 col-lg-6 col-sm-6' ng-show='game.deck.length === 0 && !game.topCard'>No Cards in Deck</div>
+
+
                             <!-- <div class='span3'></div> -->
                             <div class='col-xs-6 col-md-6 col-lg-6 col-sm-6'>{{game.scrap.length}} Cards in Scrap</div>
                             <!-- <div class='span3'></div> -->

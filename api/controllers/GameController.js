@@ -2819,14 +2819,30 @@ module.exports = {
 			res.send(e);
 		});
 
-		Promise.all([promiseGame, promiseThief, promiseVictim, promisePoints]).then(function (values) {
+		var promiseJack = new Promise(function (resolve, reject) {
+			Card.findOne(req.body.jackId).exec(function (error, jack) {
+				if (error || !jack) {
+					return reject(error);
+				} else {
+					return resolve(jack);
+				}
+			});
+		}).catch(function (e) {
+				console.log("Error finding jack: " + req.body.jackId + " for jack");
+				console.log(e);
+				res.send(e);
+		});		
+
+		Promise.all([promiseGame, promiseThief, promiseVictim, promisePoints, promiseJack]).then(function (values) {
 			var game = values[0];
 			var thief = values[1];
 			var victim = values[2];
 			var points = values[3];
+			var jack = values[4];
+
 			var max = game.deck.length-1;
 			var random = Math.floor(Math.random() * ((max + 1)));
-			if (game && thief && victim && points){
+			if (game && thief && victim && points && jack){
 				var yourTurn = thief.pNum === game.turn % 2;
 				if (yourTurn) {
 					var validRank = points.rank <= 10;
@@ -2878,6 +2894,8 @@ module.exports = {
 							thief.points.add(points.id);
 							thief.hand.remove(req.body.jackId);
 							points.attachments.add(req.body.jackId);
+							var log = "Player " + thief.pNum + " has played the " + jack.alt + " to steal the " + points.alt + " as the resolution of a seven";
+							game.log.push(log);
 							game.turn++;
 							game.passCount = 0;
 						
@@ -3005,7 +3023,7 @@ module.exports = {
 					console.log("Error finding jack: " + req.body.jackId + " for jack");
 					console.log(e);
 					res.send(e);
-				});
+			});
 			
 			Promise.all([promiseGame, promiseThief, promiseVictim, promisePoints, promiseJack]).then(function (values) {
 				var game = values[0];
