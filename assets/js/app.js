@@ -828,7 +828,7 @@
 						case 'pass':
 							console.log('\nIn pass case');
 							$scope.game.turn = obj.data.game.turn;
-							alert("A player has passed");
+							alert("Player " + obj.data.pNum + " has passed");
 							break;
 
 						case 'draw':

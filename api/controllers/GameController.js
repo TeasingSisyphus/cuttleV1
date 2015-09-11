@@ -3109,26 +3109,42 @@ module.exports = {
 	},
 
 	pass: function (req, res) {
-		console.log("Passing turn");
+		console.log("\nTurn Pass Requested");
 		if (req.body.hasOwnProperty('gameId')) {
-			Game.findOne(req.body.gameId).exec(function (error, game){
+			Game.findOne(req.body.gameId).populate('players').exec(function (error, game){
 				if(error || !game){
 					console.log("Game was not found");
 					res.send(404);
 				}else{
-					if(game.passCount < 2){
-						game.passCount++;
-						game.turn++;
-						game.save(function (err, savedGame) {
-							Game.publishUpdate(game.id, {
-								change: 'pass',
-								game: savedGame
+					var requestingPlayerPnum = null;
+					var playerSort = sortPlayers(game.players);
+					if (req.socket.id === playerSort[0].socketId) {
+						requestingPlayerPnum = 0;
+					} else if (req.socket.id === playerSort[1].socketId) {
+						requestingPlayerPnum = 1;
+					}
+					if(game.passCount < 2 && (requestingPlayerPnum === 0 || requestingPlayerPnum === 1) ){
+						if (requestingPlayerPnum === game.turn % 2) {
+							game.passCount++;
+							game.turn++;
+							game.save(function (err, savedGame) {
+								Game.publishUpdate(game.id, {
+									change: 'pass',
+									game: savedGame,
+									pNum: requestingPlayerPnum
+								});
+								res.send({
+									pass: true,
+									game: savedGame,
+									yourTurn: true
+								});
 							});
+						} else {
 							res.send({
-								pass: true,
-								game: savedGame
+								pass: false,
+								yourTurn: false
 							});
-						});
+						}
 					}else{
 						Game.publishUpdate(game.id, {
 							change: 'stalemate',
