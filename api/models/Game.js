@@ -74,5 +74,10 @@ module.exports = {
       type: 'array',
       defaultsTo: []
     },
+
+    passCount: {
+      type: 'integer',
+      defaultsTo: 0
+    }
   }
 };

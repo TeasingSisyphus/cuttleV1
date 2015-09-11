@@ -390,12 +390,14 @@ module.exports = {
 								game.secondCard = game.deck[random];
 								game.deck.remove(game.deck[random].id);
 								game.turn++;
+								game.passCount = 0;
 
 								var log = "Player " + foundPlayer.pNum + " has drawn a card";
 								game.log.push(log);
 							} else if (game.topCard){
 								foundPlayer.hand.add(game.topCard);
 								game.turn++;
+								game.passCount = 0;
 								if (game.secondCard) {
 									game.topCard = game.secondCard;
 									game.secondCard = null;
@@ -506,6 +508,7 @@ module.exports = {
 											game.scrapTop.class = 'card';
 											playerSort[req.body.pNum].frozenId = null;
 											game.turn++;
+											game.passCount = 0;
 
 											var log = "Player " + req.body.pNum + " has scuttled Player " + (req.body.pNum + 1) % 2 + "'s " + target.alt + " with the " + scuttler.alt;
 											game.log.push(log);
@@ -608,7 +611,6 @@ module.exports = {
 															});
 															//Switch to determine targeting requirements of the oneOff
 															switch (card.rank) {
-																case 1:
 																case 3:
 																	var log = "Player " + player.pNum + " has attempted to play the " + card.alt + " for its one off effect";
 																	game.log.push(log);
@@ -651,32 +653,8 @@ module.exports = {
 																		});
 																	}
 																	break;
+																case 1:
 																case 4:
-																case 5:
-																	if (!game.topCard) {
-																		console.log('It is illegal to play a 5 when there is no deck sir and/or madam');
-																		var log = "Player " + player.pNum + " has played the " + card.alt + " for its one off effect.";
-																		game.log.push(log);																		
-																		game.save(function(er, savedGame) {
-																			player.save(function(e, savedPlayer) {
-																				Game.publishUpdate(game.id, {
-																					change: 'emptyDeckFive',
-																					game: savedGame,
-																					player: savedPlayer,
-																					card: card
-																				}, req);
-																				res.send({
-																					oneOff: false,
-																					firstEffect: false,
-																					yourTurn: yourTurn,
-																					game: savedGame,
-																					player: savedPlayer,
-																					card: card,
-																				});
-																			});
-																		});																				
-																	}
-																	break;
 																case 6:
 																	var log = "Player " + player.pNum + " has played the " + card.alt + " for its one off effect.";
 																	game.log.push(log);
@@ -703,6 +681,57 @@ module.exports = {
 																			});
 																		});
 																	});																	
+																	break;
+																case 5:
+																	if (!game.topCard) {
+																		console.log('It is illegal to play a 5 when there is no deck sir and/or madam');
+																		var log = "Player " + player.pNum + " has played the " + card.alt + " for its one off effect.";
+																		game.log.push(log);																		
+																		game.save(function(er, savedGame) {
+																			player.save(function(e, savedPlayer) {
+																				Game.publishUpdate(game.id, {
+																					change: 'emptyDeckFive',
+																					game: savedGame,
+																					player: savedPlayer,
+																					card: card
+																				}, req);
+																				res.send({
+																					oneOff: false,
+																					firstEffect: false,
+																					yourTurn: yourTurn,
+																					game: savedGame,
+																					player: savedPlayer,
+																					card: card,
+																				});
+																			});
+																		});																				
+																	} else {
+																		var log = "Player " + player.pNum + " has played the " + card.alt + " for its one off effect.";
+																		game.log.push(log);
+																		game.firstEffect = card;
+																		player.hand.remove(card.id);																			
+																		card.save();
+																		game.save(function(er, savedGame) {
+																			player.save(function(e, savedPlayer) {
+																				Game.publishUpdate(game.id, {
+																					change: 'oneOff',
+																					game: savedGame,
+																					player: savedPlayer,
+																					card: card
+																				}, req);
+																				res.send({
+																					oneOff: true,
+																					firstEffect: true,
+																					validRank: validRank,
+																					yourTurn: yourTurn,
+																					game: savedGame,
+																					player: savedPlayer,
+																					card: card,
+																					hadTarget: null
+																				});
+																			});
+																		});	
+																	}
 																	break;
 																case 7:
 																	//Only allow playing the 7 if there is at least 1 card in the deck
@@ -1000,6 +1029,7 @@ module.exports = {
 													players[0].frozenId = null;
 													players[1].frozenId = null;
 													game.turn++;
+													game.passCount = 0;
 
 													var pointIds = [];
 													players[0].points.forEach(function (point, index, points) {
@@ -1075,6 +1105,7 @@ module.exports = {
 														players[0].frozenId = null;
 														players[1].frozenId = null;
 														game.turn++;
+														game.passCount = 0;
 
 														if (targetCard.rank === 11) {
 															Card.findOne(targetCard.attached).populate('attached').exec(function (e8, stolenPoints){
@@ -1232,6 +1263,7 @@ module.exports = {
 																}
 																game.firstEffect = null;
 																game.turn++;
+																game.passCount = 0;
 																game.save(function (er, savedGame){
 																	victim.save(function (e, savedVictim) {
 																		player.save(function (playerError, savedPlayer){
@@ -1295,6 +1327,7 @@ module.exports = {
 														game.scrap.add(card.id);
 														player.frozenId = null;
 														game.turn++;
+														game.passCount = 0;
 
 														game.save(function (er, savedGame) {
 															player.save(function (e, savedPlayer) {
@@ -1333,6 +1366,7 @@ module.exports = {
 														game.scrap.add(card.id);
 														player.frozenId = null;
 														game.turn++;
+														game.passCount = 0;
 
 														game.save(function(er, savedGame) {
 															player.save(function(e, savedPlayer) {
@@ -1363,6 +1397,7 @@ module.exports = {
 														game.deck.remove(game.secondCard.id);
 														game.scrap.add(card.id);
 														game.turn++;
+														game.passCount = 0;
 
 														game.save(function(er, savedGame) {
 															console.log("It is now turn: " + savedGame.turn);
@@ -1427,7 +1462,7 @@ module.exports = {
 													players[0].frozenId = null;
 													players[1].frozenId = null;
 													game.turn++;
-
+													game.passCount = 0;
 
 
 													var p0PointIds = [];
@@ -1561,6 +1596,7 @@ module.exports = {
 																	if (topCardIsJack && (queenCount > 0 || resolvingPlayer.points.length === 0) ) {
 																		
 																		game.turn++;
+																		game.passCount = 0;
 																		game.save(function(er, savedGame) {
 																			player.save(function(e, savedPlayer) {
 																				Game.publishUpdate(game.id, {
@@ -1653,6 +1689,7 @@ module.exports = {
 																				console.log("looped two many times trying to find new cards for seven; aborting.\n");
 																				done = true; 
 																				game.turn++;
+																				game.passCount = 0;
 																				game.save(function(er, savedGame) {
 																					console.log("It is now turn: " + savedGame.turn);
 																					player.save(function(e, savedPlayer) {
@@ -1710,6 +1747,7 @@ module.exports = {
 													game.scrapTop = card;
 													game.firstEffect = null;
 													game.turn++;
+													game.passCount = 0;
 
 													Card.findOne(card.targetId).populate('attachments').exec(function(e7, targetCard) {
 														console.log("Logging target with " + targetCard.attachments.length + " attachments");
@@ -1964,6 +2002,7 @@ module.exports = {
 								game.scrap.add(card.id);
 								game.firstEffect = null;
 								game.turn++;
+								game.passCount = 0;
 
 								var log = "The " + card.alt + " is countered and has no effect.";
 								game.log.push(log);
@@ -2003,6 +2042,7 @@ module.exports = {
 						game.scrap.add(game.firstEffect);
 						game.firstEffect = null;
 						game.turn++;
+						game.passCount = 0;
 
 						game.save(function(err, savedGame) {
 							player.save(function(er, savedPlayer) {
@@ -2043,6 +2083,7 @@ module.exports = {
 							game.scrapTop = game.firstEffect;
 							game.firstEffect = null;
 							game.turn++;
+							game.passCount = 0;
 
 							game.save(function(err, savedGame) {
 								console.log('Saving game');
@@ -2144,6 +2185,7 @@ module.exports = {
 												game.winner = savedPlayer.pNum;
 											}
 											game.turn++;
+											game.passCount = 0;
 											game.save(function(e6, savedGame) {
 												Player.publishUpdate(savedPlayer.id, {
 													change: 'points',
@@ -2271,6 +2313,7 @@ module.exports = {
 											}
 
 											game.turn++;
+											game.passCount = 0;
 											game.save(function(e6, savedGame) {
 												Player.publishUpdate(savedPlayer.id, {
 													change: 'runes',
@@ -2424,6 +2467,7 @@ module.exports = {
 											}
 
 											game.turn++;
+											game.passCount = 0;
 											game.save(function(e6, savedGame) {
 												Game.publishUpdate(savedGame.id, {
 													change: 'sevenScuttled',
@@ -2494,10 +2538,6 @@ module.exports = {
 								var validRank = card.rank <= 7 || card.rank === 9;
 								if (validRank) {
 									Player.findOne(req.body.enemyPlayerId).populateAll().exec(function (datError, victim) {
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
 										if (card.rank === 2 || card.rank === 9) {
 											console.log("played a 2, or 9");
 											var queenCount = 0;
@@ -2839,6 +2879,7 @@ module.exports = {
 							thief.hand.remove(req.body.jackId);
 							points.attachments.add(req.body.jackId);
 							game.turn++;
+							game.passCount = 0;
 						
 							return [game.save(), thief.save(), victim.save(), points.save()];
 						} else {return [Promise.reject("Opponent has Queen")];}		
@@ -2977,6 +3018,7 @@ module.exports = {
 									thief.hand.remove(req.body.jackId);
 									points.attachments.add(req.body.jackId);
 									game.turn++;
+									game.passCount = 0;
 									return [game.save(), thief.save(), victim.save(), points.save()];
 								} else {return [Promise.reject("Opponent has Queen")];}
 							} else {return [Promise.reject("Invalid Rank")];}
@@ -3026,6 +3068,39 @@ module.exports = {
 			}).catch(function(reason){
 				console.log("Error in spread()");
 				console.log(reason);
+			});
+		}
+	},
+
+	pass: function (req, res) {
+		console.log("Passing turn");
+		if (req.body.hasOwnProperty('gameId')) {
+			Game.findOne(req.body.gameId).exec(function (error, game){
+				if(error || !game){
+					console.log("Game was not found");
+					res.send(404);
+				}else{
+					if(game.passCount < 2){
+						game.passCount++;
+						game.turn++;
+						game.save(function (err, savedGame) {
+							Game.publishUpdate(game.id, {
+								change: 'pass',
+								game: savedGame
+							});
+							res.send({
+								pass: true,
+								game: savedGame
+							});
+						});
+					}else{
+						Game.publishUpdate(game.id, {
+							change: 'stalemate',
+							game: game
+						});
+
+					}
+				}
 			});
 		}
 	},

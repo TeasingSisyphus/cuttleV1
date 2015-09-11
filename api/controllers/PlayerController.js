@@ -143,6 +143,8 @@ module.exports = {
 													}
 
 													game.turn++;
+													game.passCount = 0;
+
 													Player.publishUpdate(savedPlayer.id, {
 														change: 'points',
 														victor: victor,
@@ -244,6 +246,7 @@ module.exports = {
 													}
 
 													game.turn++;
+													game.passCount = 0;
 													Player.publishUpdate(savedPlayer.id, {
 														change: 'runes',
 														victor: victor,

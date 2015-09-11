@@ -133,6 +133,16 @@
 			});
 		};
 
+		this.pass = function() {
+			console.log("Requesting to pass");
+			io.socket.get('/game/pass', {
+				gameId: $scope.game.gameId,
+				playerId: $scope.game.players[$scope.game.pNum].id,
+			}, function(res) {
+				console.log(res);
+			});
+		};
+
 		//Selects a card by changing its class to apply a green border and capturing its id and index in your hand
 		//If a card is already selected, use the previous index to find it and revert its class to normal
 		//If the requested card was already selected, deselect it
@@ -810,6 +820,17 @@
 					console.log("\nGame was updated.");
 					console.log(obj.data);
 					switch (obj.data.change) {
+						case 'stalemate':
+							console.log('\nIn stalemate');
+							alert("A stalemate has been reached");
+							break;
+
+						case 'pass':
+							console.log('\nIn pass case');
+							$scope.game.turn = obj.data.game.turn;
+							alert("A player has passed");
+							break;
+
 						case 'draw':
 							console.log('\nIn draw case');
 							$scope.game.stacking = false;

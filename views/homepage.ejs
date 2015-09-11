@@ -66,7 +66,8 @@
                         </div>
                         <div class='row'>
                             <button ng-click='game.showDeck = !game.showDeck'>Toggle Deck</button>
-                            <img src='/images/word-ace-card-back.jpg' ng-click="game.draw()" class='midCard col-xs-2 col-md-2 col-lg-2 col-sm-2 img-responsive'></img>
+                            <img src='/images/word-ace-card-back.jpg' ng-click="game.draw()" ng-show='game.topCard' class='midCard col-xs-2 col-md-2 col-lg-2 col-sm-2 img-responsive'></img>
+                            <img src='/images/emptyDeck.jpg' ng-hide='game.topCard' ng-click="game.pass()" class='midCard col-xs-2 col-md-2 col-lg-2 col-sm-2 img-responsive'></img>
                             <!-- <div class='col-xs-5 col-md-5 col-lg-5 col-sm-5'></div> -->
                             <img ng-src="{{game.scrapTopImg}}"  class='midCard col-md-offset-4 col-xs-2 col-md-2 col-lg-2 col-sm-2 img-responsive' ng-click='game.oneOff()'></img>
                             <div class='col-xs-4 col-md-4 col-lg-4 col-sm-4'></div>
