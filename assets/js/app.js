@@ -183,10 +183,14 @@
 						$scope.game.selCard = card;
 						switch ($scope.game.whichCard) {
 							case 0:
-								$scope.game.secondCard.class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
+								if ($scope.game.secondCard) {
+									$scope.game.secondCard.class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
+								}
 								break;
 							case 1:
-								$scope.game.topCard.class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
+								if ($scope.game.topCard) {
+									$scope.game.topCard.class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
+								}
 								break;
 						}
 					} else {
@@ -629,8 +633,12 @@
 						$scope.game.topTwo = [$scope.game.topCard, $scope.game.secondCard];
 						if (!res.sevenOneOff) {
 							//Then deselect the chosen card from the top two cards
-							$scope.game.topCard.class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
-							$scope.game.secondCard.class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
+							if ($scope.game.topCard) {
+								$scope.game.topCard.class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
+							}
+							if ($scope.game.secondCard) {
+								$scope.game.secondCard.class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
+							}
 						} else {
 							$scope.game.topTwoPick = false;
 							$scope.$apply();
