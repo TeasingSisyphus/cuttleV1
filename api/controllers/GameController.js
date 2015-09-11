@@ -379,7 +379,7 @@ module.exports = {
 						//Check if it is the current players turn.  If it is add a card to their hand and remove a card from the deck
 						//After that, make the second card of the deck the first card of the deck and find a new second card.
 						//Add back && foundPlayer.hand.length !== 8
-						if (game.turn % 2 === foundPlayer.pNum && foundPlayer.hand.length <= 50) {
+						if (game.turn % 2 === foundPlayer.pNum && foundPlayer.hand.length <= 7) {
 							if (game.deck.length != 0) {
 								foundPlayer.hand.add(game.topCard);
 								foundPlayer.frozenId = null;
