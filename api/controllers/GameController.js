@@ -610,6 +610,47 @@ module.exports = {
 															switch (card.rank) {
 																case 1:
 																case 3:
+																	var log = "Player " + player.pNum + " has attempted to play the " + card.alt + " for its one off effect";
+																	game.log.push(log);
+																	console.log(game);
+																	if(game.scrap.length === 0){
+																		console.log("Length: " + game.scrap.length);
+																		console.log("There is no valid scrap target");
+																		res.send({
+																		 	oneOff: false,
+																		 	firstEffect: true,
+																		 	validRank: null,
+																		 	yourTurn: yourTurn,
+																		 	card: card,
+																		});
+																	}else{
+																		var log = "Player " + player.pNum + " has played the " + card.alt + " for its one off effect.";
+																		game.log.push(log);
+																		game.firstEffect = card;
+																		player.hand.remove(card.id);
+																		game.save(function (er, savedGame) {
+																			player.save(function (e, savedPlayer) {
+																				Game.publishUpdate(game.id, {
+																					change: 'oneOff',
+																					game: savedGame,
+																					player: savedPlayer,
+																					card: card
+																				}, req);
+																				res.send({
+																					oneOff: true,
+																					firstEffect: true,
+																					validRank: validRank,
+																					yourTurn: yourTurn,
+																					game: savedGame,
+																					player: savedPlayer,
+																					card: card,
+																					hadTarget: null,
+																					lowDeck: true
+																				});
+																			});
+																		});
+																	}
+																	break;
 																case 4:
 																case 5:
 																	if (!game.topCard) {
@@ -2453,13 +2494,16 @@ module.exports = {
 								var validRank = card.rank <= 7 || card.rank === 9;
 								if (validRank) {
 									Player.findOne(req.body.enemyPlayerId).populateAll().exec(function (datError, victim) {
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 										if (card.rank === 2 || card.rank === 9) {
 											console.log("played a 2, or 9");
 											var queenCount = 0;
 											victim.runes.forEach(function (rune, index, runes) {
 												console.log(rune);
-												console.log(rune.rank === 12);
+											console.log(rune.rank === 12);
 												if (rune.rank === 12) {
 													queenCount++;
 												}
@@ -2510,7 +2554,7 @@ module.exports = {
 															});
 														});
 														break;
-
+							
 													case 1:
 														Card.findOne(req.body.targetId).populateAll().exec(function (anError, targetCard) {
 															if (targetCard.rank === 12) {
@@ -2556,22 +2600,21 @@ module.exports = {
 																	});
 																});																
 															} else {
-																	res.send({
-																		sevenOneOff: false,
-																		validRank: validRank,
-																		yourTurn: yourTurn,
-																		game: game,
-																		card: card,
-																		whichCard: req.body.whichCard,
-																		queenCount: queenCount
-																	});																
+																res.send({
+																	sevenOneOff: false,
+																	validRank: validRank,
+																	yourTurn: yourTurn,
+																	game: game,
+																	card: card,
+																	whichCard: req.body.whichCard,
+																	queenCount: queenCount
+																});																
 															}
 														});
 														break;
 													case 2:
 													case 3:
 													case 4:
-													console.log
 														res.send({
 															sevenOneOff: false,
 															validRank: validRank,
@@ -2582,7 +2625,6 @@ module.exports = {
 														});
 														break;
 												}
-
 											} else {
 												res.send({
 													sevenOneOff: false,
@@ -2673,19 +2715,13 @@ module.exports = {
 												});
 											});											
 										}
-
-
 									});
-
 								}
 							}
 						});
 					}
-
 				}
 			});
-
-
 		}
 	},
 

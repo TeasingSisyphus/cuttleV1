@@ -670,7 +670,7 @@
 									$scope.game.players[$scope.game.pNum].hand[$scope.game.selIndex].class = 'card';
 									console.log("OneOff was denied");
 									if(res.hasOwnProperty('queenCount')){
-										console.log("Response has quennCount");
+										console.log("Response has queenCount");
 										if(res.queenCount > 0){
 											console.log("Non-zero Queen Count");
 											alert("Queen in play, stack will now resolve");
