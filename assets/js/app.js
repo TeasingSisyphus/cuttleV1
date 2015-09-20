@@ -113,6 +113,13 @@
 		this.showDeck = false;     //Boolean to toggle displaying the deck
 
 
+		this.promise = function () {
+			console.log("Promising!");
+			io.socket.get('/game/promiseTest', {gameId: $scope.game.gameId}, function (res) {
+				console.log(res);
+			});
+		}
+
 	        //Notifies server when user is ready
                 //Fires when a user clicks the ready button
 	        //Once BOTH players are ready, BOTH players are brought to the game simultaneously
@@ -806,6 +813,8 @@
 			$scope.game.pNum = game.players.length - 1;
 			$scope.game.deck = game.deck;
 		});
+		
+
 
 		///////////////////////////
 		// Socket Event Handlers //
