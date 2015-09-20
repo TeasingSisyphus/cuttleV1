@@ -47,7 +47,6 @@ var findGame = function (gameId) {
 };
 
 var findPlayers = function (idArray) {
-	console.log("\nFinding Players");
 	return new Promise(function (resolve, reject) {
 		Player.find(idArray).populate('hand').populate('points').populate('runes').sort('pNum ASC').exec(function (error, players) {
 			if (error || !players[0] || !players[1]) {
@@ -61,7 +60,6 @@ var findPlayers = function (idArray) {
 };
 
 var findCards = function (idArray) {
-	console.log("\nFinding Cards");
 	return new Promise(function (resolve, reject) {
 		Card.find(idArray).populate('attachments').exec(function (error, cards) {
 			if (error || !cards) {
@@ -78,13 +76,8 @@ var populateGame = function (gameId) {
 	return new Promise(function (resolve, reject) {
 		var promiseGame = findGame(gameId);
 		promiseGame.then(function(game) {
-			console.log("game in populate:");
-			console.log(game);
-	
 			var promisePlayers = findPlayers([game.players[0].id, game.players[1].id]);
 			promisePlayers.then(function(players) {
-						console.log("\nPlayers in populate:");
-						console.log(players);
 						var p0CardIds = [];
 						var p1CardIds = [];
 						
@@ -103,11 +96,9 @@ var populateGame = function (gameId) {
 						fullGame.winner = game.winner;		
 										
 						players[0].points.forEach(function (point, index, points) {
-							console.log(point);
 							p0CardIds.push(point.id);
 						});
 						players[1].points.forEach(function (point, index, points) {
-							console.log(point);
 							p1CardIds.push(point.id);
 						});
 						
@@ -3081,7 +3072,14 @@ module.exports = {
 					victim: savedVictim,
 					targetCard: savedPoints
 				});
-				res.send({jack: true, thief: savedThief, victim: savedVictim, points: savedPoints});
+				var fullGame = populateGame(savedGame.id);
+				fullGame.then(function success (val) {
+				res.send({jack: true, thief: savedThief, victim: savedVictim, points: savedPoints, populatedGame: val});
+				}, function failure (reason) {
+					console.log("Promise to populate game rejected:");
+					console.log(reason);
+					res.send({jack: true, thief: savedThief, victim: savedVictim, points: savedPoints, populatedGameFailed: reason});				
+				});
 				
 			}, function(reason){
 				console.log("Spread was passed a rejected promise");
