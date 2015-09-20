@@ -46,6 +46,20 @@ var findGame = function (gameId) {
 	});
 };
 
+var findPlayers = function (idArray) {
+	console.log("\nFinding Players");
+	return new Promise(function (resolve, reject) {
+		Player.find(idArray).populate('hand').populate('points').populate('runes').sort('pNum ASC').exec(function (error, players) {
+			if (error || !players[0] || !players[1]) {
+				console.log("Can't find players for findPlayers");
+				return reject(error);
+			} else {
+				return resolve(players);
+			}
+		});
+	});
+};
+
 var findCards = function (idArray) {
 	console.log("\nFinding Cards");
 	return new Promise(function (resolve, reject) {
@@ -62,16 +76,15 @@ var findCards = function (idArray) {
 
 var populateGame = function (gameId) {
 	return new Promise(function (resolve, reject) {
-		Game.findOne(gameId).populateAll().exec(function (error, game) {
-			if (error || !game) {
-				console.log("Can't find game: " +  gameId + " for populateGame");
-				return reject(error);
-			} else {
-				Player.find([game.players[0].id, game.players[1].id]).populate('hand').populate('points').populate('runes').sort('pNum ASC').exec(function (erro, players) {
-					if (erro || !players[0] || !players[1]) {
-						console.log("Can't find players ing game " + gameId + " for populateGame");
-						reject(erro);
-					} else {
+		var promiseGame = findGame(gameId);
+		promiseGame.then(function(game) {
+			console.log("game in populate:");
+			console.log(game);
+	
+			var promisePlayers = findPlayers([game.players[0].id, game.players[1].id]);
+			promisePlayers.then(function(players) {
+						console.log("\nPlayers in populate:");
+						console.log(players);
 						var p0CardIds = [];
 						var p1CardIds = [];
 						
@@ -91,11 +104,11 @@ var populateGame = function (gameId) {
 										
 						players[0].points.forEach(function (point, index, points) {
 							console.log(point);
-								p0CardIds.push(point.id);
+							p0CardIds.push(point.id);
 						});
 						players[1].points.forEach(function (point, index, points) {
 							console.log(point);
-								p1CardIds.push(point.id);
+							p1CardIds.push(point.id);
 						});
 						
 						var p0Points = findCards(p0CardIds);
@@ -127,14 +140,14 @@ var populateGame = function (gameId) {
 							fullGame.players = [tempP0, tempP1];
 							return resolve(fullGame);
 							
-						});
-						
-					}
-				});  
-			}
+						});				
+			});
+	
 		});
-	}); 
-}; 
+	});
+
+};
+ 
 var sortPlayers = function(players) {
 	var sorted = [];
 
