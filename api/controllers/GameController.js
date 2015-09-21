@@ -72,6 +72,67 @@ var findCards = function (idArray) {
 	});
 };
 
+//Inputs a game and an array of 2 players
+//Returns a promise resolving to a fully populated game
+var popGame = function (game, players) {
+	return new Promise(function (resolve, reject) {
+		var fullGame = new tempGame;
+		var p0 = new tempPlayer;
+		var p1 = new tempPlayer;
+		var p0PointIds = [];
+		var p1PointIds = [];
+		
+		fullGame.id = game.id;
+		fullGame.name = game.name;
+		fullGame.deck = game.deck;
+		fullGame.scrap = game.scrap;
+		fullGame.log = game.log;
+		fullGame.topCard = game.topCard;
+		fullGame.secondCard = game.secondCard;
+		fullGame.scrapTop = game.scrapTop;
+		fullGame.turn = game.turn;
+		fullGame.firstEffect = game.firstEffect;
+		fullGame.twos = game.twos;
+		fullGame.winner = game.winner;	
+		
+		//Players' points must be populated with 'attachments'
+		players[0].points.forEach(function (point, index, points) {
+			p0PointIds.push(point.id);
+		});
+		players[1].points.forEach(function (point, index, points) {
+			p1PointIds.push(point.id);
+		});
+		
+		
+		
+		p0.id = players[0].id;
+		p0.socketId = players[0].socketId;
+		p0.pNum = players[0].pNum;
+		p0.currentGame = players[0].currentGame;
+		p0.hand = players[0].hand;
+		p0.runes = players[0].runes;
+		
+		p1.id = players[1].id;
+		p1.socketId = players[1].socketId;
+		p1.pNum = players[1].pNum;
+		p1.currentGame = players[1].currentGame;
+		p1.hand = players[1].hand;
+		p1.runes = players[1].runes;	
+		
+		var p0Points = findCards(p0PointIds);
+		var p1Points = findCards(p1PointIds);
+		
+		Promise.all([p0Points, p1Points]).then(function (vals) {
+			p0.points = vals[0];
+			p1.points = vals[1];
+			fullGame.players = [p0, p1];
+			return resolve(fullGame);			
+		});
+
+		
+	});
+};
+
 var populateGame = function (gameId) {
 	return new Promise(function (resolve, reject) {
 		var promiseGame = findGame(gameId);
@@ -3078,7 +3139,7 @@ module.exports = {
 				}, function failure (reason) {
 					console.log("Promise to populate game rejected:");
 					console.log(reason);
-					res.send({jack: true, thief: savedThief, victim: savedVictim, points:c savedPoints, populatedGameFailed: reason});				
+					res.send({jack: true, thief: savedThief, victim: savedVictim, points: savedPoints, populatedGameFailed: reason});				
 				});
 				
 			}, function(reason){
@@ -3227,6 +3288,13 @@ module.exports = {
 		                Game.update({id: savedGame.id}, savedGame);
 
 				var playerSort = sortPlayers([savedThief, savedVictim]);
+				//Call game populating promise
+				var fullGame = popGame(savedGame, playerSort).then(function (val) {
+					res.send({jack: true, thief: savedThief, victim: savedVictim, points: savedPoints, popGame: val});
+
+				});
+				
+				
 				Game.publishUpdate(savedGame.id, {
 					change: 'jack',
 					players: playerSort,
@@ -3235,7 +3303,6 @@ module.exports = {
 					victim: savedVictim,
 					targetCard: savedPoints
 				});
-				res.send({jack: true, thief: savedThief, victim: savedVictim, points: savedPoints});
 				
 			}, function(reason){
 				console.log("Spread was passed a rejected promise");
