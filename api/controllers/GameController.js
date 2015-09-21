@@ -7,6 +7,138 @@
 
 var Promise = require('bluebird');
 
+var tempGame = function () { //Used to fully populate a game for front-end updates
+	this.id = null;
+	this.name = '';
+	this.turn = null;
+	this.players = [];
+	this.deck = [];
+	this.scrap = [];
+	this.topCard = {};
+	this.secondCard = {};
+	this.scrapTop = {};
+	this.firstEffect = {};
+	this.twos = [];
+	this.winner = null;
+	this.log = [];
+};
+
+var tempPlayer = function () {
+	this.id = null;
+	this.socketId = '';
+	this.pNum = null;
+	this.currentGame = null;
+	this.points = [];
+	this.runes = [];
+	this.hand = [];
+};
+
+var findGame = function (gameId) {
+	return new Promise(function (resolve, reject) {
+		Game.findOne(gameId).populateAll().exec(function (error, game) {
+			if (error || !game) {
+				console.log("Can't find game for findGame");
+				return reject(error);
+			} else {
+				return resolve(game);
+			}
+		});
+	});
+};
+
+var findPlayers = function (idArray) {
+	return new Promise(function (resolve, reject) {
+		Player.find(idArray).populate('hand').populate('points').populate('runes').sort('pNum ASC').exec(function (error, players) {
+			if (error || !players[0] || !players[1]) {
+				console.log("Can't find players for findPlayers");
+				return reject(error);
+			} else {
+				return resolve(players);
+			}
+		});
+	});
+};
+
+var findCards = function (idArray) {
+	return new Promise(function (resolve, reject) {
+		Card.find(idArray).populate('attachments').exec(function (error, cards) {
+			if (error || !cards) {
+			 	console.log("Can't find cards for findCards");
+				return reject(error);
+			} else {
+				return resolve(cards);
+			}
+		});
+	});
+};
+
+var populateGame = function (gameId) {
+	return new Promise(function (resolve, reject) {
+		var promiseGame = findGame(gameId);
+		promiseGame.then(function(game) {
+			var promisePlayers = findPlayers([game.players[0].id, game.players[1].id]);
+			promisePlayers.then(function(players) {
+						var p0CardIds = [];
+						var p1CardIds = [];
+						
+						var fullGame = new tempGame;
+						fullGame.id = game.id;
+						fullGame.name = game.name;
+						fullGame.deck = game.deck;
+						fullGame.scrap = game.scrap;
+						fullGame.log = game.log;
+						fullGame.topCard = game.topCard;
+						fullGame.secondCard = game.secondCard;
+						fullGame.scrapTop = game.scrapTop;
+						fullGame.turn = game.tun;
+						fullGame.firstEffect = game.firstEffect;
+						fullGame.twos = game.twos;
+						fullGame.winner = game.winner;		
+										
+						players[0].points.forEach(function (point, index, points) {
+							p0CardIds.push(point.id);
+						});
+						players[1].points.forEach(function (point, index, points) {
+							p1CardIds.push(point.id);
+						});
+						
+						var p0Points = findCards(p0CardIds);
+						var p1Points = findCards(p1CardIds);
+						Promise.all([p0Points, p1Points]).then(function (vals) {
+
+							var tempP0 = new tempPlayer;
+							var tempP1 = new tempPlayer;
+							tempP0.id = players[0].id;
+							tempP0.socketId = players[0].socketId;
+							tempP0.currentGame = players[0].currentGame;
+							tempP0.pNum = players[0].pNum;
+							tempP0.hand = players[0].hand;
+							tempP0.runes = players[0].runes;
+							
+							tempP1.id = players[1].id;
+							tempP1.socketId = players[1].socketId;
+							tempP1.currentGame = players[1].currentGame;
+							tempP1.pNum = players[1].pNum;
+							tempP1.hand = players[1].hand;
+							tempP1.runes = players[1].runes;		
+												
+							vals[0].forEach(function (point, index, vals0) {
+								tempP0.points.push(point);
+							});
+							vals[1].forEach(function (point, index, vals1) {
+								tempP1.points.push(point);
+							});							
+							fullGame.players = [tempP0, tempP1];
+							return resolve(fullGame);
+							
+						});				
+			});
+	
+		});
+	});
+
+};
+ 
 var sortPlayers = function(players) {
 	var sorted = [];
 
@@ -2940,7 +3072,14 @@ module.exports = {
 					victim: savedVictim,
 					targetCard: savedPoints
 				});
-				res.send({jack: true, thief: savedThief, victim: savedVictim, points: savedPoints});
+				var fullGame = populateGame(savedGame.id);
+				fullGame.then(function success (val) {
+				res.send({jack: true, thief: savedThief, victim: savedVictim, points: savedPoints, populatedGame: val});
+				}, function failure (reason) {
+					console.log("Promise to populate game rejected:");
+					console.log(reason);
+					res.send({jack: true, thief: savedThief, victim: savedVictim, points: savedPoints, populatedGameFailed: reason});				
+				});
 				
 			}, function(reason){
 				console.log("Spread was passed a rejected promise");
@@ -3157,8 +3296,17 @@ module.exports = {
 		}
 	},
 
-	test: function (req, res) {
-		console.log("\nTesting!");
-		res.send({foob: "JASON"});
+	promiseTest: function (req, res) {
+		console.log("\nTesting Promises!");
+		var promiseGame = populateGame(req.body.gameId);
+		promiseGame.then(function success(val) {
+			console.log("\n\nGot game");
+			res.send(val);	
+		}, function fail (reason) {
+			console.log("Promise failed for reason: ");
+			console.log(reason);
+			res.send(reason);
+		});
+		
 	},
 };

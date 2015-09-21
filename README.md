@@ -9,6 +9,10 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 
 
 ## DONE
+*	Added promise returning functions to find games, players, cards, and a fully populated game with all players,
+	*	their cards, and the attachments of those cards that can be called from within the scope of any action, or find
+	*	Call this populating function in order to send the fullGame through res.send() in the sevenJack action
+*	Updated homepage with scrolling textbox of rules
 *	Pass action now checks that the it is the requesting player's turn before passing
 *	Deck length counter now adjusts to 1 and no cards in deck
 *	Added log to jack and sevenJack actions
