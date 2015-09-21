@@ -90,7 +90,7 @@ var populateGame = function (gameId) {
 						fullGame.topCard = game.topCard;
 						fullGame.secondCard = game.secondCard;
 						fullGame.scrapTop = game.scrapTop;
-						fullGame.turn = game.tun;
+						fullGame.turn = game.turn;
 						fullGame.firstEffect = game.firstEffect;
 						fullGame.twos = game.twos;
 						fullGame.winner = game.winner;		
@@ -3078,7 +3078,7 @@ module.exports = {
 				}, function failure (reason) {
 					console.log("Promise to populate game rejected:");
 					console.log(reason);
-					res.send({jack: true, thief: savedThief, victim: savedVictim, points: savedPoints, populatedGameFailed: reason});				
+					res.send({jack: true, thief: savedThief, victim: savedVictim, points:c savedPoints, populatedGameFailed: reason});				
 				});
 				
 			}, function(reason){
