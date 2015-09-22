@@ -609,11 +609,15 @@ module.exports = {
 									handSize: foundPlayer.hand.length !== 8,
 									gameHadTopCard: game.topCard != null
 								});
-								Game.publishUpdate(game.id, {
-									game: savedGame,
-									player: savedPlayer,
-									change: 'draw'
+								var fullGame = populateGame(savedGame.id).then(function (val) {
+									Game.publishUpdate(game.id, {
+										game: savedGame,
+										player: savedPlayer,
+										change: 'draw',
+										fullGame: val
+									});								
 								});
+
 							});
 						});
 					}
@@ -649,7 +653,7 @@ module.exports = {
 		}
 	},
 
-        //Handles cards being played for scuttled
+    //Handles cards being played for scuttled
 	scuttle: function(req, res) {
 		if (req.isSocket) {
 			console.log('\nSocket ' + req.socket.id + ' is requesting to scuttle');
@@ -709,21 +713,26 @@ module.exports = {
 											game.save(function(err, savedGame) {
 												playerSort[0].save(function(er, savedP0) {
 													playerSort[1].save(function(e, savedP1) {
-														res.send({
-															scuttled: true,
-															highRank: scuttler.rank > target.rank,
-															sameRank: scuttler.rank === target.rank,
-															highSuit: scuttler.suit > target.suit,
-															frozen: cardIsFrozen
+														var fullGame = popGame(savedGame, [savedP0, savedP1]).then(function (val) {
+															res.send({
+																scuttled: true,
+																highRank: scuttler.rank > target.rank,
+																sameRank: scuttler.rank === target.rank,
+																highSuit: scuttler.suit > target.suit,
+																frozen: cardIsFrozen,
+																fullGame: val
+															});
+															Game.publishUpdate(game.id, {
+																game: savedGame,
+																players: [savedP0, savedP1],
+																change: 'scuttle',
+																attachedLen: attachLen,
+																attached: attached,
+																victimPnum: (req.body.pNum + 1) % 2,
+																fullGame: val
+															});													
 														});
-														Game.publishUpdate(game.id, {
-															game: savedGame,
-															players: [savedP0, savedP1],
-															change: 'scuttle',
-															attachedLen: attachLen,
-															attached: attached,
-															victimPnum: (req.body.pNum + 1) % 2
-														});
+
 													});
 												});
 											});
@@ -757,7 +766,7 @@ module.exports = {
 		}
 	},
 
-        //Handles cards being played one-off effects
+    //Handles cards being played one-off effects
 	oneOff: function(req, res) {
 		if (req.isSocket) {
 			console.log("\nSocket " + req.socket.id + ' is requesting to play oneOff to stack');
@@ -1175,7 +1184,7 @@ module.exports = {
 		}
 	},
 
-        //Function to handle one-off effect resolution
+    //Function to handle one-off effect resolution
 	resolve: function(req, res) {
 		if (req.isSocket) {
 			console.log("\nStack resolution requested from Socket " + req.socket.id);
@@ -1362,26 +1371,29 @@ module.exports = {
 																	
 																	Promise.all([promiseSavedGame, promiseSavedP0, promiseSavedP1, promiseSavedTargetCard, promiseSavedStolenPoints]).then(
 																		function (values) {
-																			console.log('\nInside two resolve promise.all. Logging values');
 																			console.log(values);
-																			console.log('PromiseSavedTargetCard below')
-																			console.log(values[3]);
-																			Game.publishUpdate(game.id, {
-																				change: 'resolvedTwo',
-																				game: values[0],
-																				players: [values[1], values[2]],
-																				target: values[3],
-																				stolenPoints: values[4],
-																				victimPNum: req.body.pNum,
+																			var fullGame = popGame(values[0], [values[1], values[2]]).then(function (val) {
+																				Game.publishUpdate(game.id, {
+																					change: 'resolvedTwo',
+																					game: values[0],
+																					players: [values[1], values[2]],
+																					target: values[3],
+																					stolenPoints: values[4],
+																					victimPNum: req.body.pNum,
+																					fulLGame: val
+																				});
+																				res.send({
+																					resolvedTwo: true,
+																					game: values[0],
+																					players: [values[1], values[2]],
+																					target: values[3],
+																					stolenPoints: values[4],
+																					victimPNum: req.body.pNum,
+																					fullGame: val
+																				});																			
 																			});
-																			res.send({
-																				resolvedTwo: true,
-																				game: values[0],
-																				players: [values[1], values[2]],
-																				target: values[3],
-																				stolenPoints: values[4],
-																				victimPNum: req.body.pNum,
-																			});
+																			
+
 																		}, function (reason) {
 																			console.log('Saving promise in two was rejected for reason: ');
 																			console.log(reason);
@@ -1399,18 +1411,23 @@ module.exports = {
 																console.log("It is now turn: " + savedGame.turn);
 																playerSort[0].save(function(e, savedP0) {
 																	playerSort[1].save(function(e6, savedP1) {
-																		Game.publishUpdate(game.id, {
-																			change: 'resolvedTwo',
-																			game: savedGame,
-																			players: [savedP0, savedP1],
-																			target: targetCard
+																		var fullGame = popGame(savedGame, [savedP0, savedP1]).then(function (val) {
+																			Game.publishUpdate(game.id, {
+																				change: 'resolvedTwo',
+																				game: savedGame,
+																				players: [savedP0, savedP1],
+																				target: targetCard,
+																				fullGame: val
+																			});
+																			res.send({
+																				resolvedTwo: true,
+																				game: savedGame,
+																				players: [savedP0, savedP1],
+																				fullGame: val
+																			});
+																			card.save();																		
 																		});
-																		res.send({
-																			resolvedTwo: true,
-																			game: savedGame,
-																			players: [savedP0, savedP1]
-																		});
-																		card.save();
+
 																	});
 																});
 															});
@@ -1462,20 +1479,25 @@ module.exports = {
 																		player.save(function (playerError, savedPlayer){
 
 																			var sortedSavedPlayers = sortPlayers([savedVictim, savedPlayer]);
-
-																			res.send({
-																				game: savedGame,
-																				player: savedPlayer,
-																				victim: savedVictim,
+																			var fullGame = popGame(savedGame, sortedSavedPlayers).then(function (val) {
+																				res.send({
+																					game: savedGame,
+																					player: savedPlayer,
+																					victim: savedVictim,
+																					fullGame: val
+																				});
+	
+																				Game.publishUpdate(savedGame.id, {
+																					change: 'fourAutoDiscard',
+																					game: savedGame,
+																					players: sortedSavedPlayers,
+																					victim: savedVictim,
+																					player: savedPlayer,
+																					fullGame: val
+																				});																			
 																			});
 
-																			Game.publishUpdate(savedGame.id, {
-																				change: 'fourAutoDiscard',
-																				game: savedGame,
-																				players: sortedSavedPlayers,
-																				victim: savedVictim,
-																				player: savedPlayer
-																			});
+
 
 																		});
 																	});
@@ -1735,12 +1757,16 @@ module.exports = {
 																				rune.img = path;
 																			}
 																		});				
-																		var playerSort = sortPlayers([savedP0, savedP1]);														
-																		Game.publishUpdate(game.id, {
-																			change: 'resolvedSix',
-																			game: savedGame,
-																			players: playerSort
-																		});
+																		var playerSort = sortPlayers([savedP0, savedP1]);	
+																		var fullGame = popGame(savedGame, playerSort).then(function (val) {
+																			Game.publishUpdate(game.id, {
+																				change: 'resolvedSix',
+																				game: savedGame,
+																				players: playerSort,
+																				fullGame: val
+																			});																		
+																		});													
+
 																	});
 																});
 															});
@@ -1954,15 +1980,19 @@ module.exports = {
 																targetCard.save(function(e8, savedTargetCard) {
 																	playerSort[0].save(function(e, savedP0) {
 																		playerSort[1].save(function(e6, savedP1) {
-																			Game.publishUpdate(game.id, {
-																				change: 'resolvedNine',
-																				game: savedGame,
-																				players: [savedP0, savedP1],
-																				target: targetCard,
-																				stolenPoints: null,
-																				victimPNum: req.body.pNum,
-																				targetHadAttachments: false
+																			var fullGame = popGame(savedGame, [savedP0, savedP1]).then(function (val) {
+																				Game.publishUpdate(game.id, {
+																					change: 'resolvedNine',
+																					game: savedGame,
+																					players: [savedP0, savedP1],
+																					target: targetCard,
+																					stolenPoints: null,
+																					victimPNum: req.body.pNum,
+																					targetHadAttachments: false,
+																					fullGame: val
+																				});																			
 																			});
+
 																		});
 																	});
 																});
@@ -2029,15 +2059,19 @@ module.exports = {
 																		function (values) {
 																			console.log("\nInside promise.all. Logging values");
 																			console.log(values);
-																			Game.publishUpdate(game.id, {
-																				change: 'resolvedNine',
-																				game: values[0],
-																				players: [values[1], values[2]],
-																				target: values[3],
-																				stolenPoints: values[4],
-																				victimPNum: req.body.pNum,
-																				targetHadAttachments: false
+																			var fullGame = popGame(values[0], [values[1], values[2]]).then(function (val) {
+																				Game.publishUpdate(game.id, {
+																					change: 'resolvedNine',
+																					game: values[0],
+																					players: [values[1], values[2]],
+																					target: values[3],
+																					stolenPoints: values[4],
+																					victimPNum: req.body.pNum,
+																					targetHadAttachments: false,
+																					fullGame: val
+																				});																			
 																			});
+
 																		}, function (reason) {
 																			console.log("Saving promise was rejected for reason:");
 																			console.log(reason);
@@ -2118,15 +2152,19 @@ module.exports = {
 																		function (values) {
 																			console.log("\nInside promise.all. Logging values");
 																			console.log(values);
-																			Game.publishUpdate(game.id, {
-																				change: 'resolvedNine',
-																				game: values[0],
-																				players: [values[1], values[2]],
-																				target: values[3],
-																				stolenPoints: null,
-																				victimPNum: req.body.pNum,
-																				targetHadAttachments: true
+																			var fullGame = popGame(values[0], [values[1], values[2]]).then(function (val) {
+																				Game.publishUpdate(game.id, {
+																					change: 'resolvedNine',
+																					game: values[0],
+																					players: [values[1], values[2]],
+																					target: values[3],
+																					stolenPoints: null,
+																					victimPNum: req.body.pNum,
+																					targetHadAttachments: true,
+																					fullGame: val
+																				});																			
 																			});
+
 																		}, function (reason) {
 																			console.log("Saving promise was rejected for reason:");
 																			console.log(reason);
@@ -2154,15 +2192,19 @@ module.exports = {
 															game.save(function(er, savedGame) {
 																playerSort[0].save(function(e, savedP0) {
 																	playerSort[1].save(function(e6, savedP1) {
-																		Game.publishUpdate(game.id, {
-																			change: 'resolvedNine',
-																			game: savedGame,
-																			players: [savedP0, savedP1],
-																			target: targetCard,
-																			stolenPoints: null,
-																			victimPNum: req.body.pNum,
-																			targetHadAttachments: false
+																		var fullGame = popGame(savedGame, [savedP0, savedP1]).then(function (val) {
+																			Game.publishUpdate(game.id, {
+																				change: 'resolvedNine',
+																				game: savedGame,
+																				players: [savedP0, savedP1],
+																				target: targetCard,
+																				stolenPoints: null,
+																				victimPNum: req.body.pNum,
+																				targetHadAttachments: false,
+																				fullGame: val
+																			});																	
 																		});
+
 																	});
 																})
 															});
@@ -2252,7 +2294,7 @@ module.exports = {
 		}
 	},
 
-        //Handles resolution of four one-off effect since resolve does not because the effect requires additional information
+    //Handles resolution of four one-off effect since resolve does not because the effect requires additional information
 	resolveFour: function(req, res) {
 		console.log('\n\nResolve four');
 		console.log(req.body);
@@ -2380,17 +2422,22 @@ module.exports = {
 											game.turn++;
 											game.passCount = 0;
 											game.save(function(e6, savedGame) {
-												Player.publishUpdate(savedPlayer.id, {
-													change: 'points',
-													victor: victor,
-													player: savedPlayer,
-													turn: game.turn
+												var fullGame = populateGame(savedGame.id).then(function (val) {
+													Player.publishUpdate(savedPlayer.id, {
+														change: 'points',
+														victor: victor,
+														player: savedPlayer,
+														turn: game.turn,
+														fullGame: val
+													});
+													res.send({
+														points: true,
+														turn: game.turn % 2 === player.pNum,
+														rank: card.rank <= 10,
+														fullGame: val
+													});												
 												});
-												res.send({
-													points: true,
-													turn: game.turn % 2 === player.pNum,
-													rank: card.rank <= 10
-												});
+
 											});
 										});
 
@@ -2508,18 +2555,23 @@ module.exports = {
 											game.turn++;
 											game.passCount = 0;
 											game.save(function(e6, savedGame) {
-												Player.publishUpdate(savedPlayer.id, {
-													change: 'runes',
-													victor: victor,
-													player: savedPlayer,
-													turn: game.turn
+												var fullGame = populateGame(savedGame.id).then(function (val) {
+													Player.publishUpdate(savedPlayer.id, {
+														change: 'runes',
+														victor: victor,
+														player: savedPlayer,
+														turn: game.turn,
+														fullGame: val
+													});
+													res.send({
+														runes: true,
+														glasses: glasses,
+														turn: game.turn % 2 === player.pNum,
+														rank: card.rank <= 10,
+														fullGame: val
+													});											
 												});
-												res.send({
-													runes: true,
-													glasses: glasses,
-													turn: game.turn % 2 === player.pNum,
-													rank: card.rank <= 10
-												});
+
 											});
 										});
 									}
@@ -2532,7 +2584,7 @@ module.exports = {
 		}
 	},
 
-        //Handles a scuttle being played off of a seven one-off effect
+    //Handles a scuttle being played off of a seven one-off effect
 	sevenScuttle: function(req, res) {
 		console.log("\nScuttling from seven");
 		if (req.isSocket && req.body.hasOwnProperty('gameId') && req.body.hasOwnProperty('scuttledPlayerId') && req.body.hasOwnProperty('scuttlerId') && req.body.hasOwnProperty('whichCard') && req.body.hasOwnProperty('targetId')) {
@@ -2662,22 +2714,27 @@ module.exports = {
 											game.turn++;
 											game.passCount = 0;
 											game.save(function(e6, savedGame) {
-												Game.publishUpdate(savedGame.id, {
-													change: 'sevenScuttled',
-													victor: victor,
-													game: savedGame,
-													player: savedPlayer,
-													jacksOnTarget: attachLen,
-													target: target
+												var fullGame = populateGame(savedGame.id).then(function (val) {
+													Game.publishUpdate(savedGame.id, {
+														change: 'sevenScuttled',
+														victor: victor,
+														game: savedGame,
+														player: savedPlayer,
+														jacksOnTarget: attachLen,
+														target: target,
+														fullGame: val
+													});
+													res.send({
+														scuttled: true,
+														turn: (game.turn + 1) % 2 === player.pNum,
+														validRank: validRank,
+														highRank: highRank,
+														highSuit: highSuit,
+														jacksOnTarget: attachLen,
+														fullGame: val
+													});											
 												});
-												res.send({
-													scuttled: true,
-													turn: (game.turn + 1) % 2 === player.pNum,
-													validRank: validRank,
-													highRank: highRank,
-													highSuit: highSuit,
-													jacksOnTarget: attachLen
-												});
+
 											});
 										});
 									} else {
@@ -3124,18 +3181,25 @@ module.exports = {
 	            Game.update({id: savedGame.id}, savedGame);
 
 				var playerSort = sortPlayers([savedThief, savedVictim]);
-				Game.publishUpdate(savedGame.id, {
-					change: 'sevenJack',
-					game: savedGame,
-					players: playerSort,
-				    victor: victor,
-					thief: savedThief,
-					victim: savedVictim,
-					targetCard: savedPoints
-				});
-				var fullGame = populateGame(savedGame.id);
-				fullGame.then(function success (val) {
-				res.send({jack: true, thief: savedThief, victim: savedVictim, points: savedPoints, populatedGame: val});
+
+				var fullGame = popGame(savedGame, playerSort).then(function success (val) {
+					Game.publishUpdate(savedGame.id, {
+						change: 'sevenJack',
+						game: savedGame,
+						players: playerSort,
+					    victor: victor,
+						thief: savedThief,
+						victim: savedVictim,
+						targetCard: savedPoints,
+						fullGame: val
+					});				
+					res.send({
+						jack: true, 
+						thief: savedThief, 
+						victim: savedVictim, 
+						points: savedPoints, 
+						fullGame: val
+					});
 				}, function failure (reason) {
 					console.log("Promise to populate game rejected:");
 					console.log(reason);
@@ -3280,29 +3344,30 @@ module.exports = {
 				console.log("Error in Promise.all()");
 				console.log(reason);
 			}).spread(function(savedGame, savedThief, savedVictim, savedPoints){ //handle errors
-			        var victor = winner(savedThief);
+			 	var victor = winner(savedThief);
 			    
-		                if (victor) {
+		        if (victor) {
 				    savedGame.winnner = savedThief.pNum;
-			        }  
-		                Game.update({id: savedGame.id}, savedGame);
+			    }  
+		        Game.update({id: savedGame.id}, savedGame);
 
 				var playerSort = sortPlayers([savedThief, savedVictim]);
 				//Call game populating promise
 				var fullGame = popGame(savedGame, playerSort).then(function (val) {
-					res.send({jack: true, thief: savedThief, victim: savedVictim, points: savedPoints, popGame: val});
-
-				});
-				
-				
-				Game.publishUpdate(savedGame.id, {
-					change: 'jack',
-					players: playerSort,
+					res.send({jack: true, thief: savedThief, victim: savedVictim, points: savedPoints, fullGame: val});
+					Game.publishUpdate(savedGame.id, {
+						change: 'jack',
+						players: playerSort,
 				        victor: victor,
-					thief: savedThief,
-					victim: savedVictim,
-					targetCard: savedPoints
+						thief: savedThief,
+						victim: savedVictim,
+						targetCard: savedPoints,
+						fullGame: val
+					});
 				});
+				
+				
+
 				
 			}, function(reason){
 				console.log("Spread was passed a rejected promise");

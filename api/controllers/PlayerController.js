@@ -5,6 +5,201 @@
  * @help        :: See http://links.sailsjs.org/docs/controllers
  */
 
+var Promise = require('bluebird');
+
+var tempGame = function () { //Used to fully populate a game for front-end updates
+	this.id = null;
+	this.name = '';
+	this.turn = null;
+	this.players = [];
+	this.deck = [];
+	this.scrap = [];
+	this.topCard = {};
+	this.secondCard = {};
+	this.scrapTop = {};
+	this.firstEffect = {};
+	this.twos = [];
+	this.winner = null;
+	this.log = [];
+};
+
+var tempPlayer = function () {
+	this.id = null;
+	this.socketId = '';
+	this.pNum = null;
+	this.currentGame = null;
+	this.points = [];
+	this.runes = [];
+	this.hand = [];
+};
+
+var findGame = function (gameId) {
+	return new Promise(function (resolve, reject) {
+		Game.findOne(gameId).populateAll().exec(function (error, game) {
+			if (error || !game) {
+				console.log("Can't find game for findGame");
+				return reject(error);
+			} else {
+				return resolve(game);
+			}
+		});
+	});
+};
+
+var findPlayers = function (idArray) {
+	return new Promise(function (resolve, reject) {
+		Player.find(idArray).populate('hand').populate('points').populate('runes').sort('pNum ASC').exec(function (error, players) {
+			if (error || !players[0] || !players[1]) {
+				console.log("Can't find players for findPlayers");
+				return reject(error);
+			} else {
+				return resolve(players);
+			}
+		});
+	});
+};
+
+var findCards = function (idArray) {
+	return new Promise(function (resolve, reject) {
+		Card.find(idArray).populate('attachments').exec(function (error, cards) {
+			if (error || !cards) {
+			 	console.log("Can't find cards for findCards");
+				return reject(error);
+			} else {
+				return resolve(cards);
+			}
+		});
+	});
+};
+
+//Inputs a game and an array of 2 players
+//Returns a promise resolving to a fully populated game
+var popGame = function (game, players) {
+	return new Promise(function (resolve, reject) {
+		var fullGame = new tempGame;
+		var p0 = new tempPlayer;
+		var p1 = new tempPlayer;
+		var p0PointIds = [];
+		var p1PointIds = [];
+		
+		fullGame.id = game.id;
+		fullGame.name = game.name;
+		fullGame.deck = game.deck;
+		fullGame.scrap = game.scrap;
+		fullGame.log = game.log;
+		fullGame.topCard = game.topCard;
+		fullGame.secondCard = game.secondCard;
+		fullGame.scrapTop = game.scrapTop;
+		fullGame.turn = game.turn;
+		fullGame.firstEffect = game.firstEffect;
+		fullGame.twos = game.twos;
+		fullGame.winner = game.winner;	
+		
+		//Players' points must be populated with 'attachments'
+		players[0].points.forEach(function (point, index, points) {
+			p0PointIds.push(point.id);
+		});
+		players[1].points.forEach(function (point, index, points) {
+			p1PointIds.push(point.id);
+		});
+		
+		
+		
+		p0.id = players[0].id;
+		p0.socketId = players[0].socketId;
+		p0.pNum = players[0].pNum;
+		p0.currentGame = players[0].currentGame;
+		p0.hand = players[0].hand;
+		p0.runes = players[0].runes;
+		
+		p1.id = players[1].id;
+		p1.socketId = players[1].socketId;
+		p1.pNum = players[1].pNum;
+		p1.currentGame = players[1].currentGame;
+		p1.hand = players[1].hand;
+		p1.runes = players[1].runes;	
+		
+		var p0Points = findCards(p0PointIds);
+		var p1Points = findCards(p1PointIds);
+		
+		Promise.all([p0Points, p1Points]).then(function (vals) {
+			p0.points = vals[0];
+			p1.points = vals[1];
+			fullGame.players = [p0, p1];
+			return resolve(fullGame);			
+		});
+
+		
+	});
+};
+
+var populateGame = function (gameId) {
+	return new Promise(function (resolve, reject) {
+		var promiseGame = findGame(gameId);
+		promiseGame.then(function(game) {
+			var promisePlayers = findPlayers([game.players[0].id, game.players[1].id]);
+			promisePlayers.then(function(players) {
+						var p0CardIds = [];
+						var p1CardIds = [];
+						
+						var fullGame = new tempGame;
+						fullGame.id = game.id;
+						fullGame.name = game.name;
+						fullGame.deck = game.deck;
+						fullGame.scrap = game.scrap;
+						fullGame.log = game.log;
+						fullGame.topCard = game.topCard;
+						fullGame.secondCard = game.secondCard;
+						fullGame.scrapTop = game.scrapTop;
+						fullGame.turn = game.turn;
+						fullGame.firstEffect = game.firstEffect;
+						fullGame.twos = game.twos;
+						fullGame.winner = game.winner;		
+										
+						players[0].points.forEach(function (point, index, points) {
+							p0CardIds.push(point.id);
+						});
+						players[1].points.forEach(function (point, index, points) {
+							p1CardIds.push(point.id);
+						});
+						
+						var p0Points = findCards(p0CardIds);
+						var p1Points = findCards(p1CardIds);
+						Promise.all([p0Points, p1Points]).then(function (vals) {
+
+							var tempP0 = new tempPlayer;
+							var tempP1 = new tempPlayer;
+							tempP0.id = players[0].id;
+							tempP0.socketId = players[0].socketId;
+							tempP0.currentGame = players[0].currentGame;
+							tempP0.pNum = players[0].pNum;
+							tempP0.hand = players[0].hand;
+							tempP0.runes = players[0].runes;
+							
+							tempP1.id = players[1].id;
+							tempP1.socketId = players[1].socketId;
+							tempP1.currentGame = players[1].currentGame;
+							tempP1.pNum = players[1].pNum;
+							tempP1.hand = players[1].hand;
+							tempP1.runes = players[1].runes;		
+												
+							vals[0].forEach(function (point, index, vals0) {
+								tempP0.points.push(point);
+							});
+							vals[1].forEach(function (point, index, vals1) {
+								tempP1.points.push(point);
+							});							
+							fullGame.players = [tempP0, tempP1];
+							return resolve(fullGame);
+							
+						});				
+			});
+	
+		});
+	});
+
+};
+
 //Returns a sorted array of player objects
 //Sorted by pNum
 var sortPlayers = function(players) {
@@ -144,20 +339,24 @@ module.exports = {
 
 													game.turn++;
 													game.passCount = 0;
+													var fullGame = populateGame(game.id).then(function (val) {
+														Player.publishUpdate(savedPlayer.id, {
+															change: 'points',
+															victor: victor,
+															player: savedPlayer,
+															turn: game.turn,
+															fullGame: val
+														});
+														res.send({
+															points: true,
+															turn: game.turn % 2 === player.pNum,
+															rank: card.rank <= 10,
+															frozen: cardIsFrozen,
+															fullGame: val
+														});
+														game.save();													
+													});
 
-													Player.publishUpdate(savedPlayer.id, {
-														change: 'points',
-														victor: victor,
-														player: savedPlayer,
-														turn: game.turn
-													});
-													res.send({
-														points: true,
-														turn: game.turn % 2 === player.pNum,
-														rank: card.rank <= 10,
-														frozen: cardIsFrozen
-													});
-													game.save();
 												});
 											} else {
 												console.log("Card was frozen for playing points");
@@ -247,20 +446,25 @@ module.exports = {
 
 													game.turn++;
 													game.passCount = 0;
-													Player.publishUpdate(savedPlayer.id, {
-														change: 'runes',
-														victor: victor,
-														player: savedPlayer,
-														turn: game.turn
+													var fullGame = populateGame(game.id).then(function (val) {
+														Player.publishUpdate(savedPlayer.id, {
+															change: 'runes',
+															victor: victor,
+															player: savedPlayer,
+															turn: game.turn,
+															fullGame: val
+														});
+														res.send({
+															runes: true,
+															glasses: glasses,
+															turn: game.turn % 2 === player.pNum,
+															rank: (card.rank === 12 || card.rank === 13),
+															frozen: cardIsFrozen,
+															fullGame: val
+														});
+														game.save();													
 													});
-													res.send({
-														runes: true,
-														glasses: glasses,
-														turn: game.turn % 2 === player.pNum,
-														rank: (card.rank === 12 || card.rank === 13),
-														frozen: cardIsFrozen
-													});
-													game.save();
+
 
 												});
 											} else {

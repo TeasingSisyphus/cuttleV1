@@ -1046,7 +1046,7 @@
 							$scope.game.stacking = false;
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
-							$scope.game.players = obj.data.players;
+							$scope.game.players = obj.data.fullGame.players;
 
 							var glasses = false;
 							$scope.game.players[$scope.game.pNum].runes.forEach(function(rune, index, runes) {
@@ -1090,7 +1090,7 @@
 						case 'resolvedThree':
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
-							$scope.game.players[obj.data.player.pNum] = obj.data.player;
+							$scope.game.players[obj.data.player.pNum].hand = obj.data.player.hand;
 							$scope.game.stacking = false;
 							$scope.game.scrapPick = false;
 							$scope.game.turn = obj.data.game.turn;
@@ -1101,7 +1101,7 @@
 							console.log("Resolved four");
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
-							$scope.game.players[obj.data.player.pNum] = obj.data.player;
+							$scope.game.players[obj.data.player.pNum].hand = obj.data.player.hand;
 							$scope.game.stacking = false;
 							$scope.game.selectTwo = false;
 							$scope.game.turn = obj.data.game.turn;
@@ -1112,7 +1112,7 @@
 							console.log("Four resulted in auto discard due to handsize");
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
-							$scope.game.players = obj.data.players;
+							$scope.game.players = obj.data.fullGame.players;
 							$scope.game.stacking = false;
 							$scope.game.selectTwo = false;
 							$scope.game.turn = obj.data.game.turn;
@@ -1126,7 +1126,7 @@
 							$scope.game.topCard = obj.data.game.topCard;
 							$scope.game.secondCard = obj.data.game.secondCard;
 							$scope.game.topTwo = [obj.data.game.topCard, obj.data.game.secondCard];
-							$scope.game.players[obj.data.player.pNum] = obj.data.player;
+							$scope.game.players[obj.data.player.pNum].hand = obj.data.player.hand;
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.turn = obj.data.game.turn;
@@ -1140,7 +1140,7 @@
 							$scope.game.topCard = obj.data.game.topCard;
 							$scope.game.secondCard = obj.data.game.secondCard;
 							$scope.game.topTwo = [obj.data.game.topCard, obj.data.game.secondCard];
-							$scope.game.players[obj.data.player.pNum] = obj.data.player;
+							$scope.game.players[obj.data.player.pNum].hand = obj.data.player.hand;
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.turn = obj.data.game.turn;
@@ -1154,7 +1154,7 @@
 							$scope.game.topCard = obj.data.game.topCard;
 							$scope.game.secondCard = obj.data.game.secondCard;
 							$scope.game.topTwo = [obj.data.game.topCard, obj.data.game.secondCard];
-							$scope.game.players[obj.data.player.pNum] = obj.data.player;
+							$scope.game.players[obj.data.player.pNum].hand = obj.data.player.hand;
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.turn = obj.data.game.turn;
@@ -1166,7 +1166,7 @@
 							$scope.game.glasses = false;
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
-							$scope.game.players = obj.data.players;
+							$scope.game.players = obj.data.fullGame.players;
 							$scope.game.yourJacks = [];
 							$scope.game.opJacks = [];
 							$scope.game.turn = obj.data.game.turn;
@@ -1174,7 +1174,7 @@
 						case 'resolvedNine':
 							$scope.game.stacking = false;
 							$scope.game.topTwoPick = false;
-							$scope.game.players = obj.data.players;
+							$scope.game.players = obj.data.fullGame.players;
 							var glasses = false;
 
 							$scope.game.players[$scope.game.pNum].runes.forEach(function(rune, index, runes) {
@@ -1250,7 +1250,7 @@
 						case 'sevenJack':
 							$scope.game.stacking = false;
 							$scope.game.topTwoPick = false;
-							$scope.game.players = obj.data.players;
+							$scope.game.players = obj.data.fullGame.players;
 							$scope.game.turn = obj.data.turn;
 							$scope.game.deck = obj.data.game.deck;
 							$scope.game.topCard = obj.data.game.topCard;
@@ -1304,7 +1304,7 @@
 						case 'jack':
 							$scope.game.stacking = false;
 							$scope.game.topTwoPick = false;
-							$scope.game.players = obj.data.players;
+							$scope.game.players = obj.data.fullGame.players;
 							$scope.game.turn = obj.data.turn;
 							switch (obj.data.thief.pNum === $scope.game.pNum) {
 								case true:
