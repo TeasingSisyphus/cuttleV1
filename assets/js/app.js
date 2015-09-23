@@ -2,7 +2,7 @@
 	var app = angular.module('homepage', []);
 
     
-        //Homepage controller
+    //Homepage controller
 	app.controller('homepageController', function($scope, $rootScope) {
 		this.formTitle = 'Type a name and submit to create a new game!';
 		this.gameName = '';
@@ -10,9 +10,9 @@
 		this.readyView = false;
 		this.gameView = false;
 
-	        //Socket to maintain a list of active games
-	        //Fires immediately on start-up
-                //Allows all users to see all active games
+	    //Socket to maintain a list of active games
+	    //Fires immediately on start-up
+        //Allows all users to see all active games
 		io.socket.get('/game/subscribe', function(res) {
 			res.forEach(function(game, index, list) {
 				$scope.homepage.gameList.push(game);
@@ -108,6 +108,7 @@
 		this.topTwoPick = false;   //Boolean to check if a seven one-off effect is resolving
 		this.whichCard = null;     //Represents which of the top two cards is being chosen during a seven's one off
 		this.selectTwo = false;    //Boolean to check if a four one-off effect is resolving
+		this.log = [];
 	        //DEBUG BOOLEANS
 		this.putOnTop = false;     //Boolean to check if a card is being moved to the top of the deck 
 		this.showDeck = false;     //Boolean to toggle displaying the deck
@@ -837,7 +838,7 @@
 						case 'pass':
 							console.log('\nIn pass case');
 							$scope.game.turn = obj.data.game.turn;
-							alert("Player " + obj.data.pNum + " has passed");
+							$scope.game.log.push("Player " + obj.data.pNum + " has passed");
 							break;
 
 						case 'draw':
@@ -850,6 +851,7 @@
 							$scope.game.topTwo = [obj.data.game.topCard, obj.data.game.secondCard];
 							$scope.game.players[obj.data.player.pNum].hand = obj.data.player.hand;
 							$scope.game.turn = obj.data.game.turn;
+							$scope.game.log = obj.data.game.log;
 							break;
 
 						case 'ready':
@@ -872,6 +874,7 @@
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.turn = obj.data.game.turn;
+							$scope.game.log = obj.data.game.log;
 							$scope.game.topTwoPick = false;
 							if (obj.data.attachedLen > 0) {
 								console.log("There were attachments");
@@ -925,6 +928,7 @@
 							$scope.game.players[obj.data.player.pNum] = obj.data.player;
 							$scope.game.turn = obj.data.game.turn;
 							$scope.game.topTwoPick = false;
+							$scope.game.log = obj.data.game.log;
 							break;
 
 						case 'threeData':
@@ -953,6 +957,7 @@
 							$scope.game.topTwo = [obj.data.game.topCard, obj.data.game.secondCard];
 							$scope.game.topCard.class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
 							$scope.game.secondCard.class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
+							$scope.game.log = obj.data.game.log;
 							break;
 
 						case 'sevenImpossible':
@@ -976,7 +981,8 @@
 							$scope.game.turn = obj.data.game.turn;
 							$scope.game.topCard = obj.data.game.topCard;
 							$scope.game.topTwo = [$scope.game.topCard];							
-							$scope.game.topCard.class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';							
+							$scope.game.topCard.class = 'card col-xs-4 col-sm-4 col-md-lg-4 img-responsive';
+							$scope.game.log = obj.data.game.log;							
 							break;
 
 						case 'sevenScuttled':
@@ -987,6 +993,7 @@
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.deck = obj.data.game.deck;
 							$scope.game.turn = obj.data.game.turn;
+							$scope.game.log = obj.data.gam.log;
 
 							if (obj.data.jacksOnTarget > 0) {
 								var youWereTarget = obj.data.player.pNum === $scope.game.pNum;
@@ -1013,6 +1020,7 @@
 								$scope.game.resolve();
 							}
 							$scope.game.turn = obj.data.turn;
+							$scope.game.log = obj.data.game.log;
 							$scope.topTwoPick = false;
 							$scope.game.deck = obj.data.game.deck;
 							$scope.game.topCard = obj.data.game.topCard;
@@ -1026,6 +1034,7 @@
 								$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 								$scope.game.stacking = false;
 								$scope.game.turn = obj.data.game.turn;
+								$scope.game.log = obj.data.game.log;
 								$scope.game.topTwoPick = false;
 							}
 							break;
@@ -1036,6 +1045,7 @@
 							$scope.game.players = obj.data.players;
 							$scope.game.stacking = false;
 							$scope.game.turn = obj.data.game.turn;
+							$scope.game.log = obj.data.game.log;
 							$scope.game.topTwoPick = false;
 							$scope.game.opJacks = [];
 							$scope.game.yourJacks = [];
@@ -1085,6 +1095,7 @@
 								}
 							}
 							$scope.game.turn = obj.data.game.turn;
+							$scope.game.log = obj.data.game.log;
 							break;
 
 						case 'resolvedThree':
@@ -1094,6 +1105,7 @@
 							$scope.game.stacking = false;
 							$scope.game.scrapPick = false;
 							$scope.game.turn = obj.data.game.turn;
+							$scope.game.log = obj.data.game.log;
 							$scope.game.topTwoPick = false;
 							break;
 
@@ -1105,6 +1117,7 @@
 							$scope.game.stacking = false;
 							$scope.game.selectTwo = false;
 							$scope.game.turn = obj.data.game.turn;
+							$scope.game.log = obj.data.game.log;
 							$scope.game.topTwoPick = false;
 							break;
 
@@ -1116,6 +1129,7 @@
 							$scope.game.stacking = false;
 							$scope.game.selectTwo = false;
 							$scope.game.turn = obj.data.game.turn;
+							$scope.game.log = obj.data.game.log;
 							$scope.game.topTwoPick = false;
 							break;
 
@@ -1130,6 +1144,7 @@
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.turn = obj.data.game.turn;
+							$scope.game.log = obj.data.game.log;
 							break;
 
 						case 'oneCardInDeckFive':
@@ -1144,6 +1159,7 @@
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.turn = obj.data.game.turn;
+							$scope.game.log = obj.data.game.log;
 							break;
 
 						case 'emptyDeckFive':
@@ -1158,6 +1174,7 @@
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.turn = obj.data.game.turn;
+							$scope.game.log = obj.data.game.log;
 							break;
 
 						case 'resolvedSix':
@@ -1170,6 +1187,7 @@
 							$scope.game.yourJacks = [];
 							$scope.game.opJacks = [];
 							$scope.game.turn = obj.data.game.turn;
+							$scope.game.log = obj.data.game.log;
 							break;
 						case 'resolvedNine':
 							$scope.game.stacking = false;
@@ -1245,6 +1263,7 @@
 								}
 							}
 							$scope.game.turn = obj.data.game.turn;
+							$scope.game.log = obj.data.game.log;
 							break;
 
 						case 'sevenJack':
@@ -1252,6 +1271,7 @@
 							$scope.game.topTwoPick = false;
 							$scope.game.players = obj.data.fullGame.players;
 							$scope.game.turn = obj.data.turn;
+							$scope.game.log = obj.data.game.log;
 							$scope.game.deck = obj.data.game.deck;
 							$scope.game.topCard = obj.data.game.topCard;
 							$scope.game.secondCard = obj.data.game.secondCard;
@@ -1306,6 +1326,7 @@
 							$scope.game.topTwoPick = false;
 							$scope.game.players = obj.data.fullGame.players;
 							$scope.game.turn = obj.data.turn;
+							$scope.game.log = obj.data.fullGame.log;
 							switch (obj.data.thief.pNum === $scope.game.pNum) {
 								case true:
 									console.log("Your jack");
@@ -1404,6 +1425,7 @@
 							$scope.game.players[obj.data.player.pNum] = obj.data.player;
 							$scope.game.topTwoPick = false;
 							$scope.game.turn = obj.data.turn;
+							$scope.game.log = obj.data.fullGame.log;
 							break;
 						case 'runes':
 							if (obj.data.victor === true) {
@@ -1412,6 +1434,7 @@
 							$scope.game.players[obj.data.player.pNum] = obj.data.player;
 							$scope.game.topTwoPick = false;
 							$scope.game.turn = obj.data.turn;
+							$scope.game.log = obj.data.fullGame.log;
 							break;
 						case 'jack':
 							$scope.game.players = obj.data.players;

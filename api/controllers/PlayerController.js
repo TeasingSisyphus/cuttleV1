@@ -340,6 +340,7 @@ module.exports = {
 													game.turn++;
 													game.passCount = 0;
 													var fullGame = populateGame(game.id).then(function (val) {
+														val.log.push(log);
 														Player.publishUpdate(savedPlayer.id, {
 															change: 'points',
 															victor: victor,
@@ -447,6 +448,7 @@ module.exports = {
 													game.turn++;
 													game.passCount = 0;
 													var fullGame = populateGame(game.id).then(function (val) {
+														val.log.push(log);
 														Player.publishUpdate(savedPlayer.id, {
 															change: 'runes',
 															victor: victor,

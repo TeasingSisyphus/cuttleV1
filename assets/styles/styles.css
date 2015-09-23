@@ -9,6 +9,17 @@
 	font-size: 50pt;
 }
 
+#logBox {
+	overflow: auto;
+	height: 500px
+	text-align: left;
+}
+#logTitle {
+	text-align: left;
+}
+.entry {
+	text-align: left;
+}
 .card {
 	margin-left: 10px;
 	height: 10%;

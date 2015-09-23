@@ -201,27 +201,31 @@ R.Sipie, 2000
                 <div id='midWrap'>
                     <div class='container-fluid'>
                         <div class='row'>
-                            <div class='col-xs-6 col-md-6 col-lg-6 col-sm-6' ng-show='game.deck.length > 0'>{{game.deck.length + 2}} Cards in Deck</div>
-                            <div class='col-xs-6 col-md-6 col-lg-6 col-sm-6' ng-show='game.deck.length === 0 && game.secondCard'>2 Cards in Deck</div>
+                            <div class='col-xs-4 col-md-4 col-lg-4 col-sm-4 col-md-offset-2' ng-show='game.deck.length > 0'>{{game.deck.length + 2}} Cards in Deck</div>
+                            <div class='col-xs-4 col-md-4 col-lg-4 col-sm-4 col-md-offset-2' ng-show='game.deck.length === 0 && game.secondCard'>2 Cards in Deck</div>
                             <div class='col-xs-6 col-md-6 col-lg-6 col-sm-6' ng-show='game.deck.length === 0 && !game.secondCard && game.topCard'>1 Card in Deck</div>
                             <div class='col-xs-6 col-md-6 col-lg-6 col-sm-6' ng-show='game.deck.length === 0 && !game.topCard'>No Cards in Deck</div>
 
 
                             <!-- <div class='span3'></div> -->
-                            <div class='col-xs-6 col-md-6 col-lg-6 col-sm-6'>{{game.scrap.length}} Cards in Scrap</div>
+                            <div class='col-xs-5 col-md-5 col-lg-5 col-sm-5 col-md-offset-1'>{{game.scrap.length}} Cards in Scrap</div>
                             <!-- <div class='span3'></div> -->
                         </div>
                         <div class='row'>
                             <button ng-click='game.showDeck = !game.showDeck'>Toggle Deck</button>
-                            <img src='/images/word-ace-card-back.jpg' ng-click="game.draw()" ng-show='game.topCard' class='midCard col-xs-2 col-md-2 col-lg-2 col-sm-2 img-responsive'></img>
+                            <img src='/images/word-ace-card-back.jpg' ng-click="game.draw()" ng-show='game.topCard' class='midCard col-xs-2 col-md-2 col-lg-2 col-sm-2 col-md-offset-2 img-responsive'></img>
                             <img src='/images/emptyDeck.jpg' ng-hide='game.topCard' ng-click="game.pass()" class='midCard col-xs-2 col-md-2 col-lg-2 col-sm-2 img-responsive'></img>
                             <!-- <div class='col-xs-5 col-md-5 col-lg-5 col-sm-5'></div> -->
-                            <img ng-src="{{game.scrapTopImg}}"  class='midCard col-md-offset-4 col-xs-2 col-md-2 col-lg-2 col-sm-2 img-responsive' ng-click='game.oneOff()'></img>
-                            <div class='col-xs-4 col-md-4 col-lg-4 col-sm-4'></div>
+                            <ul class='col-md-2 col-xs-2 col-lg-2 col-md-offset-.5 container-fluid' id='logBox'>
+                            	<h2 class='row'><h2 class='col-md-offset-2 col-md-10' id='logTitle'>Game Log</h2></h2>
+                            	<div ng-repeat="entry in game.log track by $index"><div class='row'><li class='col-md-12' class='entry'>{{entry}}</li></div></div>
+                            </ul>
+                            <img ng-src="{{game.scrapTopImg}}"  class='midCard  col-xs-2 col-md-2 col-lg-2 col-sm-2 img-responsive' ng-click='game.oneOff()'></img>
+                            <div class='col-xs-3 col-md-3 col-lg-3 col-sm-3'></div>
                         </div>
                         <div class='row'>
                             <img ng-show='game.topTwoPick' ng-repeat='card in game.topTwo' ng-click='game.select(card, $index)' ng-class='card.class' ng-src='{{card.img}}'></img>
-                            <div class='col-xs-4 col-md-4 col-lg-4 col-sm-4'></div>
+                            <div class='col-xs-4.5 col-md-4.5 col-lg-4.5 col-sm-4.5'></div>
                         </div>
                     </div>
                 </div>
