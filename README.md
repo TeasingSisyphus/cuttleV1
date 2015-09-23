@@ -24,8 +24,7 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 		*	yourServersLocalIP:1337
 		*	ex) 192.167.1.4:1337
 			* In this case, the machine running the server in its terminal has a local ip: 192.167.1.4
-*	After opening at least 2 browser tabs to the homepage, you can submit text into the form on the left
-	*	to create a new game.
+*	After opening at least 2 browser tabs to the homepage, you can submit text into the form on the left to create a new game.
 *	You can click an existing game from the list underneath the text bar to join it, then click the 'ready' button to play
 *	When two players have joined the same game, and clicked the 'ready' button, both will be taken to the view of their game
 *	Within a game, click the card that you wish to play, and then the place that you wish to play it.
