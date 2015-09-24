@@ -345,8 +345,8 @@
 		//Draw a card from the deck to your hand
 		this.draw = function() {
 			// Need to start keeping track of hand size
-			if ($scope.game.topCard === false) {
-				console.log("The deck is empty");
+			if ($scope.game.topCard === false || $scope.game.topTwoPick || ($scope.game.turn + 1) % 2 === $scope.game.pNum) {
+				console.log("The draw is illegal");
 				// Add a pop-up telling the player the deck is empty
 				// var deckOut = confirm("The deck is empty, you may either pass or play a card.\n Good Luck");
 				// io.socket.get
