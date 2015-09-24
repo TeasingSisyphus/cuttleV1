@@ -85,7 +85,8 @@ var findCards = function (idArray) {
 	});
 };
 
-//Inputs a game and an array of 2 players
+//Inputs a game and an array of 2 players,
+//any object (game, or player) may be replaced by its id
 //Returns a promise resolving to a fully populated game
 var popGame = function (game, players) {
 	return new Promise(function (resolve, reject) {
@@ -95,18 +96,10 @@ var popGame = function (game, players) {
 		var p0PointIds = [];
 		var p1PointIds = [];
 		
-		console.log("Logging players parameter for popGame");
-		console.log(players);
 		
 		var promiseGame = new Promise(function (res, rej) {
 			if (typeof game === 'number') {
-				Game.findOne(game).populateAll().exec(function (error, foundGame) {
-					if (error || !foundGame) {
-						rej(error);
-					} else {
-						res(foundGame);
-					}
-				});
+					res(findGame(game));
 			} else { //Assume any non-number passed as game is a Game record
 				res(game);
 			}
@@ -114,42 +107,22 @@ var popGame = function (game, players) {
 		
 		var promiseP0 = new Promise(function (res, rej) {
 			if (typeof players[0] === 'number') { //If players[0] is id, find that player
-				Player.findOne(players[0]).populateAll().exec(function (error, foundP0) {
-					if (error || !foundP0) {
-						rej(error);
-					} else {
-						res(foundP0);
-					}
-				});
+				res(findPlayer(players[0]));
 			} else {
-				console.log("\np0 was already given");
-				console.log(players[0]);
 				res(players[0]);
 			}
 		});
 		
 		var promiseP1 = new Promise(function (res, rej) {
 			if (typeof players[1] === 'number') { //If players[1] is id, find that player
-				Player.findOne(players[1]).populateAll().exec(function (error, foundP1) {
-					if (error || !foundP1) {
-						rej(error);
-					} else {
-						res(foundP1);
-					}
-				});
+				res(findPlayer(players[1]));
 			} else {
-				console.log("\np1 was already given");
-				console.log(players[1]);
 				res(players[1]);
 			}			
 		});
 		
 		Promise.all([promiseGame, promiseP0, promiseP1]).then(function(values) {
-			console.log("\nInside new promise all for popGame. Logging game:");
-			console.log(values[0]);
-			console.log("\nLogging players");
 			var playerArray = [values[1], values[2]];
-			console.log(playerArray);
 			
 			fullGame.id = game.id;
 			fullGame.name = game.name;
@@ -195,8 +168,6 @@ var popGame = function (game, players) {
 				p0.points = vals[0];
 				p1.points = vals[1];
 				fullGame.players = [p0, p1];
-				console.log("\noldFullGame:");
-				console.log(fullGame);
 				
 				return resolve(fullGame);			
 			});			
@@ -3508,8 +3479,6 @@ module.exports = {
 		var promiseGame = populateGame(req.body.gameId);
 		promiseGame.then(function success(val) {
 			var gamePop = popGame(val, val.players).then(function (newFullGame) {
-				console.log("newFullGame:");
-				console.log(newFullGame);
 				res.send(newFullGame);			
 			});
 		}, function fail (reason) {
