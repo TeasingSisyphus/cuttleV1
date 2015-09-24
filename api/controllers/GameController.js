@@ -683,7 +683,8 @@ module.exports = {
 									handSize: foundPlayer.hand.length !== 8,
 									gameHadTopCard: game.topCard != null
 								});
-								var fullGame = populateGame(savedGame.id).then(function (val) {
+								var playerSort = sortPlayers(savedGame.players);
+								var fullGame = popGame(savedGame, [playerSort[0].id, playerSort[1].id]).then(function (val) {
 									Game.publishUpdate(game.id, {
 										game: savedGame,
 										player: savedPlayer,
