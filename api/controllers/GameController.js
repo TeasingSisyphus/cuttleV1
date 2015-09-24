@@ -46,6 +46,19 @@ var findGame = function (gameId) {
 	});
 };
 
+var findPlayer = function (playerId) {
+	return new Promise(function (resolve, reject) {
+		Player.findOne(playerId).populate('hand').populate('points').populate('runes').exec(function (error, player) {
+			if (error || !player) {
+				return reject(error);
+			} else {
+				return resolve(player);
+			}
+		});
+	});
+};
+
+
 var findPlayers = function (idArray) {
 	return new Promise(function (resolve, reject) {
 		Player.find(idArray).populate('hand').populate('points').populate('runes').sort('pNum ASC').exec(function (error, players) {
@@ -82,52 +95,113 @@ var popGame = function (game, players) {
 		var p0PointIds = [];
 		var p1PointIds = [];
 		
-		fullGame.id = game.id;
-		fullGame.name = game.name;
-		fullGame.deck = game.deck;
-		fullGame.scrap = game.scrap;
-		fullGame.log = game.log;
-		fullGame.topCard = game.topCard;
-		fullGame.secondCard = game.secondCard;
-		fullGame.scrapTop = game.scrapTop;
-		fullGame.turn = game.turn;
-		fullGame.firstEffect = game.firstEffect;
-		fullGame.twos = game.twos;
-		fullGame.winner = game.winner;	
+		console.log("Logging players parameter for popGame");
+		console.log(players);
 		
-		//Players' points must be populated with 'attachments'
-		players[0].points.forEach(function (point, index, points) {
-			p0PointIds.push(point.id);
-		});
-		players[1].points.forEach(function (point, index, points) {
-			p1PointIds.push(point.id);
+		var promiseGame = new Promise(function (res, rej) {
+			if (typeof game === 'number') {
+				Game.findOne(game).populateAll().exec(function (error, foundGame) {
+					if (error || !foundGame) {
+						rej(error);
+					} else {
+						res(foundGame);
+					}
+				});
+			} else { //Assume any non-number passed as game is a Game record
+				res(game);
+			}
 		});
 		
-		
-		
-		p0.id = players[0].id;
-		p0.socketId = players[0].socketId;
-		p0.pNum = players[0].pNum;
-		p0.currentGame = players[0].currentGame;
-		p0.hand = players[0].hand;
-		p0.runes = players[0].runes;
-		
-		p1.id = players[1].id;
-		p1.socketId = players[1].socketId;
-		p1.pNum = players[1].pNum;
-		p1.currentGame = players[1].currentGame;
-		p1.hand = players[1].hand;
-		p1.runes = players[1].runes;	
-		
-		var p0Points = findCards(p0PointIds);
-		var p1Points = findCards(p1PointIds);
-		
-		Promise.all([p0Points, p1Points]).then(function (vals) {
-			p0.points = vals[0];
-			p1.points = vals[1];
-			fullGame.players = [p0, p1];
-			return resolve(fullGame);			
+		var promiseP0 = new Promise(function (res, rej) {
+			if (typeof players[0] === 'number') { //If players[0] is id, find that player
+				Player.findOne(players[0]).populateAll().exec(function (error, foundP0) {
+					if (error || !foundP0) {
+						rej(error);
+					} else {
+						res(foundP0);
+					}
+				});
+			} else {
+				console.log("\np0 was already given");
+				console.log(players[0]);
+				res(players[0]);
+			}
 		});
+		
+		var promiseP1 = new Promise(function (res, rej) {
+			if (typeof players[1] === 'number') { //If players[1] is id, find that player
+				Player.findOne(players[1]).populateAll().exec(function (error, foundP1) {
+					if (error || !foundP1) {
+						rej(error);
+					} else {
+						res(foundP1);
+					}
+				});
+			} else {
+				console.log("\np1 was already given");
+				console.log(players[1]);
+				res(players[1]);
+			}			
+		});
+		
+		Promise.all([promiseGame, promiseP0, promiseP1]).then(function(values) {
+			console.log("\nInside new promise all for popGame. Logging game:");
+			console.log(values[0]);
+			console.log("\nLogging players");
+			var playerArray = [values[1], values[2]];
+			console.log(playerArray);
+			
+			fullGame.id = game.id;
+			fullGame.name = game.name;
+			fullGame.deck = game.deck;
+			fullGame.scrap = game.scrap;
+			fullGame.log = game.log;
+			fullGame.topCard = game.topCard;
+			fullGame.secondCard = game.secondCard;
+			fullGame.scrapTop = game.scrapTop;
+			fullGame.turn = game.turn;
+			fullGame.firstEffect = game.firstEffect;
+			fullGame.twos = game.twos;
+			fullGame.winner = game.winner;	
+		
+			//Players' points must be populated with 'attachments'
+			playerArray[0].points.forEach(function (point, index, points) {
+				p0PointIds.push(point.id);
+			});
+			playerArray[1].points.forEach(function (point, index, points) {
+				p1PointIds.push(point.id);
+			});
+		
+		
+		
+			p0.id = playerArray[0].id;
+			p0.socketId = playerArray[0].socketId;
+			p0.pNum = playerArray[0].pNum;
+			p0.currentGame = playerArray[0].currentGame;
+			p0.hand = playerArray[0].hand;
+			p0.runes = playerArray[0].runes;
+		
+			p1.id = playerArray[1].id;
+			p1.socketId = playerArray[1].socketId;
+			p1.pNum = playerArray[1].pNum;
+			p1.currentGame = playerArray[1].currentGame;
+			p1.hand = playerArray[1].hand;
+			p1.runes = playerArray[1].runes;	
+		
+			var p0Points = findCards(p0PointIds);
+			var p1Points = findCards(p1PointIds);
+			
+			Promise.all([p0Points, p1Points]).then(function (vals) {
+				p0.points = vals[0];
+				p1.points = vals[1];
+				fullGame.players = [p0, p1];
+				console.log("\noldFullGame:");
+				console.log(fullGame);
+				
+				return resolve(fullGame);			
+			});			
+		});
+
 
 		
 	});
@@ -3432,8 +3506,11 @@ module.exports = {
 		console.log("\nTesting Promises!");
 		var promiseGame = populateGame(req.body.gameId);
 		promiseGame.then(function success(val) {
-			console.log("\n\nGot game");
-			res.send(val);	
+			var gamePop = popGame(val, val.players).then(function (newFullGame) {
+				console.log("newFullGame:");
+				console.log(newFullGame);
+				res.send(newFullGame);			
+			});
 		}, function fail (reason) {
 			console.log("Promise failed for reason: ");
 			console.log(reason);
