@@ -3,6 +3,8 @@
 This is a multiplayer card game leveraging sails.js and angularjs.
 
 ## TODO
+*	Fix Bug where 1off is interrupted by requesting to draw
+	*	The player casting original oneOff doesn't get notified that the oneOff is 'pending'
 *	Reset Game upon win or stalemate
 *	Make oneOff deselect upon casting illegal 3, and 7 into 5/7
 *	Make a nice ready screen
