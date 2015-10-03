@@ -108,6 +108,7 @@
 		this.topTwoPick = false;   //Boolean to check if a seven one-off effect is resolving
 		this.whichCard = null;     //Represents which of the top two cards is being chosen during a seven's one off
 		this.selectTwo = false;    //Boolean to check if a four one-off effect is resolving
+		this.oneOffIllegal = false;
 	        //DEBUG BOOLEANS
 		this.putOnTop = false;     //Boolean to check if a card is being moved to the top of the deck 
 		this.showDeck = false;     //Boolean to toggle displaying the deck
@@ -476,6 +477,7 @@
 		this.requestNine = function(card) {
 			if ($scope.game.topTwoPick) {
 				console.log("Requesting to play nine on a point card after resolving a seven");
+				$scope.game.oneOffIllegal = true;
 				io.socket.get('/game/sevenOneOff', {
 					gameId: $scope.game.gameId,
 					playerId: $scope.game.players[$scope.game.pNum].id,
@@ -503,6 +505,7 @@
 			} else {
 
 				console.log("Requesting to play nine on a point card");
+				$scope.game.oneOffIllegal = true;
 				io.socket.get('/game/oneOff', {
 					gameId: $scope.game.gameId,
 					playerId: $scope.game.players[$scope.game.pNum].id,
@@ -563,6 +566,7 @@
 				if ($scope.game.topTwoPick) {
 					console.log("from a seven");
 					if ($scope.game.selCard.rank === 2 || $scope.game.selCard.rank === 9) {
+						$scope.game.oneOffIllegal = true;
 						io.socket.get('/game/sevenOneOff', {
 							gameId: $scope.game.gameId,
 							pNum: $scope.game.pNum,
@@ -586,6 +590,7 @@
                                 //Handles all other instances of a rune being targeted
 				} else {
 					if ($scope.game.selCard.rank === 2 || $scope.game.selCard.rank === 9) {
+						$scope.game.oneOffIllegal = true;
 						io.socket.get('/game/oneOff', {
 							gameId: $scope.game.gameId,
 							playerId: $scope.game.players[$scope.game.pNum].id,
@@ -622,13 +627,14 @@
                 //Handles a card being played for its one-off effect
 		this.oneOff = function() {
 
-			if ($scope.game.selId !== null) {
+			if ($scope.game.selId !== null && !$scope.game.oneOffIllegal) {
                                 //Handles card being played off seven one-off effect
 				if ($scope.game.topTwoPick) {
 					//Seven One Offs
 					console.log("Playing " + $scope.game.selCard.alt + " for oneOff after seven");
 
 					console.log("\nRequesting to play " + $scope.game.selCard.alt + " as oneOff after seven");
+					$scope.game.oneOffIllegal = true;
 					io.socket.get('/game/sevenOneOff', {
 						gameId: $scope.game.gameId,
 						playerId: $scope.game.players[$scope.game.pNum].id,
@@ -660,12 +666,13 @@
 
 				//Handles all other one-off effect plays
 				} else {
-                                        //Handles if a two one-off effect is being used to counter another one-off effect
+                    //Handles if a two one-off effect is being used to counter another one-off effect
 					if ($scope.game.stacking) {
-                                                //Check for two one-off effect
+                        //Check for two one-off effect
 						if ($scope.game.selCard.rank === 2) {
 							console.log("Requesting to play " + $scope.game.selCard.alt + " as counter to One Off");
 							$scope.game.stacking = false;
+							$scope.game.oneOffIllegal = true;
 							io.socket.get('/game/oneOff', {
 								gameId: $scope.game.gameId,
 								playerId: $scope.game.players[$scope.game.pNum].id,
@@ -710,6 +717,7 @@
 							case 4:
 							case 7:
 								console.log("\nRequesting to play " + $scope.game.selCard.alt + " as oneOff");
+								$scope.game.oneOffIllegal = true;
 								io.socket.get('/game/oneOff', {
 									gameId: $scope.game.gameId,
 									playerId: $scope.game.players[$scope.game.pNum].id,
@@ -729,6 +737,7 @@
 								break;
 							case 5:
 								console.log("Playing 5 to draw two");
+								$scope.game.oneOffIllegal = true;
 								io.socket.get('/game/oneOff', {
 									gameId: $scope.game.gameId,
 									playerId: $scope.game.players[$scope.game.pNum].id,
@@ -747,6 +756,7 @@
 								break;
 							case 6:
 								console.log('\nPlaying 6 to clear the runes');
+								$scope.game.oneOffIllegal = true;
 								io.socket.get('/game/oneOff', {
 									gameId: $scope.game.gameId,
 									playerId: $scope.game.players[$scope.game.pNum].id,
@@ -771,8 +781,8 @@
 
 		};
 
-                //Requests one-off effect resolution by the server
-                //Fires when a user declines to counter a one-off effect
+        //Requests one-off effect resolution by the server
+    	//Fires when a user declines to counter a one-off effect
 		this.resolve = function() {
 			console.log('Resolving');
 			io.socket.get('/game/resolve', {
@@ -907,11 +917,13 @@
 
 						case 'oneOff':
 							$scope.game.stacking = true;
+							$scope.game.oneOffIllegal = false;
 							console.log('\nOne Off was played');
 							var conf = confirm("Your opponent has played the " + obj.data.card.alt + " as a oneOff. Would you like to counter with a two?");
 							if (!conf) {
 								console.log("Declined to counter. Requesting to resolve stack");
 								$scope.game.resolve();
+								$scope.game.oneOffIllegal = false;
 							}
 							$scope.game.players[obj.data.player.pNum] = obj.data.player;
 							$scope.game.turn = obj.data.game.turn;
@@ -934,6 +946,7 @@
 
 						case 'sevenData':
 							$scope.game.stacking = false;
+							$scope.game.oneOffIllegal = false;
 							$scope.game.topTwoPick = true;
 							$scope.game.players[obj.data.player.pNum].hand = obj.data.player.hand;
 							$scope.game.scrap = obj.data.game.scrap;
@@ -948,6 +961,7 @@
 
 						case 'sevenImpossible':
 							$scope.game.stacking = false;
+							$scope.game.oneOffIllegal = false;
 							$scope.game.players[obj.data.player.pNum].hand = obj.data.player.hand;
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
@@ -960,6 +974,7 @@
 
 						case 'sevenLastCard':
 							$scope.game.stacking = false;
+							$scope.game.oneOffIllegal = false;
 							$scope.game.topTwoPick = true;
 							$scope.game.players[obj.data.player.pNum].hand = obj.data.player.hand;
 							$scope.game.scrap = obj.data.game.scrap;
@@ -972,6 +987,7 @@
 
 						case 'sevenScuttled':
 							$scope.game.stacking = false;
+							$scope.game.oneOffIllegal = false;
 							$scope.game.topTwoPick = false;
 							$scope.game.players[obj.data.player.pNum] = obj.data.player;
 							$scope.game.scrap = obj.data.game.scrap;
@@ -998,6 +1014,7 @@
 							break;
 						case 'sevenOneOff':
 							$scope.game.stacking = true;
+							$scope.game.oneOffIllegal = false;
 							var conf = confirm("Your opponent has played the " + obj.data.card.alt + " as a oneOff after a seven. Would you like to counter with a two?");
 							if (!conf) {
 								console.log("Declined to counter. Requesting to resolve stack");
@@ -1016,6 +1033,7 @@
 								$scope.game.scrap = obj.data.game.scrap;
 								$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 								$scope.game.stacking = false;
+								$scope.game.oneOffIllegal = false;
 								$scope.game.turn = obj.data.game.turn;
 								$scope.game.topTwoPick = false;
 							}
@@ -1026,6 +1044,7 @@
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.players = obj.data.players;
 							$scope.game.stacking = false;
+							$scope.game.oneOffIllegal = false;
 							$scope.game.turn = obj.data.game.turn;
 							$scope.game.topTwoPick = false;
 							$scope.game.opJacks = [];
@@ -1035,6 +1054,7 @@
 						case 'resolvedTwo':
 							$scope.game.topTwoPick = false;
 							$scope.game.stacking = false;
+							$scope.game.oneOffIllegal = false;
 							$scope.game.scrap = obj.data.game.scrap;
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.players = obj.data.players;
@@ -1083,6 +1103,7 @@
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.players[obj.data.player.pNum] = obj.data.player;
 							$scope.game.stacking = false;
+							$scope.game.oneOffIllegal = false;
 							$scope.game.scrapPick = false;
 							$scope.game.turn = obj.data.game.turn;
 							$scope.game.topTwoPick = false;
@@ -1094,6 +1115,7 @@
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.players[obj.data.player.pNum] = obj.data.player;
 							$scope.game.stacking = false;
+							$scope.game.oneOffIllegal = false;
 							$scope.game.selectTwo = false;
 							$scope.game.turn = obj.data.game.turn;
 							$scope.game.topTwoPick = false;
@@ -1105,6 +1127,7 @@
 							$scope.game.scrapTopImg = obj.data.game.scrapTop.img;
 							$scope.game.players = obj.data.players;
 							$scope.game.stacking = false;
+							$scope.game.oneOffIllegal = false;
 							$scope.game.selectTwo = false;
 							$scope.game.turn = obj.data.game.turn;
 							$scope.game.topTwoPick = false;
@@ -1112,6 +1135,7 @@
 
 						case 'resolvedFive':
 							$scope.game.stacking = false;
+							$scope.game.oneOffIllegal = false;
 							$scope.game.topTwoPick = false;
 							$scope.game.deck = obj.data.game.deck;
 							$scope.game.topCard = obj.data.game.topCard;
@@ -1125,6 +1149,7 @@
 
 						case 'oneCardInDeckFive':
 							$scope.game.stacking = false;
+							$scope.game.oneOffIllegal = false;
 							$scope.game.topTwoPick = false;
 							$scope.game.selectTwo = false;
 							$scope.game.deck = obj.data.game.deck;
@@ -1138,7 +1163,6 @@
 							break;
 
 						case 'emptyDeckFive':
-							$scope.game.stacking = false;
 							$scope.game.topTwoPick = false;
 							$scope.game.selectTwo = false;
 							$scope.game.deck = obj.data.game.deck;
@@ -1153,6 +1177,7 @@
 
 						case 'resolvedSix':
 							$scope.game.stacking = false;
+							$scope.game.oneOffIllegal = false;
 							$scope.game.topTwoPick = false;
 							$scope.game.glasses = false;
 							$scope.game.scrap = obj.data.game.scrap;
@@ -1164,6 +1189,7 @@
 							break;
 						case 'resolvedNine':
 							$scope.game.stacking = false;
+							$scope.game.oneOffIllegal = false;
 							$scope.game.topTwoPick = false;
 							$scope.game.players = obj.data.players;
 							var glasses = false;
@@ -1240,6 +1266,7 @@
 
 						case 'sevenJack':
 							$scope.game.stacking = false;
+							$scope.game.oneOffIllegal = false;
 							$scope.game.topTwoPick = false;
 							$scope.game.players = obj.data.players;
 							$scope.game.turn = obj.data.turn;
