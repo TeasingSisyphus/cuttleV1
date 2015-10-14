@@ -2,6 +2,8 @@
 
 This is a multiplayer card game leveraging sails.js and angularjs.
 
+
+
 ## TODO
 *	Fix Bug where 1off is interrupted by requesting to draw
 	*	The player casting original oneOff doesn't get notified that the oneOff is 'pending'
@@ -9,6 +11,13 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 *	Make oneOff deselect upon casting illegal 3, and 7 into 5/7
 *	Make a nice ready screen
 
+## REASEARCH FOR V2
+*	Node machines
+	*	Passoword encryption
+*	ejs syntax for data encapsulation
+*	View rendering (pages should be modularized)
+	*	Had trouble with res.view() for socket requests. Might be patched?
+*	Leverage ng-animate to handle card transitions
 
 ## DONE
 *	Pass action now checks that the it is the requesting player's turn before passing
