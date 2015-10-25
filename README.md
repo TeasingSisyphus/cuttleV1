@@ -72,7 +72,6 @@ This is a multiplayer card game leveraging sails.js and angularjs.
 *	Flesh out readyView to display the number of players in the game and who is ready
 *   Make categories for actions with giant comment blocks for easy navigation
 *	Make THIS FILE called agenda.md, then make a README.md that has notes on installing and using the app
-*   Change populateGame in GameController.js to use the previously found game
 
 
 ## ANGULAR BUGS

@@ -63,7 +63,7 @@ module.exports.routes = {
 '/game/jack'             :          'GameController.jack',
 '/game/sevenJack'        :          'GameController.sevenJack',
 '/game/pass'             :          'GameController.pass',
-'/game/promiseTest'		   :		    	'GameController.promiseTest',
+'/game/promiseTest'		 :			'GameController.promiseTest',
 
 
 
