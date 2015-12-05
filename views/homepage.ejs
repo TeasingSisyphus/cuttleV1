@@ -1,6 +1,6 @@
 <!-- Default home page -->
 <body ng-app='homepage'>
-    <div ng-controller='homepageController as homepage'>
+    <div ng-controller='homepageController as homepage' ng-cloak>
     	<div ng-hide='homepage.readyView'>
 	        {{homepage.formTitle}}
 	        <form ng-submit='homepage.makeGame()'>
@@ -18,7 +18,7 @@
 
              </div>
 
-            <div ng-show='game.gameView'>
+            <div ng-show='game.gameView' ng-cloak>
 
                 <div> Game Name: {{game.name}}      Game Id: {{game.id}} Glasses: {{game.glasses}}    Stacking: {{game.stacking}} Turn: {{game.turn}} Your Turn: {{game.turn % 2 === game.pNum}}      
 
